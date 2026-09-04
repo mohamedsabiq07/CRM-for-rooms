@@ -9,7 +9,9 @@ import {
   AlertCircle, 
   Clock,
   ExternalLink,
-  Plus
+  Plus,
+  LogOut,
+  Bed
 } from 'lucide-react';
 import { Tenant, Building, RoomUnit } from '../types/crm';
 import { calculateStayDuration, calculateRentDueInfo, generateWhatsAppLink } from '../utils/dateUtils';
@@ -21,6 +23,7 @@ interface TenantSheetProps {
   searchQuery: string;
   onEditTenant: (tenant: Tenant) => void;
   onDeleteTenant: (tenantId: string) => void;
+  onCheckOutTenant: (tenant: Tenant) => void;
   onToggleKey: (tenantId: string, keyType: 'cupboard' | 'door') => void;
   onStatusClick: (tenant: Tenant) => void;
   onAddTenantToSection?: (section: string) => void;
@@ -33,6 +36,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
   searchQuery,
   onEditTenant,
   onDeleteTenant,
+  onCheckOutTenant,
   onToggleKey,
   onStatusClick,
   onAddTenantToSection,
@@ -45,11 +49,12 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
       t.place.toLowerCase().includes(q) ||
       t.partition.toLowerCase().includes(q) ||
       t.remarks.toLowerCase().includes(q) ||
-      t.section.toLowerCase().includes(q)
+      t.section.toLowerCase().includes(q) ||
+      (t.bedType && t.bedType.toLowerCase().includes(q)) ||
+      (t.spaceType && t.spaceType.toLowerCase().includes(q))
     );
   });
 
-  // Group tenants by section (e.g. HALL, ROOM)
   const sections = Array.from(new Set(tenants.map(t => t.section || 'HALL')));
   if (!sections.includes('HALL')) sections.unshift('HALL');
   if (!sections.includes('ROOM')) sections.push('ROOM');
@@ -67,13 +72,13 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
         </h2>
       </div>
 
-      {/* Spreadsheet Table Container with horizontal scrolling */}
+      {/* Spreadsheet Table Container */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs sm:text-sm border-collapse select-none">
           <thead>
             <tr className="bg-amber-100/90 text-slate-900 font-bold border-b border-amber-300">
               <th className="py-2.5 px-3 border-r border-amber-200 text-center w-12">Sno</th>
-              <th className="py-2.5 px-3 border-r border-amber-200 min-w-[150px]">Tenants</th>
+              <th className="py-2.5 px-3 border-r border-amber-200 min-w-[170px]">Tenants</th>
               <th className="py-2.5 px-3 border-r border-amber-200 min-w-[110px]">Place</th>
               <th className="py-2.5 px-3 border-r border-amber-200 text-center min-w-[100px]">Deposit</th>
               <th className="py-2.5 px-3 border-r border-amber-200 text-center min-w-[110px]">Joining date</th>
@@ -88,8 +93,8 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                 D/k
               </th>
               <th className="py-2.5 px-3 border-r border-amber-200 min-w-[160px]">Remarks</th>
-              <th className="py-2.5 px-2.5 border-r border-amber-200 text-center min-w-[70px]">Partition</th>
-              <th className="py-2.5 px-3 text-center min-w-[140px]">Actions</th>
+              <th className="py-2.5 px-2.5 border-r border-amber-200 text-center min-w-[80px]">Partition</th>
+              <th className="py-2.5 px-3 text-center min-w-[170px]">Actions</th>
             </tr>
           </thead>
 
@@ -151,15 +156,36 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                             {t.sno}
                           </td>
 
-                          {/* Tenant Name */}
+                          {/* Tenant Name & Bed/Space Badges */}
                           <td className="py-2.5 px-3 border-r border-emerald-300/70 font-bold text-slate-900">
-                            <div className="flex items-center justify-between gap-1">
-                              <span>{t.name}</span>
-                              {t.phone && (
-                                <span className="text-[10px] font-mono text-slate-500 font-normal hidden lg:inline">
-                                  {t.phone}
-                                </span>
-                              )}
+                            <div>
+                              <div className="flex items-center justify-between gap-1">
+                                <span>{t.name}</span>
+                                {t.phone && (
+                                  <span className="text-[10px] font-mono text-slate-500 font-normal hidden xl:inline">
+                                    {t.phone}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Space & Bed Type Tag */}
+                              <div className="flex items-center gap-1 mt-0.5">
+                                {t.bedType && (
+                                  <span className={`text-[9px] px-1.5 py-0.2 rounded font-semibold ${
+                                    t.bedType === 'Lower Bed' 
+                                      ? 'bg-blue-100 text-blue-800' 
+                                      : t.bedType === 'Upper Bed'
+                                        ? 'bg-purple-100 text-purple-800'
+                                        : 'bg-slate-200 text-slate-700'
+                                  }`}>
+                                    {t.bedType}
+                                  </span>
+                                )}
+                                {t.spaceType && t.spaceType !== 'Partition' && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-semibold">
+                                    {t.spaceType}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </td>
 
@@ -257,9 +283,9 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                             {t.partition || '-'}
                           </td>
 
-                          {/* Actions: Call, WhatsApp, Edit, Delete */}
+                          {/* Actions: Call, WhatsApp, Tenant Out (Check-Out), Edit */}
                           <td className="py-2.5 px-2 text-center">
-                            <div className="flex items-center justify-center gap-1.5">
+                            <div className="flex items-center justify-center gap-1.5 flex-wrap">
                               {/* Direct Phone Call */}
                               <a
                                 href={`tel:${t.phone.replace(/\s+/g, '')}`}
@@ -280,6 +306,15 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                                 <MessageSquare className="w-3.5 h-3.5" />
                               </a>
 
+                              {/* TENANT OUT (CHECK-OUT & GIVE BACK REFUND) */}
+                              <button
+                                onClick={() => onCheckOutTenant(t)}
+                                title="Tenant Out: Check-out, return keys & give back deposit refund"
+                                className="p-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition shadow-sm"
+                              >
+                                <LogOut className="w-3.5 h-3.5" />
+                              </button>
+
                               {/* Edit Modal */}
                               <button
                                 onClick={() => onEditTenant(t)}
@@ -287,15 +322,6 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                                 className="p-1.5 rounded-lg bg-slate-700 text-white hover:bg-slate-900 transition shadow-sm"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-
-                              {/* Delete / Vacate */}
-                              <button
-                                onClick={() => onDeleteTenant(t.id)}
-                                title="Delete or Vacate Tenant"
-                                className="p-1.5 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </td>
@@ -323,12 +349,16 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 bg-indigo-600 rounded"></span>
-            Key Handed Over (Cu/k: Cupboard, D/k: Door)
+            Key Given (Cu/k: Cupboard, D/k: Door)
+          </span>
+          <span className="flex items-center gap-1.5 text-rose-700 font-semibold">
+            <LogOut className="w-3.5 h-3.5 text-rose-600" />
+            Tenant Out (Deposit Give-Back Settlement)
           </span>
         </div>
 
         <div className="text-[11px] text-slate-500 font-medium">
-          💡 Click any <strong>Rent cell</strong> to record payment or adjust balance. Click <strong>Cu/k</strong> or <strong>D/k</strong> to toggle key handover.
+          💡 Click <strong>Tenant Out</strong> icon to process checkout, check keys, deduct lost fees, and calculate deposit refund.
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, UserPlus, Calendar, Phone, MapPin, Coins, Key, ShieldCheck } from 'lucide-react';
-import { Tenant, Building, RoomUnit } from '../types/crm';
+import { X, UserPlus, Calendar, Phone, MapPin, Coins, Key, ShieldCheck, Bed, Layers, Calculator } from 'lucide-react';
+import { Tenant, Building, RoomUnit, SpaceType, BedType } from '../types/crm';
+import { calculateProRataRent } from '../utils/rentCalculator';
 
 interface AddTenantModalProps {
   isOpen: boolean;
@@ -36,11 +37,17 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
   const [joiningDate, setJoiningDate] = useState(todayFormatted);
   const [section, setSection] = useState(defaultSection);
   const [partition, setPartition] = useState('p1');
+  const [spaceType, setSpaceType] = useState<SpaceType>('Partition');
+  const [bedType, setBedType] = useState<BedType>('Lower Bed');
   const [cupboardKey, setCupboardKey] = useState(true);
   const [doorKey, setDoorKey] = useState(true);
   const [remarks, setRemarks] = useState('');
 
   if (!isOpen) return null;
+
+  // Real-time pro-rata calculation for mid-month arrivals
+  const proRataResult = calculateProRataRent(Number(rentAmount) || 0, joiningDate);
+  const isMidMonth = proRataResult && proRataResult.daysRemainingInMonth < 28 && proRataResult.daysRemainingInMonth > 1;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +57,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
       sno: nextSno,
       buildingId: building.id,
       roomId: room.id,
-      flatId: building.id, // compatibility
+      flatId: building.id,
       name: name.trim(),
       place: place.trim(),
       phone: phone.trim(),
@@ -60,6 +67,8 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
       status: 'Active',
       section: section || 'HALL',
       partition: partition.trim().toLowerCase(),
+      spaceType,
+      bedType,
       rentAmount: Number(rentAmount) || 800,
       cupboardKey,
       doorKey,
@@ -73,16 +82,16 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
         
         {/* Modal Header */}
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-amber-500 text-slate-950 rounded-lg">
+            <div className="p-2 bg-amber-500 text-slate-950 rounded-xl shadow">
               <UserPlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold">New Tenant Onboarding</h3>
+              <h3 className="text-base font-bold">Tenant In (Check-In)</h3>
               <p className="text-xs text-slate-400">{building.name} • Room {room.roomNumber}</p>
             </div>
           </div>
@@ -92,7 +101,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
         </div>
 
         {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
           
           {/* Tenant Name & Place */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -106,7 +115,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Sunanda, Anita"
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
               />
             </div>
 
@@ -119,12 +128,12 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                 value={place}
                 onChange={(e) => setPlace(e.target.value)}
                 placeholder="e.g. Malayali, Karnataka, Tamil"
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
             </div>
           </div>
 
-          {/* Contact Number & Joining Date */}
+          {/* Contact Number & Move-in Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -137,7 +146,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+971 50..."
-                  className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono"
+                  className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono"
                 />
               </div>
             </div>
@@ -153,41 +162,78 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                   value={joiningDate}
                   onChange={(e) => setJoiningDate(e.target.value)}
                   placeholder="01.09.2026"
-                  className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono"
+                  className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono"
                 />
               </div>
             </div>
           </div>
 
-          {/* Section & Partition */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Flat Section
-              </label>
-              <select
-                value={section}
-                onChange={(e) => setSection(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
-              >
-                <option value="HALL">HALL</option>
-                <option value="ROOM">ROOM</option>
-                <option value="MASTER ROOM">MASTER ROOM</option>
-                <option value="BALCONY">BALCONY</option>
-              </select>
+          {/* SPACE TYPE & BED TYPE SELECTION */}
+          <div className="bg-amber-50/70 p-3.5 rounded-2xl border border-amber-200/80 space-y-3">
+            <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+              <Bed className="w-4 h-4 text-amber-600" />
+              Space & Bed Type Configuration
+            </h4>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Space Category</label>
+                <select
+                  value={spaceType}
+                  onChange={(e) => {
+                    const st = e.target.value as SpaceType;
+                    setSpaceType(st);
+                    if (st === 'Partition') setBedType('Private Partition');
+                    else if (st === 'Without Partition') setBedType('Lower Bed');
+                  }}
+                  className="w-full text-xs font-bold px-3 py-2 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                >
+                  <option value="Partition">Partition (Cabin)</option>
+                  <option value="Without Partition">Without Partition (Open)</option>
+                  <option value="Bed Space">Bed Space</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Bed Choice</label>
+                <select
+                  value={bedType}
+                  onChange={(e) => setBedType(e.target.value as BedType)}
+                  className="w-full text-xs font-bold px-3 py-2 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                >
+                  <option value="Lower Bed">Lower Bed</option>
+                  <option value="Upper Bed">Upper Bed</option>
+                  <option value="Single Bed">Single Bed</option>
+                  <option value="Private Partition">Private Partition</option>
+                </select>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Partition / Bedspace Code
-              </label>
-              <input
-                type="text"
-                value={partition}
-                onChange={(e) => setPartition(e.target.value)}
-                placeholder="p1, p2, p3... p8"
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 uppercase font-bold text-rose-700"
-              />
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Section</label>
+                <select
+                  value={section}
+                  onChange={(e) => setSection(e.target.value)}
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                >
+                  <option value="HALL">HALL</option>
+                  <option value="ROOM">ROOM</option>
+                  <option value="MASTER ROOM">MASTER ROOM</option>
+                  <option value="BALCONY">BALCONY</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Partition / Bed Code</label>
+                <input
+                  type="text"
+                  value={partition}
+                  onChange={(e) => setPartition(e.target.value)}
+                  placeholder="p1, p2, p3... p8"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 uppercase font-bold text-rose-700"
+                />
+              </div>
             </div>
           </div>
 
@@ -202,7 +248,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                 value={rentAmount}
                 onChange={(e) => setRentAmount(e.target.value)}
                 placeholder="800"
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
               />
             </div>
 
@@ -226,13 +272,35 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                 disabled={isNoAdvance}
                 value={isNoAdvance ? '0' : deposit}
                 onChange={(e) => setDeposit(e.target.value)}
-                placeholder="300"
-                className={`w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold ${
+                placeholder="200"
+                className={`w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold ${
                   isNoAdvance ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''
                 }`}
               />
             </div>
           </div>
+
+          {/* MID-MONTH PRO-RATA RENT CALLOUT */}
+          {isMidMonth && proRataResult && (
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded-2xl flex items-center justify-between gap-3 text-xs">
+              <div>
+                <span className="font-bold text-blue-950 flex items-center gap-1">
+                  <Calculator className="w-3.5 h-3.5 text-blue-600" />
+                  Mid-Month Arrival Pro-Rata:
+                </span>
+                <p className="text-[11px] text-blue-800 mt-0.5">
+                  {proRataResult.daysRemainingInMonth} days remaining in current month = <strong>AED {proRataResult.proRataAmount}</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRentAmount(proRataResult.proRataAmount.toString())}
+                className="px-2.5 py-1 bg-blue-600 text-white rounded-lg font-bold text-[11px] hover:bg-blue-700 transition shrink-0"
+              >
+                Apply AED {proRataResult.proRataAmount}
+              </button>
+            </div>
+          )}
 
           {/* Key Handover Checkboxes */}
           <div className="flex items-center gap-6 py-2 px-3 bg-amber-50/60 rounded-xl border border-amber-200/70">
@@ -268,8 +336,8 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
               type="text"
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
-              placeholder="e.g. 500 balance, she will pay before 10th"
-              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"
+              placeholder="e.g. Lower bed booked, advance paid in cash"
+              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
 
@@ -278,16 +346,16 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg shadow-md shadow-amber-500/20 transition flex items-center gap-1.5"
+              className="px-5 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center gap-1.5"
             >
               <UserPlus className="w-4 h-4" />
-              <span>Save & Add to Sheet</span>
+              <span>Check-In & Add to Sheet</span>
             </button>
           </div>
         </form>

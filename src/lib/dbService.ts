@@ -152,6 +152,8 @@ export async function fetchTenantsFromDb(): Promise<Tenant[]> {
       status: d.status as any || 'Active',
       section: d.section || 'HALL',
       partition: d.partition || 'p1',
+      spaceType: d.space_type || 'Partition',
+      bedType: d.bed_type || 'Bed Space',
       rentAmount: Number(d.rent_amount) || 0,
       cupboardKey: !!d.cupboard_key,
       doorKey: !!d.door_key,
@@ -159,6 +161,7 @@ export async function fetchTenantsFromDb(): Promise<Tenant[]> {
       remarks: d.remarks || '',
       lastPaidDate: d.last_paid_date || '',
       history: d.history || [],
+      checkOutRecord: d.checkout_record || undefined,
     }));
   } catch (err) {
     console.error('Error fetching tenants from Supabase:', err);
@@ -183,6 +186,8 @@ export async function upsertTenantToDb(tenant: Tenant) {
       status: tenant.status,
       section: tenant.section,
       partition: tenant.partition,
+      space_type: tenant.spaceType,
+      bed_type: tenant.bedType,
       rent_amount: tenant.rentAmount,
       cupboard_key: tenant.cupboardKey,
       door_key: tenant.doorKey,
@@ -190,6 +195,7 @@ export async function upsertTenantToDb(tenant: Tenant) {
       remarks: tenant.remarks,
       last_paid_date: tenant.lastPaidDate,
       history: tenant.history || [],
+      checkout_record: tenant.checkOutRecord || null,
     });
   } catch (err) {
     console.error('Error saving tenant to Supabase:', err);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Edit3, Calendar, Phone, Key, Trash2 } from 'lucide-react';
-import { Tenant } from '../types/crm';
+import { Tenant, SpaceType, BedType } from '../types/crm';
 
 interface EditTenantModalProps {
   isOpen: boolean;
@@ -29,10 +29,12 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
   const [leavingDate, setLeavingDate] = useState(tenant.leavingDate || '');
   const [section, setSection] = useState(tenant.section);
   const [partition, setPartition] = useState(tenant.partition);
+  const [spaceType, setSpaceType] = useState<SpaceType>(tenant.spaceType || 'Partition');
+  const [bedType, setBedType] = useState<BedType>(tenant.bedType || 'Lower Bed');
   const [cupboardKey, setCupboardKey] = useState(tenant.cupboardKey);
   const [doorKey, setDoorKey] = useState(tenant.doorKey);
   const [remarks, setRemarks] = useState(tenant.remarks);
-  const [status, setStatus] = useState<'Active' | 'Vacated'>(tenant.status);
+  const [status, setStatus] = useState<'Active' | 'Vacated' | 'Checked Out'>(tenant.status);
   const [currentMonthStatus, setCurrentMonthStatus] = useState(tenant.currentMonthStatus);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -49,6 +51,8 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
       leavingDate: leavingDate.trim() || null,
       section,
       partition: partition.trim().toLowerCase(),
+      spaceType,
+      bedType,
       cupboardKey,
       doorKey,
       remarks: remarks.trim(),
@@ -169,6 +173,37 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 uppercase font-bold text-rose-700"
               />
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Space Type
+              </label>
+              <select
+                value={spaceType}
+                onChange={(e) => setSpaceType(e.target.value as any)}
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+              >
+                <option value="Partition">Partition</option>
+                <option value="Without Partition">Without Partition</option>
+                <option value="Bed Space">Bed Space</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Bed Position / Type
+              </label>
+              <select
+                value={bedType}
+                onChange={(e) => setBedType(e.target.value as any)}
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+              >
+                <option value="Upper Bed">Upper Bed</option>
+                <option value="Lower Bed">Lower Bed</option>
+                <option value="Single Bed">Single Bed</option>
+                <option value="Private Partition">Private Partition</option>
+              </select>
+            </div>
           </div>
 
           {/* Rent, Deposit & Note */}
@@ -265,6 +300,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               >
                 <option value="Active">Active</option>
                 <option value="Vacated">Vacated (Moved Out)</option>
+                <option value="Checked Out">Checked Out</option>
               </select>
             </div>
           </div>

@@ -40,7 +40,6 @@ export interface Building {
   notes?: string;
 }
 
-// Backward compatibility alias
 export type FlatItem = Building;
 
 export interface PaymentRecord {
@@ -54,12 +53,28 @@ export interface PaymentRecord {
   remarks?: string;
 }
 
+export type SpaceType = 'Partition' | 'Without Partition' | 'Bed Space';
+export type BedType = 'Lower Bed' | 'Upper Bed' | 'Single Bed' | 'Private Partition';
+
+export interface CheckOutRecord {
+  checkOutDate: string; // DD.MM.YYYY
+  stayDuration: string; // e.g. "4 months 12 days"
+  originalDeposit: number;
+  unpaidRentDeduction: number;
+  keyReturnedDoor: boolean;
+  keyReturnedCupboard: boolean;
+  lostKeyCharges: number;
+  damageCharges: number;
+  giveBackAmount: number; // Final refund given back to tenant
+  notes?: string;
+}
+
 export interface Tenant {
   id: string;
   sno: number;
   buildingId: string;
   roomId: string;
-  flatId?: string; // for backward compatibility
+  flatId?: string; // backward compatibility
   name: string;
   place: string; // e.g., Karnataka, Malayali, Indonesia, Tamil, Srilankan
   phone: string;
@@ -67,15 +82,18 @@ export interface Tenant {
   depositNote?: string; // "No Advance", etc.
   joiningDate: string; // DD.MM.YYYY format
   leavingDate?: string | null;
-  status: 'Active' | 'Vacated';
+  status: 'Active' | 'Checked Out' | 'Vacated';
   section: string; // "HALL" or "ROOM"
   partition: string; // "p1", "p2", "p3", "p4", "p5", "p6", "p8" etc.
+  spaceType: SpaceType; // 'Partition' | 'Without Partition' | 'Bed Space'
+  bedType: BedType; // 'Lower Bed' | 'Upper Bed' | 'Single Bed' | 'Private Partition'
   rentAmount: number; // monthly rent in AED
   cupboardKey: boolean; // Cu/k
   doorKey: boolean; // D/k
   currentMonthStatus: 'Paid' | 'Pending' | 'Due' | 'Partial'; // e.g. Sep-26
   remarks: string; // "she has money", "she will do it before 10th", "she came at night", "500 balance"
   lastPaidDate?: string;
+  checkOutRecord?: CheckOutRecord;
   history?: PaymentRecord[];
 }
 

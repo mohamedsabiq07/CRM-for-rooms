@@ -10,11 +10,15 @@ import { EditTenantModal } from './components/EditTenantModal';
 import { RecordPaymentModal } from './components/RecordPaymentModal';
 import { AddBuildingModal } from './components/AddBuildingModal';
 import { ManageRoomModal } from './components/ManageRoomModal';
+import { CheckOutModal } from './components/CheckOutModal';
+import { RentCalculatorModal } from './components/RentCalculatorModal';
+import { PastTenantsModal } from './components/PastTenantsModal';
 import { 
   LocationItem, 
   Building, 
   RoomUnit, 
   Tenant, 
+  CheckOutRecord,
   RentNotification, 
   OwnerChequeNotification, 
   UtilityNotification 
@@ -97,6 +101,9 @@ export const App: React.FC = () => {
 
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [paymentTenant, setPaymentTenant] = useState<Tenant | null>(null);
+  const [checkoutTenant, setCheckoutTenant] = useState<Tenant | null>(null);
+  const [isRentCalculatorOpen, setIsRentCalculatorOpen] = useState(false);
+  const [isPastTenantsOpen, setIsPastTenantsOpen] = useState(false);
 
   // --- INITIAL LOAD FROM SUPABASE CLOUD DATABASE ---
   useEffect(() => {
@@ -158,6 +165,11 @@ export const App: React.FC = () => {
       t.status === 'Active'
     );
   }, [tenants, currentRoom, currentBuilding]);
+
+  // Past checked-out tenants archive across all rooms
+  const pastTenants = useMemo(() => {
+    return tenants.filter(t => t.status === 'Checked Out' || !!t.leavingDate || !!t.checkOutRecord);
+  }, [tenants]);
 
   // --- Dynamic Unified Notifications Engine ---
   const tenantNotifications: RentNotification[] = useMemo(() => {
@@ -289,6 +301,27 @@ export const App: React.FC = () => {
   const handleDeleteTenant = (id: string) => {
     setTenants(prev => prev.filter(t => t.id !== id));
     deleteTenantFromDb(id);
+  };
+
+  const handleConfirmCheckOut = (tenantId: string, checkoutRecord: CheckOutRecord) => {
+    setTenants(prev =>
+      prev.map(t => {
+        if (t.id !== tenantId) return t;
+        const updated: Tenant = {
+          ...t,
+          status: 'Checked Out',
+          leavingDate: checkoutRecord.checkOutDate,
+          doorKey: checkoutRecord.keyReturnedDoor,
+          cupboardKey: checkoutRecord.keyReturnedCupboard,
+          remarks: checkoutRecord.giveBackAmount >= 0
+            ? `Give-back refund: AED ${checkoutRecord.giveBackAmount}${checkoutRecord.notes ? ` (${checkoutRecord.notes})` : ''}`
+            : `Deduction settled${checkoutRecord.notes ? ` (${checkoutRecord.notes})` : ''}`,
+          checkOutRecord: checkoutRecord,
+        };
+        upsertTenantToDb(updated);
+        return updated;
+      })
+    );
   };
 
   const handleToggleKey = (tenantId: string, keyType: 'cupboard' | 'door') => {
@@ -476,6 +509,9 @@ export const App: React.FC = () => {
           setIsAddTenantOpen(true);
         }}
         onOpenAddBuilding={() => setIsAddBuildingOpen(true)}
+        onOpenRentCalculator={() => setIsRentCalculatorOpen(true)}
+        onOpenPastTenants={() => setIsPastTenantsOpen(true)}
+        pastTenantsCount={pastTenants.length}
         onToggleNotifications={() => setIsNotificationOpen(prev => !prev)}
         onExportExcel={handleExportExcel}
         onLogout={handleLogout}
@@ -611,6 +647,7 @@ export const App: React.FC = () => {
                 searchQuery={searchQuery}
                 onEditTenant={setEditingTenant}
                 onDeleteTenant={handleDeleteTenant}
+                onCheckOutTenant={setCheckoutTenant}
                 onToggleKey={handleToggleKey}
                 onStatusClick={setPaymentTenant}
                 onAddTenantToSection={(sec) => {
@@ -689,6 +726,29 @@ export const App: React.FC = () => {
         onClose={() => setPaymentTenant(null)}
         tenant={paymentTenant}
         onSavePayment={handleSavePayment}
+      />
+
+      {/* Tenant Out (Checkout) & Settlement Modal */}
+      <CheckOutModal
+        isOpen={!!checkoutTenant}
+        onClose={() => setCheckoutTenant(null)}
+        tenant={checkoutTenant}
+        onConfirmCheckOut={handleConfirmCheckOut}
+      />
+
+      {/* Pro-Rata Rent Calculator Modal */}
+      <RentCalculatorModal
+        isOpen={isRentCalculatorOpen}
+        onClose={() => setIsRentCalculatorOpen(false)}
+      />
+
+      {/* Past Tenants Archive Modal */}
+      <PastTenantsModal
+        isOpen={isPastTenantsOpen}
+        onClose={() => setIsPastTenantsOpen(false)}
+        pastTenants={pastTenants}
+        buildings={buildings}
+        rooms={rooms}
       />
 
       {/* Persistent Footer with Live Database Indicator */}

@@ -87,11 +87,9 @@ export const INITIAL_BUILDINGS: Building[] = [
   }
 ];
 
-// Alias for backward compatibility
 export const INITIAL_FLATS = INITIAL_BUILDINGS;
 
 export const INITIAL_ROOMS: RoomUnit[] = [
-  // --- VIENNA BUILDING ROOMS ---
   {
     id: 'room-vienna-103',
     buildingId: 'bld-vienna',
@@ -138,8 +136,6 @@ export const INITIAL_ROOMS: RoomUnit[] = [
       lastPaidDate: '01.09.2026'
     }
   },
-
-  // --- AL WALEED BUILDING ROOMS ---
   {
     id: 'room-waleed-204',
     buildingId: 'bld-al-waleed',
@@ -181,176 +177,6 @@ export const INITIAL_ROOMS: RoomUnit[] = [
       dueDate: '18.09.2026',
       status: 'Due'
     }
-  },
-
-  // --- AL SHAFAR TOWER ROOMS ---
-  {
-    id: 'room-shafar-302',
-    buildingId: 'bld-al-shafar',
-    roomNumber: '302',
-    roomType: 'Partition Unit',
-    dewaBill: {
-      provider: 'DEWA',
-      accountNumber: '2203819201',
-      amount: 920,
-      dueDate: '08.09.2026',
-      status: 'Overdue'
-    },
-    wifiBill: {
-      provider: 'Etisalat',
-      accountNumber: '04-981-4401',
-      amount: 409,
-      dueDate: '14.09.2026',
-      status: 'Due'
-    }
-  },
-  {
-    id: 'room-shafar-705',
-    buildingId: 'bld-al-shafar',
-    roomNumber: '705',
-    roomType: 'Studio Partition',
-    dewaBill: {
-      provider: 'DEWA',
-      accountNumber: '2203819202',
-      amount: 860,
-      dueDate: '08.09.2026',
-      status: 'Paid',
-      lastPaidDate: '01.09.2026'
-    },
-    wifiBill: {
-      provider: 'Du',
-      accountNumber: '04-981-4402',
-      amount: 389,
-      dueDate: '14.09.2026',
-      status: 'Paid',
-      lastPaidDate: '01.09.2026'
-    }
-  },
-
-  // --- BIN THANI RESIDENCE ROOMS ---
-  {
-    id: 'room-thani-105',
-    buildingId: 'bld-bin-thani',
-    roomNumber: '105',
-    roomType: 'Partition Flat',
-    dewaBill: {
-      provider: 'DEWA',
-      accountNumber: '2204928101',
-      amount: 840,
-      dueDate: '22.09.2026',
-      status: 'Paid'
-    },
-    wifiBill: {
-      provider: 'Du',
-      accountNumber: '04-620-5501',
-      amount: 389,
-      dueDate: '25.09.2026',
-      status: 'Paid'
-    }
-  },
-  {
-    id: 'room-thani-502',
-    buildingId: 'bld-bin-thani',
-    roomNumber: '502',
-    roomType: 'Partition Flat',
-    dewaBill: {
-      provider: 'DEWA',
-      accountNumber: '2204928102',
-      amount: 790,
-      dueDate: '22.09.2026',
-      status: 'Due'
-    },
-    wifiBill: {
-      provider: 'Du',
-      accountNumber: '04-620-5502',
-      amount: 389,
-      dueDate: '25.09.2026',
-      status: 'Due'
-    }
-  },
-
-  // --- AL HABBAI BUILDING ROOMS ---
-  {
-    id: 'room-habbai-201',
-    buildingId: 'bld-al-habbai',
-    roomNumber: '201',
-    roomType: 'Partition Unit',
-    dewaBill: {
-      provider: 'DEWA',
-      accountNumber: '2205837201',
-      amount: 810,
-      dueDate: '16.09.2026',
-      status: 'Paid'
-    },
-    wifiBill: {
-      provider: 'Du',
-      accountNumber: '04-510-6601',
-      amount: 389,
-      dueDate: '20.09.2026',
-      status: 'Paid'
-    }
-  },
-  {
-    id: 'room-habbai-304',
-    buildingId: 'bld-al-habbai',
-    roomNumber: '304',
-    roomType: 'Partition Unit',
-    dewaBill: {
-      provider: 'DEWA',
-      accountNumber: '2205837202',
-      amount: 830,
-      dueDate: '16.09.2026',
-      status: 'Due'
-    },
-    wifiBill: {
-      provider: 'Du',
-      accountNumber: '04-510-6602',
-      amount: 389,
-      dueDate: '20.09.2026',
-      status: 'Due'
-    }
-  },
-
-  // --- ARENCO BUILDING ROOMS ---
-  {
-    id: 'room-arenco-401',
-    buildingId: 'bld-arenco',
-    roomNumber: '401',
-    roomType: 'Partition Flat',
-    dewaBill: {
-      provider: 'DEWA',
-      accountNumber: '2206748301',
-      amount: 880,
-      dueDate: '18.09.2026',
-      status: 'Paid'
-    },
-    wifiBill: {
-      provider: 'Etisalat',
-      accountNumber: '04-430-7701',
-      amount: 409,
-      dueDate: '22.09.2026',
-      status: 'Paid'
-    }
-  },
-  {
-    id: 'room-arenco-802',
-    buildingId: 'bld-arenco',
-    roomNumber: '802',
-    roomType: 'Partition Flat',
-    dewaBill: {
-      provider: 'DEWA',
-      accountNumber: '2206748302',
-      amount: 910,
-      dueDate: '18.09.2026',
-      status: 'Due'
-    },
-    wifiBill: {
-      provider: 'Du',
-      accountNumber: '04-430-7702',
-      amount: 389,
-      dueDate: '22.09.2026',
-      status: 'Due'
-    }
   }
 ];
 
@@ -371,6 +197,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'HALL',
     partition: 'p1',
+    spaceType: 'Partition',
+    bedType: 'Private Partition',
     rentAmount: 750,
     cupboardKey: true,
     doorKey: true,
@@ -393,6 +221,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'HALL',
     partition: 'p2',
+    spaceType: 'Partition',
+    bedType: 'Lower Bed',
     rentAmount: 700,
     cupboardKey: true,
     doorKey: false,
@@ -415,6 +245,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'HALL',
     partition: 'p2',
+    spaceType: 'Partition',
+    bedType: 'Upper Bed',
     rentAmount: 750,
     cupboardKey: false,
     doorKey: false,
@@ -437,10 +269,12 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'HALL',
     partition: 'p3',
+    spaceType: 'Partition',
+    bedType: 'Lower Bed',
     rentAmount: 800,
     cupboardKey: true,
     doorKey: true,
-    currentMonthStatus: 'Due', // Highlighted yellow in photo
+    currentMonthStatus: 'Due',
     remarks: '',
     lastPaidDate: '28.07.2026'
   },
@@ -459,6 +293,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'HALL',
     partition: 'p3',
+    spaceType: 'Partition',
+    bedType: 'Upper Bed',
     rentAmount: 800,
     cupboardKey: false,
     doorKey: false,
@@ -481,6 +317,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'HALL',
     partition: 'p4',
+    spaceType: 'Without Partition',
+    bedType: 'Lower Bed',
     rentAmount: 750,
     cupboardKey: false,
     doorKey: false,
@@ -502,6 +340,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'HALL',
     partition: 'p4',
+    spaceType: 'Without Partition',
+    bedType: 'Upper Bed',
     rentAmount: 750,
     cupboardKey: true,
     doorKey: true,
@@ -524,6 +364,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'HALL',
     partition: 'p5',
+    spaceType: 'Bed Space',
+    bedType: 'Lower Bed',
     rentAmount: 700,
     cupboardKey: false,
     doorKey: false,
@@ -545,14 +387,14 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'HALL',
     partition: 'p5',
+    spaceType: 'Bed Space',
+    bedType: 'Upper Bed',
     rentAmount: 700,
     cupboardKey: false,
     doorKey: false,
     currentMonthStatus: 'Pending',
     remarks: 'amount with Neenu'
   },
-
-  // --- ROOM SECTION ---
   {
     id: 't-10',
     sno: 9,
@@ -568,6 +410,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'ROOM',
     partition: 'p6',
+    spaceType: 'Partition',
+    bedType: 'Private Partition',
     rentAmount: 850,
     cupboardKey: true,
     doorKey: true,
@@ -590,6 +434,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'ROOM',
     partition: 'p6',
+    spaceType: 'Partition',
+    bedType: 'Lower Bed',
     rentAmount: 850,
     cupboardKey: true,
     doorKey: true,
@@ -612,6 +458,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'ROOM',
     partition: 'p7',
+    spaceType: 'Bed Space',
+    bedType: 'Lower Bed',
     rentAmount: 800,
     cupboardKey: false,
     doorKey: false,
@@ -633,6 +481,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'ROOM',
     partition: 'p7',
+    spaceType: 'Bed Space',
+    bedType: 'Upper Bed',
     rentAmount: 800,
     cupboardKey: true,
     doorKey: true,
@@ -655,6 +505,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'ROOM',
     partition: 'p8',
+    spaceType: 'Partition',
+    bedType: 'Private Partition',
     rentAmount: 800,
     cupboardKey: true,
     doorKey: true,
@@ -677,14 +529,14 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'ROOM',
     partition: 'p8',
+    spaceType: 'Partition',
+    bedType: 'Private Partition',
     rentAmount: 800,
     cupboardKey: false,
     doorKey: false,
     currentMonthStatus: 'Pending',
     remarks: ''
   },
-
-  // Sample tenant in Room 601
   {
     id: 't-16',
     sno: 1,
@@ -700,6 +552,8 @@ export const INITIAL_TENANTS: Tenant[] = [
     status: 'Active',
     section: 'MASTER',
     partition: 'm1',
+    spaceType: 'Bed Space',
+    bedType: 'Lower Bed',
     rentAmount: 900,
     cupboardKey: true,
     doorKey: true,

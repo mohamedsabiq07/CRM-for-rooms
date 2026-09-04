@@ -6,6 +6,8 @@ import {
   Bell, 
   FileSpreadsheet, 
   Search, 
+  Calculator,
+  History,
   DoorOpen,
   LayoutGrid,
   LogOut,
@@ -29,6 +31,9 @@ interface HeaderProps {
   onSearchChange: (q: string) => void;
   onOpenAddTenant: () => void;
   onOpenAddBuilding: () => void;
+  onOpenRentCalculator: () => void;
+  onOpenPastTenants: () => void;
+  pastTenantsCount: number;
   onToggleNotifications: () => void;
   onExportExcel: () => void;
   onLogout: () => void;
@@ -54,6 +59,9 @@ export const Header: React.FC<HeaderProps> = ({
   onSearchChange,
   onOpenAddTenant,
   onOpenAddBuilding,
+  onOpenRentCalculator,
+  onOpenPastTenants,
+  pastTenantsCount,
   onToggleNotifications,
   onExportExcel,
   onLogout,
@@ -173,6 +181,31 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full bg-slate-800 text-xs text-white placeholder-slate-400 pl-8 pr-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400 transition"
               />
             </div>
+
+            {/* Pro-Rata Rent Calculator Quick Tool */}
+            <button
+              onClick={onOpenRentCalculator}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 rounded-lg text-xs font-semibold border border-amber-500/30 shadow-sm transition cursor-pointer"
+              title="Pro-Rata Rent Calculator for Mid-Month Arrivals"
+            >
+              <Calculator className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Rent Calc</span>
+            </button>
+
+            {/* Past Stays / Checkout Archive */}
+            <button
+              onClick={onOpenPastTenants}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-indigo-200 rounded-lg text-xs font-semibold border border-indigo-500/30 shadow-sm transition cursor-pointer"
+              title="Past Tenants & Vacated History"
+            >
+              <History className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">Past Stays</span>
+              {pastTenantsCount > 0 && (
+                <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1 rounded font-bold">
+                  {pastTenantsCount}
+                </span>
+              )}
+            </button>
 
             {/* Excel Export (if in sheet) */}
             {currentView === 'sheet' && (
