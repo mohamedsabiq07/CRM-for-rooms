@@ -41,7 +41,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
         {/* Modal Header */}
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-500 text-slate-950 rounded-lg">
+            <div className="p-2 bg-slate-800 text-white rounded-lg border border-slate-700">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
@@ -57,10 +57,10 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           
-          <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex items-center justify-between">
+          <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl flex items-center justify-between">
             <div>
-              <p className="text-xs text-emerald-800 font-semibold">Standard Monthly Rent</p>
-              <p className="text-lg font-extrabold text-emerald-950">AED {tenant.rentAmount}</p>
+              <p className="text-xs text-slate-500 font-semibold">Standard Monthly Rent</p>
+              <p className="text-lg font-bold text-slate-900">AED {tenant.rentAmount}</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-slate-500">Deposit Held</p>
@@ -87,7 +87,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                   setStatus('Partial');
                 }
               }}
-              className="w-full text-base font-bold px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full text-base font-bold px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
             />
           </div>
 
@@ -99,7 +99,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               >
                 <option value="Paid">Paid in Full</option>
                 <option value="Partial">Partial Payment</option>
@@ -116,7 +116,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 value={paymentDate}
                 onChange={(e) => setPaymentDate(e.target.value)}
                 placeholder="DD.MM.YYYY"
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900"
               />
             </div>
           </div>
@@ -130,7 +130,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               placeholder="e.g. 500 balance, paid cash, bank transfer"
-              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
             />
           </div>
 
@@ -144,7 +144,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg shadow-md shadow-emerald-600/20 transition flex items-center gap-1.5"
+              className="px-5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm transition flex items-center gap-1.5"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Confirm & Mark Settled</span>

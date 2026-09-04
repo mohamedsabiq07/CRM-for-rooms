@@ -35,12 +35,12 @@ export const RentCalculatorModal: React.FC<RentCalculatorModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
         
         {/* Header */}
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-amber-500 text-slate-950 rounded-xl shadow">
+            <div className="p-2 bg-slate-800 text-white rounded-lg border border-slate-700">
               <Calculator className="w-5 h-5" />
             </div>
             <div>
@@ -65,7 +65,7 @@ export const RentCalculatorModal: React.FC<RentCalculatorModalProps> = ({
                 value={monthlyRent}
                 onChange={(e) => setMonthlyRent(e.target.value)}
                 placeholder="800"
-                className="w-full text-sm font-bold px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full text-sm font-bold px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               />
             </div>
 
@@ -78,7 +78,7 @@ export const RentCalculatorModal: React.FC<RentCalculatorModalProps> = ({
                 value={moveInDate}
                 onChange={(e) => setMoveInDate(e.target.value)}
                 placeholder="18.09.2026"
-                className="w-full text-sm font-mono px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full text-sm font-mono px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               />
             </div>
           </div>
@@ -88,8 +88,8 @@ export const RentCalculatorModal: React.FC<RentCalculatorModalProps> = ({
             <div className="space-y-3 pt-2">
               
               {/* Option 1: Calendar Pro-Rata */}
-              <div className="bg-amber-50/80 border border-amber-300 rounded-2xl p-4">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-full">
+              <div className="bg-slate-50 border border-slate-300 rounded-xl p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-800 bg-slate-200 px-2 py-0.5 rounded-full">
                   Option 1: Pro-Rated Calendar Month
                 </span>
                 <div className="mt-2.5 flex items-baseline justify-between">
@@ -109,7 +109,7 @@ export const RentCalculatorModal: React.FC<RentCalculatorModalProps> = ({
               </div>
 
               {/* Option 2: 30-Day Rolling Cycle */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full">
                   Option 2: 30-Day Rolling Cycle
                 </span>
@@ -132,7 +132,7 @@ export const RentCalculatorModal: React.FC<RentCalculatorModalProps> = ({
               {/* Copy Quote Button */}
               <button
                 onClick={handleCopyQuote}
-                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"
               >
                 {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                 <span>{copied ? 'Copied Quote to Clipboard!' : 'Copy Customer Quote'}</span>

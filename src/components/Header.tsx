@@ -83,32 +83,32 @@ export const Header: React.FC<HeaderProps> = ({
     utilityNotifications.filter(u => u.status === 'overdue' || u.status === 'due_today').length;
 
   return (
-    <header className="bg-slate-900 text-white sticky top-0 z-30 shadow-md border-b border-slate-800">
+    <header className="bg-slate-950 text-white sticky top-0 z-30 shadow-sm border-b border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           
           {/* Brand & Main View Navigation */}
           <div className="flex items-center flex-wrap gap-4">
             <div className="flex items-center space-x-2.5">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-amber-500/20 shrink-0">
-                <Building2 className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-200 font-bold shrink-0">
+                <Building2 className="w-5 h-5 text-slate-300" />
               </div>
               <div>
-                <h1 className="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
-                  Room CRM <span className="text-[10px] bg-amber-400/20 text-amber-300 font-semibold px-2 py-0.5 rounded-full border border-amber-400/30">Dubai</span>
+                <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+                  Room CRM <span className="text-[10px] bg-slate-800 text-slate-300 font-medium px-2 py-0.5 rounded border border-slate-700">Dubai</span>
                 </h1>
-                <p className="text-[11px] text-slate-400 font-medium">Buildings & Partitions</p>
+                <p className="text-[11px] text-slate-400 font-normal">Property & Tenant Management</p>
               </div>
             </div>
 
             {/* View Switcher Tabs */}
-            <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
+            <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
               <button
                 onClick={() => onChangeView('sheet')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
                   currentView === 'sheet'
-                    ? 'bg-amber-500 text-slate-950 shadow-sm'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'bg-slate-800 text-white shadow-sm font-semibold border border-slate-700'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -117,10 +117,10 @@ export const Header: React.FC<HeaderProps> = ({
 
               <button
                 onClick={() => onChangeView('buildings')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
                   currentView === 'buildings'
-                    ? 'bg-amber-500 text-slate-950 shadow-sm'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'bg-slate-800 text-white shadow-sm font-semibold border border-slate-700'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
@@ -129,10 +129,10 @@ export const Header: React.FC<HeaderProps> = ({
 
               <button
                 onClick={() => onChangeView('profit_loss')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
                   currentView === 'profit_loss'
-                    ? 'bg-amber-500 text-slate-950 shadow-sm'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'bg-slate-800 text-white shadow-sm font-semibold border border-slate-700'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <TrendingUp className="w-3.5 h-3.5" />
@@ -144,16 +144,16 @@ export const Header: React.FC<HeaderProps> = ({
             {currentView === 'sheet' && (
               <div className="flex items-center flex-wrap gap-2">
                 {/* Building Selector */}
-                <div className="flex items-center space-x-1.5 bg-slate-800/90 px-2.5 py-1 rounded-lg border border-slate-700">
-                  <Building2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <div className="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800">
+                  <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <select
                     value={selectedBuildingId}
                     onChange={(e) => onSelectBuilding(e.target.value)}
                     aria-label="Select Building"
-                    className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer pr-1"
+                    className="bg-transparent text-xs font-medium text-slate-200 focus:outline-none cursor-pointer pr-1"
                   >
                     {buildings.map((bld) => (
-                      <option key={bld.id} value={bld.id} className="bg-slate-800 text-white">
+                      <option key={bld.id} value={bld.id} className="bg-slate-900 text-white">
                         {bld.name}
                       </option>
                     ))}
@@ -161,19 +161,19 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
 
                 {/* Room Number Selector */}
-                <div className="flex items-center space-x-1.5 bg-slate-800/90 px-2.5 py-1 rounded-lg border border-slate-700">
-                  <DoorOpen className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <div className="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800">
+                  <DoorOpen className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <select
                     value={selectedRoomId}
                     onChange={(e) => onSelectRoom(e.target.value)}
                     aria-label="Select Room Number"
-                    className="bg-transparent text-xs font-bold text-emerald-300 focus:outline-none cursor-pointer pr-1"
+                    className="bg-transparent text-xs font-medium text-slate-200 focus:outline-none cursor-pointer pr-1"
                   >
                     {currentRooms.length === 0 ? (
-                      <option value="" className="bg-slate-800 text-slate-400">No rooms</option>
+                      <option value="" className="bg-slate-900 text-slate-400">No rooms</option>
                     ) : (
                       currentRooms.map((room) => (
-                        <option key={room.id} value={room.id} className="bg-slate-800 text-white">
+                        <option key={room.id} value={room.id} className="bg-slate-900 text-white">
                           Room {room.roomNumber} ({room.roomType.split(' ')[0]})
                         </option>
                       ))
@@ -187,37 +187,37 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Search, Action Buttons, User Profile & Notifications */}
           <div className="flex items-center flex-wrap gap-2">
             {/* Search Input */}
-            <div className="relative min-w-[150px] sm:min-w-[180px]">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div className="relative min-w-[150px] sm:min-w-[170px]">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Search tenant, partition, place..."
-                className="w-full bg-slate-800 text-xs text-white placeholder-slate-400 pl-8 pr-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400 transition"
+                placeholder="Search tenant, partition..."
+                className="w-full bg-slate-900 text-xs text-white placeholder-slate-500 pl-8 pr-3 py-1.5 rounded-md border border-slate-800 focus:outline-none focus:border-slate-600 transition"
               />
             </div>
 
             {/* Pro-Rata Rent Calculator Quick Tool */}
             <button
               onClick={onOpenRentCalculator}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 rounded-lg text-xs font-semibold border border-amber-500/30 shadow-sm transition cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-md text-xs font-medium border border-slate-800 transition cursor-pointer"
               title="Pro-Rata Rent Calculator for Mid-Month Arrivals"
             >
-              <Calculator className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Rent Calc</span>
+              <Calculator className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Calculator</span>
             </button>
 
             {/* Past Stays / Checkout Archive */}
             <button
               onClick={onOpenPastTenants}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-indigo-200 rounded-lg text-xs font-semibold border border-indigo-500/30 shadow-sm transition cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-md text-xs font-medium border border-slate-800 transition cursor-pointer"
               title="Past Tenants & Vacated History"
             >
-              <History className="w-3.5 h-3.5 text-indigo-400" />
+              <History className="w-3.5 h-3.5 text-slate-400" />
               <span className="hidden sm:inline">Past Stays</span>
               {pastTenantsCount > 0 && (
-                <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1 rounded font-bold">
+                <span className="text-[10px] bg-slate-800 text-slate-300 px-1 rounded border border-slate-700 font-medium">
                   {pastTenantsCount}
                 </span>
               )}
@@ -227,11 +227,11 @@ export const Header: React.FC<HeaderProps> = ({
             {onOpenAddExpense && (
               <button
                 onClick={onOpenAddExpense}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-300 hover:text-rose-200 rounded-lg text-xs font-semibold border border-rose-600/40 shadow-sm transition cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-md text-xs font-medium border border-slate-800 transition cursor-pointer"
                 title="Log Flat Expense (AC, maintenance, cleaning, supplies)"
               >
-                <Receipt className="w-3.5 h-3.5 text-rose-400" />
-                <span className="hidden sm:inline">+ Expense</span>
+                <Receipt className="w-3.5 h-3.5 text-slate-400" />
+                <span className="hidden sm:inline">Add Expense</span>
               </button>
             )}
 
@@ -239,29 +239,29 @@ export const Header: React.FC<HeaderProps> = ({
             {currentView === 'sheet' && (
               <button
                 onClick={onExportExcel}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-lg text-xs font-semibold border border-emerald-500/50 shadow-sm transition"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-md text-xs font-medium border border-slate-800 transition"
                 title="Export Current Sheet to Excel (.xlsx)"
               >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-200" />
-                <span className="hidden sm:inline">Export Excel</span>
+                <FileSpreadsheet className="w-3.5 h-3.5 text-slate-400" />
+                <span className="hidden sm:inline">Export</span>
               </button>
             )}
 
             {/* Notifications Bell with Total Due Count */}
             <button
               onClick={onToggleNotifications}
-              className={`relative p-2 rounded-lg border transition ${
+              className={`relative p-2 rounded-md border transition ${
                 isNotificationOpen 
-                  ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold' 
+                  ? 'bg-slate-800 text-white border-slate-700' 
                   : totalUrgentCount > 0
-                    ? 'bg-rose-950/70 text-rose-300 border-rose-600/60 animate-pulse'
-                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'
+                    ? 'bg-slate-900 text-rose-300 border-rose-900/60'
+                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'
               }`}
               title="Notifications: Tenant Rent + Owner Cheques + DEWA/Wi-Fi"
             >
-              <Bell className="w-4 h-4" />
+              <Bell className="w-3.5 h-3.5" />
               {totalUrgentCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.2 bg-rose-600 text-white text-[10px] font-bold rounded-full border border-slate-900 shadow">
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.2 bg-rose-600 text-white text-[10px] font-semibold rounded-full border border-slate-950">
                   {totalUrgentCount}
                 </span>
               )}
@@ -271,7 +271,7 @@ export const Header: React.FC<HeaderProps> = ({
             {currentView === 'sheet' ? (
               <button
                 onClick={onOpenAddTenant}
-                className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold shadow-md shadow-amber-500/20 transition cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-950 rounded-md text-xs font-semibold shadow-sm transition cursor-pointer border border-slate-200"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Add Tenant</span>
@@ -279,7 +279,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <button
                 onClick={onOpenAddBuilding}
-                className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold shadow-md shadow-amber-500/20 transition cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-950 rounded-md text-xs font-semibold shadow-sm transition cursor-pointer border border-slate-200"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Add Building</span>
@@ -287,17 +287,17 @@ export const Header: React.FC<HeaderProps> = ({
             )}
 
             {/* User Profile & Logout */}
-            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-700">
-              <div className="flex items-center gap-1 bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700 text-xs font-semibold text-amber-300">
-                <User className="w-3.5 h-3.5 text-amber-400" />
+            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800">
+              <div className="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-md border border-slate-800 text-xs font-medium text-slate-300">
+                <User className="w-3.5 h-3.5 text-slate-400" />
                 <span>abuthalif</span>
               </div>
               <button
                 onClick={onLogout}
                 title="Log Out"
-                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
+                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-900 rounded-md transition"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3.5 h-3.5" />
               </button>
             </div>
 

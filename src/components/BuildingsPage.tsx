@@ -67,79 +67,79 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner & Financial Metrics */}
-      <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl border border-slate-800">
+      <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-sm border border-slate-800">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-800">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-widest">
-              <Building2 className="w-4 h-4" />
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-400 uppercase tracking-widest">
+              <Building2 className="w-4 h-4 text-slate-400" />
               <span>Building Portfolio & Utility Operations</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-1">
-              {buildings.length} Buildings Under Management
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mt-1">
+              {buildings.length} Properties Under Management
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Tracking owner contract rent, quarterly cheques, and room-level DEWA & Wi-Fi bills.
+            <p className="text-xs text-slate-400 mt-1">
+              Track landlord contracts, upcoming cheque dates, and room-level utility bills.
             </p>
           </div>
 
           <button
             onClick={onOpenAddBuilding}
-            className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition self-start md:self-auto cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-100 text-slate-950 font-semibold rounded-lg text-xs shadow-sm transition self-start md:self-auto cursor-pointer border border-slate-200"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Add New Building</span>
+            <span>Add Property</span>
           </button>
         </div>
 
         {/* Financial KPI Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6">
-          <div className="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/60">
-            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
-              Annual Owner Rent
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6">
+          <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+              Annual Master Rent
             </span>
-            <span className="text-lg sm:text-xl font-bold text-white mt-0.5 block">
+            <span className="text-lg font-bold text-white mt-0.5 block">
               AED {totalAnnualOwnerRent.toLocaleString()}
             </span>
-            <span className="text-[10px] text-slate-400">
-              ~AED {monthlyOwnerRent.toLocaleString()} / month
+            <span className="text-[11px] text-slate-400">
+              ~AED {monthlyOwnerRent.toLocaleString()} / mo
             </span>
           </div>
 
-          <div className="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/60">
-            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
+          <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
               Monthly Tenant Inflow
             </span>
-            <span className="text-lg sm:text-xl font-bold text-emerald-400 mt-0.5 block">
+            <span className="text-lg font-bold text-white mt-0.5 block">
               AED {totalMonthlyTenantRent.toLocaleString()}
             </span>
-            <span className="text-[10px] text-slate-400">
-              From {activeTenants.length} active tenants
+            <span className="text-[11px] text-slate-400">
+              {activeTenants.length} active tenants
             </span>
           </div>
 
-          <div className="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/60">
-            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
+          <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
               Monthly Utilities (DEWA + Wi-Fi)
             </span>
-            <span className="text-lg sm:text-xl font-bold text-amber-400 mt-0.5 block">
+            <span className="text-lg font-bold text-white mt-0.5 block">
               AED {(totalMonthlyDewa + totalMonthlyWifi).toLocaleString()}
             </span>
-            <span className="text-[10px] text-slate-400">
-              DEWA: AED {totalMonthlyDewa} • Wi-Fi: AED {totalMonthlyWifi}
+            <span className="text-[11px] text-slate-400">
+              DEWA: {totalMonthlyDewa} • Wi-Fi: {totalMonthlyWifi}
             </span>
           </div>
 
-          <div className="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/60">
-            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
+          <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
               Estimated Net Cash Flow
             </span>
-            <span className={`text-lg sm:text-xl font-bold mt-0.5 block ${
+            <span className={`text-lg font-bold mt-0.5 block ${
               estimatedMonthlyProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'
             }`}>
               {estimatedMonthlyProfit >= 0 ? '+' : ''}AED {estimatedMonthlyProfit.toLocaleString()} / mo
             </span>
-            <span className="text-[10px] text-slate-400">
-              Net margin after all expenses
+            <span className="text-[11px] text-slate-400">
+              Net margin after expenses
             </span>
           </div>
         </div>
@@ -185,44 +185,44 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
           return (
             <div
               key={building.id}
-              className="bg-white rounded-3xl shadow-md border border-slate-200/80 overflow-hidden hover:shadow-lg transition flex flex-col justify-between"
+              className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition flex flex-col justify-between"
             >
               <div>
                 {/* Building Header Banner */}
                 <div className="bg-slate-900 text-white p-5 flex items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-black tracking-tight text-white">{building.name}</h3>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 uppercase">
+                      <h3 className="text-base font-bold tracking-tight text-white">{building.name}</h3>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 uppercase">
                         {location?.name || 'Dubai'}
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
-                      <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span>{building.address}</span>
                     </p>
                   </div>
 
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-400 font-semibold block">Owner Rent</span>
-                    <span className="text-sm font-extrabold text-amber-300">
+                    <span className="text-[10px] text-slate-400 font-medium block">Owner Contract</span>
+                    <span className="text-sm font-bold text-white">
                       AED {building.ownerRentAnnual.toLocaleString()} / yr
                     </span>
                   </div>
                 </div>
 
                 {/* Owner Payment Terms & Next Cheque Alert */}
-                <div className="bg-amber-50/80 p-4 border-b border-amber-200/70 flex items-center justify-between flex-wrap gap-2 text-xs">
+                <div className="bg-slate-50 p-3.5 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2 text-xs">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-amber-100 rounded-lg text-amber-800">
+                    <div className="p-2 bg-white rounded-md border border-slate-200 text-slate-700">
                       <CreditCard className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="font-bold text-amber-950">
+                      <span className="font-semibold text-slate-800">
                         {building.paymentTerms} Terms (AED {building.chequeAmount.toLocaleString()} / cheque)
                       </span>
-                      <p className="text-[11px] text-amber-800 flex items-center gap-1 mt-0.5">
-                        <Calendar className="w-3.5 h-3.5" />
+                      <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                        <Calendar className="w-3 h-3 text-slate-400" />
                         <span>Next Cheque: <strong>{building.nextChequeDueDate}</strong></span>
                       </p>
                     </div>
@@ -231,11 +231,11 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                   {building.ownerPhone && (
                     <a
                       href={`tel:${building.ownerPhone.replace(/\s+/g, '')}`}
-                      className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 bg-white rounded-lg border border-amber-300 text-amber-900 hover:bg-amber-100 transition shadow-sm"
+                      className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 bg-white rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 transition shadow-sm"
                       title="Call Building Owner / Real Estate"
                     >
                       <Phone className="w-3 h-3" />
-                      <span>{building.ownerName || 'Call Owner'}</span>
+                      <span>{building.ownerName || 'Call Landlord'}</span>
                     </a>
                   )}
                 </div>
@@ -243,14 +243,14 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                 {/* Rooms List Section */}
                 <div className="p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                      <DoorOpen className="w-4 h-4 text-slate-700" />
-                      <span>Rooms in this Building ({buildingRooms.length})</span>
+                    <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <DoorOpen className="w-4 h-4 text-slate-500" />
+                      <span>Configured Units ({buildingRooms.length})</span>
                     </h4>
 
                     <button
                       onClick={() => onOpenAddRoom(building)}
-                      className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1 px-2 py-1 rounded hover:bg-amber-50 transition"
+                      className="text-xs font-semibold text-slate-700 hover:text-slate-900 flex items-center gap-1 px-2.5 py-1 rounded-md hover:bg-slate-100 border border-slate-200 transition"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Room</span>
@@ -258,11 +258,11 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                   </div>
 
                   {buildingRooms.length === 0 ? (
-                    <div className="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                    <div className="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                       <p className="text-xs text-slate-400 italic">No rooms registered under this building yet.</p>
                       <button
                         onClick={() => onOpenAddRoom(building)}
-                        className="mt-2 text-xs font-bold text-amber-600 hover:underline"
+                        className="mt-2 text-xs font-semibold text-slate-700 hover:underline"
                       >
                         + Add Room (e.g. 103, 601)
                       </button>
@@ -276,22 +276,22 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                         return (
                           <div
                             key={room.id}
-                            className="bg-slate-50 rounded-2xl p-4 border border-slate-200 hover:border-slate-300 transition"
+                            className="bg-slate-50/70 rounded-xl p-3.5 border border-slate-200 hover:border-slate-300 transition"
                           >
                             {/* Room Header & Quick Access */}
                             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
                               <div>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="text-sm font-black text-slate-900">
+                                  <span className="text-sm font-bold text-slate-900">
                                     Room {room.roomNumber}
                                   </span>
-                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-700">
+                                  <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-200 text-slate-700">
                                     {room.roomType || 'Partition Flat'}
                                   </span>
-                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
                                     Math.max(0, (room.capacity || 10) - roomTenants.length) > 0 
-                                      ? 'bg-amber-100 text-amber-900 border border-amber-300' 
-                                      : 'bg-emerald-100 text-emerald-800'
+                                      ? 'bg-slate-100 text-slate-700 border-slate-200' 
+                                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                   }`}>
                                     {Math.max(0, (room.capacity || 10) - roomTenants.length) > 0 
                                       ? `${Math.max(0, (room.capacity || 10) - roomTenants.length)} Vacant (${roomTenants.length}/${room.capacity || 10} Beds)` 
@@ -299,7 +299,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                                   </span>
                                 </div>
                                 <p className="text-[11px] text-slate-500 mt-0.5">
-                                  Real Estate Rent: <strong className="text-slate-800">AED {Number(room.actualRentAnnual || 0).toLocaleString()}/yr</strong> • Tenant Inflow: <strong className="text-emerald-700">AED {roomIncome.toLocaleString()}/mo</strong>
+                                  Master Rent: <strong className="text-slate-800">AED {Number(room.actualRentAnnual || 0).toLocaleString()}/yr</strong> • Tenant Inflow: <strong className="text-slate-800">AED {roomIncome.toLocaleString()}/mo</strong>
                                 </p>
                               </div>
 
@@ -307,7 +307,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                                 {/* Open in Sheet Button */}
                                 <button
                                   onClick={() => onSelectRoomInSheet(building.id, room.id)}
-                                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition shadow-sm"
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-900 text-white font-semibold text-xs hover:bg-slate-800 transition shadow-sm"
                                   title={`Open Room ${room.roomNumber} in Tenants Spreadsheet`}
                                 >
                                   <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -316,7 +316,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
 
                                 <button
                                   onClick={() => onEditRoom(building, room)}
-                                  className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition"
+                                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-md transition"
                                   title="Edit Room & Utilities"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
@@ -327,20 +327,18 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                             {/* Utilities: DEWA & Wi-Fi */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
                               {/* DEWA Bill Card */}
-                              <div className="bg-white p-3 rounded-xl border border-amber-200 flex flex-col justify-between">
+                              <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col justify-between">
                                 <div>
                                   <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-bold text-amber-900 flex items-center gap-1">
-                                      <Zap className="w-3.5 h-3.5 text-amber-600" /> DEWA Bill
+                                    <span className="text-[11px] font-semibold text-slate-700 flex items-center gap-1">
+                                      <Zap className="w-3.5 h-3.5 text-slate-500" /> DEWA Bill
                                     </span>
                                     <button
                                       onClick={() => onQuickToggleBillStatus(room.id, 'dewa')}
-                                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition ${
+                                      className={`text-[10px] font-semibold px-2 py-0.5 rounded border transition ${
                                         room.dewaBill?.status === 'Paid'
-                                          ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                                          : room.dewaBill?.status === 'Due'
-                                            ? 'bg-amber-200 text-amber-900 hover:bg-amber-300'
-                                            : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                          : 'bg-slate-100 text-slate-700 border-slate-200'
                                       }`}
                                       title="Click to toggle Paid/Due"
                                     >
@@ -348,7 +346,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                                     </button>
                                   </div>
                                   <div className="mt-1 flex items-baseline justify-between">
-                                    <span className="text-xs font-black text-slate-900">
+                                    <span className="text-xs font-bold text-slate-900">
                                       AED {room.dewaBill?.amount || 0}
                                     </span>
                                     <span className="text-[10px] text-slate-400 font-mono">
@@ -362,20 +360,18 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                               </div>
 
                               {/* Wi-Fi Bill Card */}
-                              <div className="bg-white p-3 rounded-xl border border-blue-200 flex flex-col justify-between">
+                              <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col justify-between">
                                 <div>
                                   <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-bold text-blue-900 flex items-center gap-1">
-                                      <Wifi className="w-3.5 h-3.5 text-blue-600" /> Wi-Fi ({room.wifiBill?.provider || 'Du'})
+                                    <span className="text-[11px] font-semibold text-slate-700 flex items-center gap-1">
+                                      <Wifi className="w-3.5 h-3.5 text-slate-500" /> Wi-Fi ({room.wifiBill?.provider || 'Du'})
                                     </span>
                                     <button
                                       onClick={() => onQuickToggleBillStatus(room.id, 'wifi')}
-                                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition ${
+                                      className={`text-[10px] font-semibold px-2 py-0.5 rounded border transition ${
                                         room.wifiBill?.status === 'Paid'
-                                          ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                                          : room.wifiBill?.status === 'Due'
-                                            ? 'bg-amber-200 text-amber-900 hover:bg-amber-300'
-                                            : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                          : 'bg-slate-100 text-slate-700 border-slate-200'
                                       }`}
                                       title="Click to toggle Paid/Due"
                                     >
@@ -383,7 +379,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                                     </button>
                                   </div>
                                   <div className="mt-1 flex items-baseline justify-between">
-                                    <span className="text-xs font-black text-slate-900">
+                                    <span className="text-xs font-bold text-slate-900">
                                       AED {room.wifiBill?.amount || 0}
                                     </span>
                                     <span className="text-[10px] text-slate-400 font-mono">
@@ -406,8 +402,8 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
               </div>
 
               {/* Building Bottom Footer with Vacate/Remove Building Option */}
-              <div className="bg-slate-100/90 px-5 py-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-                <span className="font-semibold text-slate-600">{buildingRooms.length} room units configured</span>
+              <div className="bg-slate-50 px-5 py-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                <span className="font-medium text-slate-600">{buildingRooms.length} room units configured</span>
                 
                 <button
                   onClick={() => {
@@ -415,11 +411,11 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                       onDeleteBuilding(building.id);
                     }
                   }}
-                  className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 transition"
+                  className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 text-slate-600 hover:text-rose-700 bg-white hover:bg-rose-50 rounded-md border border-slate-200 transition"
                   title="Vacate and remove this building"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                  <span>Vacate / Remove Building</span>
+                  <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-rose-600" />
+                  <span>Remove Building</span>
                 </button>
               </div>
             </div>

@@ -9,9 +9,9 @@
 }
 
 /* Custom styles for sheet display */
-.sheet-header-gold {
-  background-color: #f59e0b;
-  color: #111827;
+.sheet-header-dark {
+  background-color: #0f172a;
+  color: #ffffff;
 }
 
 .sheet-section-dark {
@@ -19,12 +19,8 @@
   color: #ffffff;
 }
 
-.sheet-row-green {
-  background-color: #d1fae5;
-}
-
-.sheet-row-alt {
-  background-color: #ecfdf5;
+.sheet-row-subtle {
+  background-color: #f8fafc;
 }
 
 /* Custom scrollbars */

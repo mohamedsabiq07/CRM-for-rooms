@@ -71,7 +71,7 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
         {/* Header */}
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-amber-500 text-slate-950 rounded-lg">
+            <div className="p-2 bg-slate-800 text-white rounded-lg border border-slate-700">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
@@ -99,7 +99,7 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Vienna Building, Al Murad Tower"
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-bold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-900"
               />
             </div>
 
@@ -110,7 +110,7 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
               <select
                 value={locationId}
                 onChange={(e) => setLocationId(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               >
                 {locations.map(loc => (
                   <option key={loc.id} value={loc.id}>
@@ -131,14 +131,14 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="e.g. Al Barsha 1, Near Mall of the Emirates"
-              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
             />
           </div>
 
           {/* Owner Contract Rent & Terms */}
-          <div className="bg-amber-50/70 p-3.5 rounded-xl border border-amber-200/80 space-y-3">
+          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
             <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
-              <DollarSign className="w-4 h-4 text-amber-600" />
+              <DollarSign className="w-4 h-4 text-slate-700" />
               Owner Contract & Payment Terms
             </h4>
 
@@ -153,7 +153,7 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
                   value={ownerRentAnnual}
                   onChange={(e) => setOwnerRentAnnual(e.target.value)}
                   placeholder="78000"
-                  className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-bold"
+                  className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-900"
                 />
               </div>
 
@@ -164,7 +164,7 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
                 <select
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value as any)}
-                  className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                  className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
                 >
                   <option value="Quarterly">Quarterly (4 Cheques)</option>
                   <option value="Semi-Annually">Semi-Annually (2 Cheques)</option>
@@ -177,7 +177,7 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Per Cheque Amount
                 </label>
-                <div className="px-3 py-2 bg-amber-100/80 border border-amber-300 rounded-lg text-sm font-extrabold text-amber-950">
+                <div className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-900">
                   AED {chequeAmount.toLocaleString()}
                 </div>
               </div>
@@ -195,7 +195,7 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
                     value={nextChequeDueDate}
                     onChange={(e) => setNextChequeDueDate(e.target.value)}
                     placeholder="15.10.2026"
-                    className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono"
+                    className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900"
                   />
                 </div>
               </div>
@@ -211,7 +211,7 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
                     value={ownerPhone}
                     onChange={(e) => setOwnerPhone(e.target.value)}
                     placeholder="+971 4..."
-                    className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono"
+                    className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900"
                   />
                 </div>
               </div>
@@ -234,7 +234,7 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
                   value={room1}
                   onChange={(e) => setRoom1(e.target.value)}
                   placeholder="e.g. 103"
-                  className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-bold"
+                  className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-900"
                 />
               </div>
               <div>
@@ -244,7 +244,7 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
                   value={room2}
                   onChange={(e) => setRoom2(e.target.value)}
                   placeholder="e.g. 601"
-                  className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-bold"
+                  className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-900"
                 />
               </div>
             </div>
@@ -261,7 +261,7 @@ export const AddBuildingModal: React.FC<AddBuildingModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg shadow-md shadow-amber-500/20 transition flex items-center gap-1.5"
+              className="px-5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm transition flex items-center gap-1.5"
             >
               <Plus className="w-4 h-4" />
               <span>Create Building & Rooms</span>

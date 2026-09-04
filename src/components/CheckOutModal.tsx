@@ -73,7 +73,7 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
         {/* Header */}
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-rose-500 text-white rounded-xl shadow">
+            <div className="p-2 bg-slate-800 text-white rounded-lg border border-slate-700">
               <LogOut className="w-5 h-5" />
             </div>
             <div>
@@ -117,15 +117,15 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
                 required
                 value={checkOutDate}
                 onChange={(e) => setCheckOutDate(e.target.value)}
-                className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono"
+                className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900"
               />
             </div>
           </div>
 
           {/* Key Return Checklist & Lost Key Charges */}
-          <div className="bg-amber-50/70 p-3.5 rounded-2xl border border-amber-200/80 space-y-3">
-            <h4 className="text-xs font-bold text-amber-950 flex items-center gap-1.5 uppercase tracking-wider">
-              <Key className="w-4 h-4 text-amber-600" />
+          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+            <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+              <Key className="w-4 h-4 text-slate-700" />
               Key Handover & Penalties
             </h4>
 
@@ -136,19 +136,19 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
                   type="checkbox"
                   checked={doorKeyReturned}
                   onChange={(e) => setDoorKeyReturned(e.target.checked)}
-                  className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                  className="rounded text-slate-900 focus:ring-slate-900 w-4 h-4"
                 />
                 Door Key Returned (D/k)
               </label>
 
               {!doorKeyReturned && (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-rose-700 text-[11px] font-bold">Lost Fee: AED</span>
+                  <span className="text-slate-600 text-[11px] font-bold">Lost Fee: AED</span>
                   <input
                     type="number"
                     value={doorKeyFee}
                     onChange={(e) => setDoorKeyFee(e.target.value)}
-                    className="w-16 px-2 py-1 border border-rose-300 rounded-lg text-xs font-bold text-rose-800 bg-white"
+                    className="w-16 px-2 py-1 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 bg-white"
                   />
                 </div>
               )}
@@ -161,19 +161,19 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
                   type="checkbox"
                   checked={cupboardKeyReturned}
                   onChange={(e) => setCupboardKeyReturned(e.target.checked)}
-                  className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                  className="rounded text-slate-900 focus:ring-slate-900 w-4 h-4"
                 />
                 Cupboard Key Returned (Cu/k)
               </label>
 
               {!cupboardKeyReturned && (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-rose-700 text-[11px] font-bold">Lost Fee: AED</span>
+                  <span className="text-slate-600 text-[11px] font-bold">Lost Fee: AED</span>
                   <input
                     type="number"
                     value={cupboardKeyFee}
                     onChange={(e) => setCupboardKeyFee(e.target.value)}
-                    className="w-16 px-2 py-1 border border-rose-300 rounded-lg text-xs font-bold text-rose-800 bg-white"
+                    className="w-16 px-2 py-1 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 bg-white"
                   />
                 </div>
               )}
@@ -191,7 +191,7 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
                 value={unpaidRent}
                 onChange={(e) => setUnpaidRent(e.target.value)}
                 placeholder="0"
-                className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-400 font-semibold text-slate-800"
+                className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-800"
               />
             </div>
 
@@ -204,46 +204,46 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
                 value={damageCharges}
                 onChange={(e) => setDamageCharges(e.target.value)}
                 placeholder="0"
-                className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-400 font-semibold text-slate-800"
+                className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-800"
               />
             </div>
           </div>
 
           {/* THE "GIVE BACK" (DEPOSIT REFUND) SUMMARY CARD */}
-          <div className={`p-4 rounded-2xl border-2 transition ${
+          <div className={`p-4 rounded-xl border transition ${
             settlement.giveBackAmount > 0 
-              ? 'bg-emerald-50 border-emerald-400 text-emerald-950' 
+              ? 'bg-slate-50 border-slate-300 text-slate-900' 
               : settlement.tenantOwesExtra > 0
-                ? 'bg-rose-50 border-rose-400 text-rose-950'
-                : 'bg-slate-50 border-slate-300 text-slate-800'
+                ? 'bg-rose-50 border-rose-200 text-rose-950'
+                : 'bg-slate-50 border-slate-200 text-slate-800'
           }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
                 Original Advance Deposit Held:
               </span>
-              <span className="text-sm font-extrabold">
+              <span className="text-sm font-bold text-slate-900">
                 AED {tenant.deposit || 0}
               </span>
             </div>
 
             {settlement.totalDeductions > 0 && (
-              <div className="text-[11px] text-slate-600 space-y-0.5 pb-2 border-b border-slate-200/80 mb-2">
+              <div className="text-[11px] text-slate-600 space-y-0.5 pb-2 border-b border-slate-200 mb-2">
                 {settlement.unpaidRentDeduction > 0 && (
                   <div className="flex justify-between">
                     <span>Unpaid Rent:</span>
-                    <span className="text-rose-600">-AED {settlement.unpaidRentDeduction}</span>
+                    <span className="text-rose-600 font-semibold">-AED {settlement.unpaidRentDeduction}</span>
                   </div>
                 )}
                 {settlement.totalKeyCharges > 0 && (
                   <div className="flex justify-between">
                     <span>Lost Key Charges:</span>
-                    <span className="text-rose-600">-AED {settlement.totalKeyCharges}</span>
+                    <span className="text-rose-600 font-semibold">-AED {settlement.totalKeyCharges}</span>
                   </div>
                 )}
                 {settlement.damageCharges > 0 && (
                   <div className="flex justify-between">
                     <span>Damages/Cleaning:</span>
-                    <span className="text-rose-600">-AED {settlement.damageCharges}</span>
+                    <span className="text-rose-600 font-semibold">-AED {settlement.damageCharges}</span>
                   </div>
                 )}
               </div>
@@ -251,15 +251,15 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
 
             <div className="flex items-baseline justify-between pt-1">
               <div>
-                <span className="text-sm font-black block">
+                <span className="text-sm font-bold block text-slate-900">
                   {settlement.giveBackAmount > 0 ? 'Give Back to Tenant:' : settlement.tenantOwesExtra > 0 ? 'Tenant Owes Extra:' : 'Settled (Zero Balance)'}
                 </span>
                 <span className="text-[10px] text-slate-500">
                   {settlement.giveBackAmount > 0 ? 'Net deposit refund to hand over' : ''}
                 </span>
               </div>
-              <span className={`text-2xl font-black ${
-                settlement.giveBackAmount > 0 ? 'text-emerald-700' : settlement.tenantOwesExtra > 0 ? 'text-rose-700' : 'text-slate-800'
+              <span className={`text-2xl font-bold ${
+                settlement.giveBackAmount > 0 ? 'text-slate-900' : settlement.tenantOwesExtra > 0 ? 'text-rose-700' : 'text-slate-800'
               }`}>
                 AED {settlement.giveBackAmount > 0 ? settlement.giveBackAmount : settlement.tenantOwesExtra}
               </span>
@@ -276,7 +276,7 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g. Deposit refunded in cash, vacated room peacefully"
-              className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
             />
           </div>
 
@@ -285,13 +285,13 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl shadow-lg shadow-rose-600/20 transition flex items-center gap-1.5"
+              className="px-5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm transition flex items-center gap-1.5"
             >
               <LogOut className="w-4 h-4" />
               <span>Confirm Check-Out & Refund</span>

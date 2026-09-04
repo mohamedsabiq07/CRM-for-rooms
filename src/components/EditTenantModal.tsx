@@ -69,7 +69,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
         {/* Modal Header */}
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-amber-500 text-slate-950 rounded-lg">
+            <div className="p-2 bg-slate-800 text-white rounded-lg border border-slate-700">
               <Edit3 className="w-5 h-5" />
             </div>
             <div>
@@ -95,7 +95,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               />
             </div>
 
@@ -107,7 +107,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 type="text"
                 value={place}
                 onChange={(e) => setPlace(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               />
             </div>
           </div>
@@ -123,7 +123,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                   type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono"
+                  className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900"
                 />
               </div>
             </div>
@@ -138,7 +138,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                   type="text"
                   value={joiningDate}
                   onChange={(e) => setJoiningDate(e.target.value)}
-                  className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono"
+                  className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900"
                 />
               </div>
             </div>
@@ -153,7 +153,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               <select
                 value={section}
                 onChange={(e) => setSection(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               >
                 <option value="HALL">HALL</option>
                 <option value="ROOM">ROOM</option>
@@ -170,7 +170,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 type="text"
                 value={partition}
                 onChange={(e) => setPartition(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 uppercase font-bold text-rose-700"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 uppercase font-bold text-slate-900"
               />
             </div>
 
@@ -181,7 +181,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               <select
                 value={spaceType}
                 onChange={(e) => setSpaceType(e.target.value as any)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               >
                 <option value="Partition">Partition</option>
                 <option value="Without Partition">Without Partition</option>
@@ -196,7 +196,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               <select
                 value={bedType}
                 onChange={(e) => setBedType(e.target.value as any)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               >
                 <option value="Upper Bed">Upper Bed</option>
                 <option value="Lower Bed">Lower Bed</option>
@@ -216,7 +216,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 type="number"
                 value={rentAmount}
                 onChange={(e) => setRentAmount(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               />
             </div>
 
@@ -228,7 +228,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 type="number"
                 value={deposit}
                 onChange={(e) => setDeposit(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               />
             </div>
 
@@ -241,22 +241,22 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 value={depositNote}
                 onChange={(e) => setDepositNote(e.target.value)}
                 placeholder="No Advance, etc."
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               />
             </div>
           </div>
 
           {/* Keys Handover */}
-          <div className="flex items-center gap-6 py-2 px-3 bg-amber-50/60 rounded-xl border border-amber-200/70">
+          <div className="flex items-center gap-6 py-2 px-3 bg-slate-50 rounded-xl border border-slate-200">
             <span className="text-xs font-bold text-slate-800 flex items-center gap-1">
-              <Key className="w-4 h-4 text-amber-600" /> Keys:
+              <Key className="w-4 h-4 text-slate-600" /> Keys:
             </span>
             <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={cupboardKey}
                 onChange={(e) => setCupboardKey(e.target.checked)}
-                className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                className="rounded text-slate-900 focus:ring-slate-900 w-4 h-4"
               />
               Cupboard Key (Cu/k)
             </label>
@@ -265,7 +265,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 type="checkbox"
                 checked={doorKey}
                 onChange={(e) => setDoorKey(e.target.checked)}
-                className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                className="rounded text-slate-900 focus:ring-slate-900 w-4 h-4"
               />
               Door Key (D/k)
             </label>
@@ -280,7 +280,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               <select
                 value={currentMonthStatus}
                 onChange={(e) => setCurrentMonthStatus(e.target.value as any)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               >
                 <option value="Paid">Paid</option>
                 <option value="Due">Due</option>
@@ -296,7 +296,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               >
                 <option value="Active">Active</option>
                 <option value="Vacated">Vacated (Moved Out)</option>
@@ -315,7 +315,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               placeholder="e.g. 500 balance, she came at night"
-              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 italic"
+              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 italic"
             />
           </div>
 
@@ -345,7 +345,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg shadow-md shadow-amber-500/20 transition"
+                className="px-5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm transition"
               >
                 Save Changes
               </button>

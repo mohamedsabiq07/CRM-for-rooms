@@ -575,27 +575,27 @@ export const App: React.FC = () => {
         
         {/* Urgent Deadlines Alert Banner */}
         {totalUrgentCount > 0 && (
-          <div className="mb-5 bg-gradient-to-r from-rose-500 via-amber-500 to-amber-600 text-white p-3.5 rounded-2xl shadow-lg flex items-center justify-between flex-wrap gap-3">
+          <div className="mb-5 bg-slate-900 border border-slate-800 text-white p-4 rounded-xl shadow-sm flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-xl">
-                <AlertTriangle className="w-5 h-5 text-white stroke-[2.5]" />
+              <div className="p-2 bg-slate-800 text-slate-300 rounded-lg border border-slate-700">
+                <AlertTriangle className="w-4 h-4 text-slate-300" />
               </div>
               <div>
-                <h3 className="text-sm font-bold tracking-tight">
-                  {totalUrgentCount} Deadlines Requiring Action!
+                <h3 className="text-xs sm:text-sm font-semibold tracking-tight text-white">
+                  {totalUrgentCount} Action Items Requiring Attention
                 </h3>
-                <p className="text-xs text-white/90">
+                <p className="text-xs text-slate-400">
                   {tenantNotifications.length > 0 && `${tenantNotifications.length} tenant rents • `}
                   {chequeNotifications.length > 0 && `${chequeNotifications.length} owner cheques • `}
-                  {utilityNotifications.length > 0 && `${utilityNotifications.length} DEWA/Wi-Fi bills`}
+                  {utilityNotifications.length > 0 && `${utilityNotifications.length} utility bills`}
                 </p>
               </div>
             </div>
             <button
               onClick={() => setIsNotificationOpen(true)}
-              className="px-4 py-1.5 bg-white text-slate-950 font-bold rounded-xl text-xs hover:bg-amber-50 transition shadow-sm"
+              className="px-3.5 py-1.5 bg-white text-slate-950 font-semibold rounded-lg text-xs hover:bg-slate-100 transition shadow-sm border border-slate-200 cursor-pointer"
             >
-              View Alerts & Call
+              View Alerts
             </button>
           </div>
         )}
@@ -649,35 +649,35 @@ export const App: React.FC = () => {
         {currentView === 'sheet' && (
           <>
             {/* Building & Room Selector Banner */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
               <div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
                   <span>{currentLocation?.name || 'Dubai'}</span>
                   <span>•</span>
                   <span>{currentBuilding?.name}</span>
                 </div>
-                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2 mt-0.5">
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 mt-0.5">
                   Room {currentRoom?.roomNumber || '103'} — {currentRoom?.roomType || 'Partition Flat'}
                 </h2>
               </div>
 
               {/* Utility Badges for this Room */}
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs">
-                  <Zap className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="font-semibold text-slate-700">DEWA: AED {currentRoom?.dewaBill?.amount}</span>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                    currentRoom?.dewaBill?.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-200 text-amber-900'
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                  <Zap className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="font-medium text-slate-700">DEWA: AED {currentRoom?.dewaBill?.amount}</span>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.2 rounded border ${
+                    currentRoom?.dewaBill?.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-700 border-slate-200'
                   }`}>
                     {currentRoom?.dewaBill?.status}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs">
-                  <Wifi className="w-3.5 h-3.5 text-blue-600" />
-                  <span className="font-semibold text-slate-700">Wi-Fi: AED {currentRoom?.wifiBill?.amount}</span>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                    currentRoom?.wifiBill?.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-200 text-amber-900'
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                  <Wifi className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="font-medium text-slate-700">Wi-Fi: AED {currentRoom?.wifiBill?.amount}</span>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.2 rounded border ${
+                    currentRoom?.wifiBill?.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-700 border-slate-200'
                   }`}>
                     {currentRoom?.wifiBill?.status}
                   </span>
@@ -688,9 +688,9 @@ export const App: React.FC = () => {
                     setAddTenantSection('HALL');
                     setIsAddTenantOpen(true);
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs shadow-sm transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg text-xs transition shadow-sm cursor-pointer"
                 >
-                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Add Tenant</span>
                 </button>
               </div>
@@ -831,11 +831,12 @@ export const App: React.FC = () => {
       />
 
       {/* Persistent Footer with Live Database Indicator */}
-      <footer className="bg-white border-t border-slate-200 py-3 px-4 text-xs text-slate-400 flex items-center justify-between flex-wrap gap-2">
-        <p>Dubai Property Management CRM • Buildings, Room Numbers, DEWA, Wi-Fi & Partitions</p>
-        <div className="flex items-center gap-1.5 text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-          <Database className="w-3.5 h-3.5" />
-          <span>Cloud PostgreSQL Database Active & Synced</span>
+      <footer className="bg-white border-t border-slate-200 py-3 px-4 text-xs text-slate-500 flex items-center justify-between flex-wrap gap-2">
+        <p>Dubai Property Management CRM • Buildings, Room Units, Utilities & Financial Ledger</p>
+        <div className="flex items-center gap-2 text-slate-600 font-medium bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <Database className="w-3.5 h-3.5 text-slate-500" />
+          <span>PostgreSQL Cloud Synced</span>
         </div>
       </footer>
     </div>

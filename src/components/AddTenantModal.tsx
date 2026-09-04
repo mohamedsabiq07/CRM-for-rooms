@@ -82,16 +82,16 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200">
         
         {/* Modal Header */}
-        <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+        <div className="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-amber-500 text-slate-950 rounded-xl shadow">
-              <UserPlus className="w-5 h-5" />
+            <div className="p-2 bg-slate-800 border border-slate-700 text-slate-200 rounded-lg">
+              <UserPlus className="w-5 h-5 text-slate-300" />
             </div>
             <div>
-              <h3 className="text-base font-bold">Tenant In (Check-In)</h3>
+              <h3 className="text-base font-bold text-white">Tenant Check-In</h3>
               <p className="text-xs text-slate-400">{building.name} • Room {room.roomNumber}</p>
             </div>
           </div>
@@ -106,7 +106,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
           {/* Tenant Name & Place */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Tenant Name *
               </label>
               <input
@@ -115,12 +115,12 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Sunanda, Anita"
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 font-medium"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Place / Origin / State
               </label>
               <input
@@ -128,7 +128,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                 value={place}
                 onChange={(e) => setPlace(e.target.value)}
                 placeholder="e.g. Malayali, Karnataka, Tamil"
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
               />
             </div>
           </div>
@@ -186,7 +186,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                     if (st === 'Partition') setBedType('Private Partition');
                     else if (st === 'Without Partition') setBedType('Lower Bed');
                   }}
-                  className="w-full text-xs font-bold px-3 py-2 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  className="w-full text-xs font-semibold px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
                 >
                   <option value="Partition">Partition (Cabin)</option>
                   <option value="Without Partition">Without Partition (Open)</option>
@@ -199,7 +199,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                 <select
                   value={bedType}
                   onChange={(e) => setBedType(e.target.value as BedType)}
-                  className="w-full text-xs font-bold px-3 py-2 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  className="w-full text-xs font-semibold px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
                 >
                   <option value="Lower Bed">Lower Bed</option>
                   <option value="Upper Bed">Upper Bed</option>
@@ -215,7 +215,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                 <select
                   value={section}
                   onChange={(e) => setSection(e.target.value)}
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  className="w-full text-xs font-semibold px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
                 >
                   <option value="HALL">HALL</option>
                   <option value="ROOM">ROOM</option>
@@ -231,7 +231,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                   value={partition}
                   onChange={(e) => setPartition(e.target.value)}
                   placeholder="p1, p2, p3... p8"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 uppercase font-bold text-rose-700"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 uppercase font-bold text-slate-900"
                 />
               </div>
             </div>
@@ -240,7 +240,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
           {/* Rent & Advance Deposit */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Monthly Rent (AED)
               </label>
               <input
@@ -248,21 +248,21 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                 value={rentAmount}
                 onChange={(e) => setRentAmount(e.target.value)}
                 placeholder="800"
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 font-semibold"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-semibold text-slate-700">
                   Advance Deposit (AED)
                 </label>
-                <label className="text-[11px] text-rose-600 font-semibold flex items-center gap-1 cursor-pointer">
+                <label className="text-[11px] text-slate-500 font-medium flex items-center gap-1 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={isNoAdvance}
                     onChange={(e) => setIsNoAdvance(e.target.checked)}
-                    className="rounded text-rose-600 focus:ring-rose-500"
+                    className="rounded text-slate-700 focus:ring-slate-400"
                   />
                   No Advance
                 </label>
@@ -273,7 +273,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
                 value={isNoAdvance ? '0' : deposit}
                 onChange={(e) => setDeposit(e.target.value)}
                 placeholder="200"
-                className={`w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold ${
+                className={`w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 font-semibold ${
                   isNoAdvance ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''
                 }`}
               />
@@ -282,20 +282,20 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
 
           {/* MID-MONTH PRO-RATA RENT CALLOUT */}
           {isMidMonth && proRataResult && (
-            <div className="bg-blue-50 border border-blue-200 p-3 rounded-2xl flex items-center justify-between gap-3 text-xs">
+            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between gap-3 text-xs">
               <div>
-                <span className="font-bold text-blue-950 flex items-center gap-1">
-                  <Calculator className="w-3.5 h-3.5 text-blue-600" />
+                <span className="font-semibold text-slate-900 flex items-center gap-1">
+                  <Calculator className="w-3.5 h-3.5 text-slate-600" />
                   Mid-Month Arrival Pro-Rata:
                 </span>
-                <p className="text-[11px] text-blue-800 mt-0.5">
-                  {proRataResult.daysRemainingInMonth} days remaining in current month = <strong>AED {proRataResult.proRataAmount}</strong>
+                <p className="text-[11px] text-slate-600 mt-0.5">
+                  {proRataResult.daysRemainingInMonth} days remaining in month = <strong>AED {proRataResult.proRataAmount}</strong>
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setRentAmount(proRataResult.proRataAmount.toString())}
-                className="px-2.5 py-1 bg-blue-600 text-white rounded-lg font-bold text-[11px] hover:bg-blue-700 transition shrink-0"
+                className="px-2.5 py-1 bg-slate-900 text-white rounded-md font-medium text-[11px] hover:bg-slate-800 transition shrink-0"
               >
                 Apply AED {proRataResult.proRataAmount}
               </button>
@@ -303,25 +303,25 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
           )}
 
           {/* Key Handover Checkboxes */}
-          <div className="flex items-center gap-6 py-2 px-3 bg-amber-50/60 rounded-xl border border-amber-200/70">
-            <span className="text-xs font-bold text-slate-800 flex items-center gap-1">
-              <Key className="w-4 h-4 text-amber-600" /> Keys Given:
+          <div className="flex items-center gap-6 py-2 px-3 bg-slate-50 rounded-xl border border-slate-200">
+            <span className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+              <Key className="w-4 h-4 text-slate-500" /> Keys Given:
             </span>
-            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={cupboardKey}
                 onChange={(e) => setCupboardKey(e.target.checked)}
-                className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                className="rounded text-slate-900 focus:ring-slate-400 w-4 h-4"
               />
               Cupboard Key (Cu/k)
             </label>
-            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={doorKey}
                 onChange={(e) => setDoorKey(e.target.checked)}
-                className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                className="rounded text-slate-900 focus:ring-slate-400 w-4 h-4"
               />
               Door Key (D/k)
             </label>
@@ -329,15 +329,15 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
 
           {/* Remarks */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Remarks & Special Notes
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Remarks & Notes
             </label>
             <input
               type="text"
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               placeholder="e.g. Lower bed booked, advance paid in cash"
-              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
           </div>
 
@@ -346,16 +346,16 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
-              <span>Check-In & Add to Sheet</span>
+              <span>Complete Check-In</span>
             </button>
           </div>
         </form>

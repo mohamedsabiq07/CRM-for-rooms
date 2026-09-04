@@ -33,12 +33,12 @@ export const PastTenantsModal: React.FC<PastTenantsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full overflow-hidden border border-slate-200">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden border border-slate-200">
         
         {/* Header */}
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-600 text-white rounded-xl shadow">
+            <div className="p-2 bg-slate-800 text-white rounded-lg border border-slate-700">
               <History className="w-5 h-5" />
             </div>
             <div>
@@ -62,7 +62,7 @@ export const PastTenantsModal: React.FC<PastTenantsModalProps> = ({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search past tenant by name, nationality, or room..."
-              className="w-full text-xs pl-9 pr-3 py-2 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full text-xs pl-9 pr-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
             />
           </div>
         </div>
@@ -82,7 +82,7 @@ export const PastTenantsModal: React.FC<PastTenantsModalProps> = ({
               return (
                 <div
                   key={t.id}
-                  className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition"
+                  className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition"
                 >
                   <div className="flex items-start justify-between flex-wrap gap-2">
                     <div>
@@ -91,7 +91,7 @@ export const PastTenantsModal: React.FC<PastTenantsModalProps> = ({
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-semibold">
                           {t.place || 'Tenant'}
                         </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-slate-900 text-amber-300 uppercase">
+                        <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-slate-100 text-slate-800 border border-slate-300 uppercase">
                           {t.partition}
                         </span>
                       </div>
@@ -135,7 +135,7 @@ export const PastTenantsModal: React.FC<PastTenantsModalProps> = ({
                       </div>
                       <div>
                         <span className="text-slate-400 block font-bold">Give Back Refund:</span>
-                        <span className="font-black text-emerald-700">
+                        <span className="font-bold text-emerald-700">
                           AED {co.giveBackAmount}
                         </span>
                       </div>
@@ -154,10 +154,10 @@ export const PastTenantsModal: React.FC<PastTenantsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-slate-100 border-t border-slate-200 flex justify-end">
+        <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition"
+            className="px-4 py-1.5 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition"
           >
             Close
           </button>

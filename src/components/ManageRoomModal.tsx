@@ -93,7 +93,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
         {/* Header */}
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-amber-500 text-slate-950 rounded-lg">
+            <div className="p-2 bg-slate-800 text-white rounded-lg border border-slate-700">
               <DoorOpen className="w-5 h-5" />
             </div>
             <div>
@@ -123,7 +123,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                 value={roomNumber}
                 onChange={(e) => setRoomNumber(e.target.value)}
                 placeholder="e.g. 103, 304, 601"
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-bold"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-900"
               />
             </div>
 
@@ -134,7 +134,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
               <select
                 value={roomType}
                 onChange={(e) => setRoomType(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium"
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium text-slate-900"
               >
                 <option value="Partition Flat">Partition Flat</option>
                 <option value="Master Bedspace">Master Bedspace</option>
@@ -146,7 +146,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-blue-600" />
+                <Users className="w-3.5 h-3.5 text-slate-600" />
                 <span>Total Capacity (Beds) *</span>
               </label>
               <input
@@ -156,14 +156,14 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                 value={capacity}
                 onChange={(e) => setCapacity(e.target.value)}
                 placeholder="e.g. 7"
-                className="w-full text-sm px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 font-black text-blue-900"
+                className="w-full text-sm px-3 py-2 border border-slate-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-900"
               />
               <span className="text-[10px] text-slate-500 block mt-0.5">e.g. Flat 304 accommodates 7 beds</span>
             </div>
           </div>
 
           {/* Real Estate Master Contract & Actual Rent */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-300 space-y-3">
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5 uppercase tracking-wider">
                 <Building2 className="w-4 h-4 text-slate-700" />
@@ -186,7 +186,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                     value={actualRentAnnual}
                     onChange={(e) => setActualRentAnnual(e.target.value)}
                     placeholder="e.g. 36000"
-                    className="w-full text-xs pl-9 pr-3 py-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-900"
+                    className="w-full text-xs pl-9 pr-3 py-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                   />
                 </div>
               </div>
@@ -196,7 +196,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                 <select
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value as PaymentTermsType)}
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-semibold"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 >
                   <option value="Quarterly">Quarterly (4 Cheques)</option>
                   <option value="Semi-Annually">Semi-Annually (2 Cheques)</option>
@@ -212,7 +212,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                   value={realEstateName}
                   onChange={(e) => setRealEstateName(e.target.value)}
                   placeholder="e.g. Vienna Real Estate Management"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
@@ -223,7 +223,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                   value={realEstatePhone}
                   onChange={(e) => setRealEstatePhone(e.target.value)}
                   placeholder="+971 4 399 1122"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
@@ -234,7 +234,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                   value={ejariNumber}
                   onChange={(e) => setEjariNumber(e.target.value)}
                   placeholder="EJR-2026-3047"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
@@ -245,22 +245,22 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                   value={securityDepositToOwner}
                   onChange={(e) => setSecurityDepositToOwner(e.target.value)}
                   placeholder="3000"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-semibold"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
             </div>
           </div>
 
           {/* DEWA Bill Section */}
-          <div className="bg-amber-50/60 p-3.5 rounded-xl border border-amber-200/80 space-y-3">
+          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-amber-900 flex items-center gap-1.5 uppercase tracking-wider">
-                <Zap className="w-4 h-4 text-amber-600" />
+              <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                <Zap className="w-4 h-4 text-slate-700" />
                 DEWA Bill (Electricity & Water)
               </h4>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                dewaStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' :
-                dewaStatus === 'Due' ? 'bg-amber-200 text-amber-900' : 'bg-rose-100 text-rose-800'
+                dewaStatus === 'Paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                dewaStatus === 'Due' ? 'bg-slate-200 text-slate-700 border border-slate-300' : 'bg-rose-50 text-rose-700 border border-rose-200'
               }`}>
                 {dewaStatus}
               </span>
@@ -274,7 +274,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                   value={dewaAccount}
                   onChange={(e) => setDewaAccount(e.target.value)}
                   placeholder="2201948572"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
@@ -285,7 +285,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                   value={dewaAmount}
                   onChange={(e) => setDewaAmount(e.target.value)}
                   placeholder="850"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-900"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
             </div>
@@ -298,7 +298,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                   value={dewaDueDate}
                   onChange={(e) => setDewaDueDate(e.target.value)}
                   placeholder="10.09.2026"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
@@ -307,7 +307,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                 <select
                   value={dewaStatus}
                   onChange={(e) => setDewaStatus(e.target.value as any)}
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-semibold"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 >
                   <option value="Paid">Paid</option>
                   <option value="Due">Due</option>
@@ -318,15 +318,15 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
           </div>
 
           {/* Wi-Fi Bill Section */}
-          <div className="bg-blue-50/60 p-3.5 rounded-xl border border-blue-200/80 space-y-3">
+          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-blue-900 flex items-center gap-1.5 uppercase tracking-wider">
-                <Wifi className="w-4 h-4 text-blue-600" />
+              <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                <Wifi className="w-4 h-4 text-slate-700" />
                 Wi-Fi Internet Bill
               </h4>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                wifiStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' :
-                wifiStatus === 'Due' ? 'bg-amber-200 text-amber-900' : 'bg-rose-100 text-rose-800'
+                wifiStatus === 'Paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                wifiStatus === 'Due' ? 'bg-slate-200 text-slate-700 border border-slate-300' : 'bg-rose-50 text-rose-700 border border-rose-200'
               }`}>
                 {wifiStatus}
               </span>
@@ -340,7 +340,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                   value={wifiProvider}
                   onChange={(e) => setWifiProvider(e.target.value)}
                   placeholder="Du / Etisalat"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-medium"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
@@ -351,7 +351,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                   value={wifiAmount}
                   onChange={(e) => setWifiAmount(e.target.value)}
                   placeholder="389"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-900"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
             </div>
@@ -364,7 +364,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                   value={wifiAccount}
                   onChange={(e) => setWifiAccount(e.target.value)}
                   placeholder="04-892-1140"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
@@ -375,7 +375,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                   value={wifiDueDate}
                   onChange={(e) => setWifiDueDate(e.target.value)}
                   placeholder="15.09.2026"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
             </div>
@@ -409,7 +409,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg shadow-md shadow-amber-500/20 transition"
+                className="px-5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm transition"
               >
                 {isEditing ? 'Save Room Details' : 'Add Room'}
               </button>
