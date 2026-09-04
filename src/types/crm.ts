@@ -123,6 +123,7 @@ export interface CheckOutRecord {
   unpaidRentDeduction: number;
   keyReturnedDoor: boolean;
   keyReturnedCupboard: boolean;
+  keyReturnedPartition?: boolean; // P/k (for partition customers)
   lostKeyCharges: number;
   damageCharges: number;
   giveBackAmount: number; // Final refund given back to tenant
@@ -150,6 +151,7 @@ export interface Tenant {
   rentAmount: number; // monthly rent in AED
   cupboardKey: boolean; // Cu/k
   doorKey: boolean; // D/k
+  partitionKey?: boolean; // P/k (only for customers in partition)
   currentMonthStatus: 'Paid' | 'Pending' | 'Due' | 'Partial'; // e.g. Sep-26
   stayMonth?: string; // e.g. 'Sep-2026'
   monthStatusHistory?: Record<string, 'Paid' | 'Pending' | 'Due' | 'Partial'>;
@@ -183,6 +185,8 @@ export interface CustomerInquiry {
   budget?: number; // in AED
   status: 'New' | 'Followed Up' | 'Interested' | 'Converted' | 'Not Interested';
   notes?: string;
+  leadSource?: 'Former Tenant' | 'Direct Inquiry';
+  tenantId?: string;
   lastContactedDate?: string;
   createdAt?: string;
 }

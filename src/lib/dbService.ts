@@ -175,6 +175,7 @@ export async function fetchTenantsFromDb(): Promise<Tenant[]> {
       rentAmount: Number(d.rent_amount) || 0,
       cupboardKey: !!d.cupboard_key,
       doorKey: !!d.door_key,
+      partitionKey: !!d.partition_key,
       currentMonthStatus: d.current_month_status as any || 'Pending',
       remarks: d.remarks || '',
       lastPaidDate: d.last_paid_date || '',
@@ -209,6 +210,7 @@ export async function upsertTenantToDb(tenant: Tenant) {
       rent_amount: tenant.rentAmount,
       cupboard_key: tenant.cupboardKey,
       door_key: tenant.doorKey,
+      partition_key: !!tenant.partitionKey,
       current_month_status: tenant.currentMonthStatus,
       remarks: tenant.remarks,
       last_paid_date: tenant.lastPaidDate,
@@ -345,6 +347,8 @@ export async function fetchInquiriesFromDb(): Promise<CustomerInquiry[]> {
       budget: Number(d.budget) || 0,
       status: d.status as any || 'New',
       notes: d.notes || '',
+      leadSource: (d.lead_source as any) || 'Direct Inquiry',
+      tenantId: d.tenant_id || undefined,
       lastContactedDate: d.last_contacted_date || '',
       createdAt: d.created_at,
     }));
@@ -366,6 +370,8 @@ export async function upsertInquiryToDb(inquiry: CustomerInquiry) {
       budget: inquiry.budget,
       status: inquiry.status,
       notes: inquiry.notes,
+      lead_source: inquiry.leadSource || 'Direct Inquiry',
+      tenant_id: inquiry.tenantId || null,
       last_contacted_date: inquiry.lastContactedDate,
     });
   } catch (err) {

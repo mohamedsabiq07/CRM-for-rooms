@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Tenant, Building, RoomUnit } from '../types/crm';
 import { calculateStayDuration, calculateRentDueInfo, generateWhatsAppLink } from '../utils/dateUtils';
+import { isTenantInPartition } from '../utils/tenantConversion';
 
 interface TenantSheetProps {
   building: Building;
@@ -31,7 +32,7 @@ interface TenantSheetProps {
   onEditTenant: (tenant: Tenant) => void;
   onDeleteTenant: (tenantId: string) => void;
   onCheckOutTenant: (tenant: Tenant) => void;
-  onToggleKey: (tenantId: string, keyType: 'cupboard' | 'door') => void;
+  onToggleKey: (tenantId: string, keyType: 'cupboard' | 'door' | 'partition') => void;
   onStatusClick: (tenant: Tenant) => void;
   onAddTenantToSection?: (section: string) => void;
 }
@@ -157,6 +158,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
               <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[120px] font-semibold">{selectedMonth} Rent</th>
               <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Cupboard Key">Cu/k</th>
               <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Door Key">D/k</th>
+              <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Partition Key (only for Partition tenants)">P/k</th>
               <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[120px] font-medium">Partition</th>
               <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[140px] font-medium">Remarks</th>
               <th className="py-2.5 px-3 text-center min-w-[140px] font-semibold">Actions</th>
@@ -171,7 +173,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                 <React.Fragment key={sectionName}>
                   {/* Subtle Section Divider */}
                   <tr className="bg-slate-100/90 border-y border-slate-200">
-                    <td colSpan={12} className="py-2 px-4">
+                    <td colSpan={13} className="py-2 px-4">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-800 tracking-wider uppercase flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-slate-600"></span>
@@ -197,7 +199,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
 
                   {sectionTenants.length === 0 ? (
                     <tr className="bg-white">
-                      <td colSpan={12} className="py-4 px-4 text-center text-xs text-slate-400 italic">
+                      <td colSpan={13} className="py-4 px-4 text-center text-xs text-slate-400 italic">
                         No tenants currently listed in {sectionName}
                       </td>
                     </tr>
@@ -345,16 +347,42 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                             </button>
                           </td>
 
-                          {/* Remarks */}
-                          <td className="py-2.5 px-3 border-r border-slate-200/60 text-xs text-slate-600 font-normal">
-                            {t.remarks || '-'}
-                          </td>
+                          {/* Partition Key (P/k) - ONLY FOR CUSTOMERS IN PARTITION */}
+                          {(() => {
+                            const inPartition = isTenantInPartition(t, room?.roomType);
+                            return (
+                              <td 
+                                onClick={() => inPartition && onToggleKey(t.id, 'partition')}
+                                title={inPartition ? "Click to toggle Partition Key status" : "Not applicable for Bed Space"}
+                                className={`py-2.5 px-1 text-center border-r border-slate-200/60 ${
+                                  inPartition ? 'cursor-pointer hover:bg-slate-100' : 'bg-slate-50/40 select-none'
+                                }`}
+                              >
+                                {inPartition ? (
+                                  <button className={`w-4 h-4 mx-auto rounded flex items-center justify-center border transition ${
+                                    t.partitionKey 
+                                      ? 'bg-[#181824] text-[#38CE3C] border-[#181824]' 
+                                      : 'bg-white text-transparent border-slate-300 hover:border-slate-400'
+                                  }`}>
+                                    <Check className="w-3 h-3 stroke-[3]" />
+                                  </button>
+                                ) : (
+                                  <span className="text-slate-300 font-mono text-xs select-none" title="Partition Key only applies to Partition tenants">-</span>
+                                )}
+                              </td>
+                            );
+                          })()}
 
                           {/* Partition */}
                           <td className="py-2.5 px-2 text-center border-r border-slate-200/60">
                             <span className="inline-block font-bold text-slate-900 text-xs uppercase px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
                               {t.partition || '-'}
                             </span>
+                          </td>
+
+                          {/* Remarks */}
+                          <td className="py-2.5 px-3 border-r border-slate-200/60 text-xs text-slate-600 font-normal">
+                            {t.remarks || '-'}
                           </td>
 
                           {/* Actions: Call, WhatsApp, Tenant Out (Check-Out), Edit */}
@@ -423,7 +451,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
           </span>
           <span className="flex items-center gap-1.5 text-slate-600">
             <span className="w-2.5 h-2.5 bg-slate-900 rounded-sm"></span>
-            Key Handed Over (Cu/k: Cupboard, D/k: Door)
+            Key Handed Over (Cu/k: Cupboard, D/k: Door, P/k: Partition)
           </span>
           <span className="flex items-center gap-1.5 text-slate-600">
             <LogOut className="w-3.5 h-3.5 text-slate-500" />

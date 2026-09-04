@@ -60,6 +60,7 @@ export interface GiveBackSettlement {
   unpaidRentDeduction: number;
   doorKeyCharge: number;
   cupboardKeyCharge: number;
+  partitionKeyCharge?: number;
   totalKeyCharges: number;
   damageCharges: number;
   totalDeductions: number;
@@ -74,11 +75,14 @@ export function calculateGiveBack(
   cupboardKeyReturned: boolean = true,
   doorKeyFee: number = 50,
   cupboardKeyFee: number = 30,
-  damageCharges: number = 0
+  damageCharges: number = 0,
+  partitionKeyReturned?: boolean,
+  partitionKeyFee: number = 50
 ): GiveBackSettlement {
   const doorKeyCharge = doorKeyReturned ? 0 : doorKeyFee;
   const cupboardKeyCharge = cupboardKeyReturned ? 0 : cupboardKeyFee;
-  const totalKeyCharges = doorKeyCharge + cupboardKeyCharge;
+  const partitionKeyCharge = (partitionKeyReturned !== undefined && !partitionKeyReturned) ? partitionKeyFee : 0;
+  const totalKeyCharges = doorKeyCharge + cupboardKeyCharge + partitionKeyCharge;
 
   const totalDeductions = unpaidRent + totalKeyCharges + damageCharges;
   const diff = deposit - totalDeductions;
@@ -91,6 +95,7 @@ export function calculateGiveBack(
     unpaidRentDeduction: unpaidRent,
     doorKeyCharge,
     cupboardKeyCharge,
+    partitionKeyCharge,
     totalKeyCharges,
     damageCharges,
     totalDeductions,

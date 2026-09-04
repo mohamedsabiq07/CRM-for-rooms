@@ -41,6 +41,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
   const [bedType, setBedType] = useState<BedType>('Lower Bed');
   const [cupboardKey, setCupboardKey] = useState(true);
   const [doorKey, setDoorKey] = useState(true);
+  const [partitionKey, setPartitionKey] = useState(true);
   const [remarks, setRemarks] = useState('');
 
   if (!isOpen) return null;
@@ -72,6 +73,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
       rentAmount: Number(rentAmount) || 800,
       cupboardKey,
       doorKey,
+      partitionKey: spaceType === 'Partition' ? partitionKey : false,
       currentMonthStatus: 'Pending',
       remarks: remarks.trim(),
       lastPaidDate: joiningDate.trim()
@@ -325,6 +327,17 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
               />
               Door Key (D/k)
             </label>
+            {spaceType === 'Partition' && (
+              <label className="flex items-center gap-2 text-xs font-semibold text-purple-900 cursor-pointer bg-purple-100/70 px-2 py-0.5 rounded-md border border-purple-200">
+                <input
+                  type="checkbox"
+                  checked={partitionKey}
+                  onChange={(e) => setPartitionKey(e.target.checked)}
+                  className="rounded text-purple-900 focus:ring-purple-400 w-4 h-4"
+                />
+                Partition Key (P/k)
+              </label>
+            )}
           </div>
 
           {/* Remarks */}

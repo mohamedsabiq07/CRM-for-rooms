@@ -45,6 +45,7 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [requirementFilter, setRequirementFilter] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'former_tenants' | 'direct_inquiries'>('all');
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -76,9 +77,13 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
   const followedUpLeads = inquiries.filter(i => i.status === 'Followed Up').length;
   const interestedLeads = inquiries.filter(i => i.status === 'Interested').length;
   const convertedLeads = inquiries.filter(i => i.status === 'Converted').length;
+  const formerTenantsCount = inquiries.filter(i => i.leadSource === 'Former Tenant' || !!i.tenantId).length;
+  const directInquiriesCount = inquiries.filter(i => i.leadSource !== 'Former Tenant' && !i.tenantId).length;
 
   // Filtered List
   const filteredInquiries = inquiries.filter(item => {
+    if (sourceFilter === 'former_tenants' && item.leadSource !== 'Former Tenant' && !item.tenantId) return false;
+    if (sourceFilter === 'direct_inquiries' && (item.leadSource === 'Former Tenant' || item.tenantId)) return false;
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
     if (requirementFilter !== 'all' && item.lookingFor !== requirementFilter) return false;
     if (searchQuery.trim()) {
@@ -259,13 +264,35 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
         </div>
 
         {/* Lead KPI Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-6">
-          <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-6">
+          <div 
+            onClick={() => setSourceFilter('all')}
+            className={`p-3.5 rounded-xl border transition cursor-pointer ${
+              sourceFilter === 'all' 
+                ? 'bg-slate-800 border-[#38CE3C] ring-1 ring-[#38CE3C]' 
+                : 'bg-slate-800/80 border-slate-700/60 hover:bg-slate-800'
+            }`}
+          >
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
               Total Inquiries
             </span>
             <span className="text-xl font-bold text-white mt-0.5 block">{totalLeads}</span>
             <span className="text-[11px] text-slate-400">All registered leads</span>
+          </div>
+
+          <div 
+            onClick={() => setSourceFilter(sourceFilter === 'former_tenants' ? 'all' : 'former_tenants')}
+            className={`p-3.5 rounded-xl border transition cursor-pointer ${
+              sourceFilter === 'former_tenants' 
+                ? 'bg-purple-900/50 border-purple-400 ring-1 ring-purple-400' 
+                : 'bg-slate-800/80 border-slate-700/60 hover:bg-slate-800'
+            }`}
+          >
+            <span className="text-[10px] font-semibold text-purple-300 uppercase tracking-wider block">
+              🏠 Former Tenants
+            </span>
+            <span className="text-xl font-bold text-purple-300 mt-0.5 block">{formerTenantsCount}</span>
+            <span className="text-[11px] text-purple-200/70">Left rooms & archived</span>
           </div>
 
           <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
@@ -285,70 +312,112 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
           </div>
 
           <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
-            <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider block">
+            <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider block">
               Interested
             </span>
-            <span className="text-xl font-bold text-purple-300 mt-0.5 block">{interestedLeads}</span>
+            <span className="text-xl font-bold text-emerald-300 mt-0.5 block">{interestedLeads}</span>
             <span className="text-[11px] text-slate-400">Viewing scheduled</span>
           </div>
 
           <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
-            <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider block">
+            <span className="text-[10px] font-semibold text-[#38CE3C] uppercase tracking-wider block">
               Converted
             </span>
-            <span className="text-xl font-bold text-emerald-300 mt-0.5 block">{convertedLeads}</span>
+            <span className="text-xl font-bold text-[#38CE3C] mt-0.5 block">{convertedLeads}</span>
             <span className="text-[11px] text-slate-400">Moved in as tenants</span>
           </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-wrap flex-1">
-          {/* Search Box */}
-          <div className="relative min-w-[240px] flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search leads by name, phone, notes..."
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto">
-            {['all', 'New', 'Followed Up', 'Interested', 'Converted', 'Not Interested'].map(st => (
-              <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                  statusFilter === st
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {st === 'all' ? 'All Leads' : st}
-              </button>
-            ))}
-          </div>
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3">
+        {/* Source Filter Tabs */}
+        <div className="flex items-center gap-1.5 flex-wrap border-b border-slate-100 pb-3">
+          <span className="text-xs text-slate-500 font-semibold mr-1">Lead Source:</span>
+          <button
+            onClick={() => setSourceFilter('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              sourceFilter === 'all'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            All Leads ({totalLeads})
+          </button>
+          <button
+            onClick={() => setSourceFilter('former_tenants')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              sourceFilter === 'former_tenants'
+                ? 'bg-purple-700 text-white shadow-xs'
+                : 'bg-purple-50 text-purple-800 hover:bg-purple-100 border border-purple-200'
+            }`}
+          >
+            <span>🏠 Former Tenants (Left Room)</span>
+            <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-extrabold ${
+              sourceFilter === 'former_tenants' ? 'bg-purple-800 text-white' : 'bg-purple-200 text-purple-900'
+            }`}>
+              {formerTenantsCount}
+            </span>
+          </button>
+          <button
+            onClick={() => setSourceFilter('direct_inquiries')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              sourceFilter === 'direct_inquiries'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Direct Inquiries ({directInquiriesCount})
+          </button>
         </div>
 
-        {/* Requirement Filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500 font-medium">Looking For:</span>
-          <select
-            value={requirementFilter}
-            onChange={(e) => setRequirementFilter(e.target.value)}
-            className="bg-slate-50 text-xs font-medium text-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
-          >
-            <option value="all">Any Requirement</option>
-            <option value="Bed Space (Lower)">Bed Space (Lower)</option>
-            <option value="Bed Space (Upper)">Bed Space (Upper)</option>
-            <option value="Partition">Partition</option>
-            <option value="Private Room">Private Room</option>
-          </select>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap flex-1">
+            {/* Search Box */}
+            <div className="relative min-w-[240px] flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search leads by name, phone, room, notes..."
+                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            {/* Status Tabs */}
+            <div className="flex items-center gap-1 overflow-x-auto">
+              {['all', 'New', 'Followed Up', 'Interested', 'Converted', 'Not Interested'].map(st => (
+                <button
+                  key={st}
+                  onClick={() => setStatusFilter(st)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    statusFilter === st
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {st === 'all' ? 'All Statuses' : st}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Requirement Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500 font-medium">Looking For:</span>
+            <select
+              value={requirementFilter}
+              onChange={(e) => setRequirementFilter(e.target.value)}
+              className="bg-slate-50 text-xs font-medium text-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
+            >
+              <option value="all">Any Requirement</option>
+              <option value="Bed Space (Lower)">Bed Space (Lower)</option>
+              <option value="Bed Space (Upper)">Bed Space (Upper)</option>
+              <option value="Partition">Partition</option>
+              <option value="Private Room">Private Room</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -391,7 +460,14 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                     <tr key={item.id} className="hover:bg-slate-50/70 transition">
                       {/* Name */}
                       <td className="py-2.5 px-3 border-r border-slate-200/60 font-bold text-slate-900">
-                        {item.name}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>{item.name}</span>
+                          {(item.leadSource === 'Former Tenant' || !!item.tenantId) && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-200">
+                              🏠 Former Tenant
+                            </span>
+                          )}
+                        </div>
                         {item.preferredLocation && (
                           <span className="block text-[10px] text-slate-500 font-normal mt-0.5">
                             Prefers: {item.preferredLocation}
@@ -660,9 +736,25 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
 
               {/* Message Template Editor */}
               <div>
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1.5">
                   <label className="font-semibold text-slate-700 block">WhatsApp Message Template</label>
                   <span className="text-[10px] text-slate-400">Variables: {'{name}'}, {'{lookingFor}'}, {'{month}'}</span>
+                </div>
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setBroadcastTemplate(`Hi {name}, hope you are doing well! Are you still looking for a {lookingFor} in Dubai for ${selectedMonth}? We have clean, fully furnished spaces available starting from AED 650/month with DEWA, high-speed Wi-Fi, and cleaning included. Please let me know if you would like to view or reserve today! - Mohamed Room Management`)}
+                    className="px-2.5 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md border border-slate-300 transition cursor-pointer"
+                  >
+                    Standard Lead Template
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBroadcastTemplate(`Hi {name}, hope you are doing well! As our former resident, we would love to welcome you back. Are you looking for a {lookingFor} in Dubai for ${selectedMonth}? We have premium clean spaces ready with DEWA and high-speed Wi-Fi included. Priority viewing and reservation available for returning tenants! - Mohamed Room Management`)}
+                    className="px-2.5 py-1 text-[11px] font-bold bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-md border border-purple-300 transition cursor-pointer flex items-center gap-1"
+                  >
+                    <span>🏠 Former Resident (Left Room) Template</span>
+                  </button>
                 </div>
                 <textarea
                   rows={4}
@@ -690,6 +782,7 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                 <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 p-1">
                   {filteredInquiries.map((inq) => {
                     const isSelected = selectedIds.includes(inq.id);
+                    const isFormer = inq.leadSource === 'Former Tenant' || !!inq.tenantId;
                     return (
                       <div
                         key={inq.id}
@@ -706,7 +799,14 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                             className="rounded text-indigo-600"
                           />
                           <div>
-                            <span className="font-bold text-slate-900 block">{inq.name}</span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-slate-900">{inq.name}</span>
+                              {isFormer && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 border border-purple-200">
+                                  🏠 Former Tenant
+                                </span>
+                              )}
+                            </div>
                             <span className="text-[10px] text-slate-500">{inq.phone} • {inq.lookingFor}</span>
                           </div>
                         </div>

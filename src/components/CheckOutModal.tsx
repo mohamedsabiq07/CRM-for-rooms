@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { X, LogOut, Key, DollarSign, Calendar, AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { X, LogOut, Key, DollarSign, Calendar, AlertTriangle, CheckCircle2, ShieldAlert, Users } from 'lucide-react';
 import { Tenant, CheckOutRecord } from '../types/crm';
 import { calculateStayDuration } from '../utils/dateUtils';
 import { calculateGiveBack } from '../utils/rentCalculator';
+import { isTenantInPartition } from '../utils/tenantConversion';
 
 interface CheckOutModalProps {
   isOpen: boolean;
   onClose: () => void;
   tenant: Tenant | null;
-  onConfirmCheckOut: (tenantId: string, checkoutRecord: CheckOutRecord) => void;
+  onConfirmCheckOut: (tenantId: string, checkoutRecord: CheckOutRecord, updatedPhone?: string) => void;
 }
 
 export const CheckOutModal: React.FC<CheckOutModalProps> = ({
@@ -19,6 +20,8 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
 }) => {
   if (!isOpen || !tenant) return null;
 
+  const inPartition = isTenantInPartition(tenant);
+
   const todayStr = new Date().toLocaleDateString('en-GB', {
     day: '2-digit',
     month: '2-digit',
@@ -26,10 +29,13 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
   }).replace(/\//g, '.');
 
   const [checkOutDate, setCheckOutDate] = useState(todayStr);
+  const [phone, setPhone] = useState(tenant.phone || '');
   const [doorKeyReturned, setDoorKeyReturned] = useState(tenant.doorKey);
   const [cupboardKeyReturned, setCupboardKeyReturned] = useState(tenant.cupboardKey);
+  const [partitionKeyReturned, setPartitionKeyReturned] = useState(tenant.partitionKey ?? true);
   const [doorKeyFee, setDoorKeyFee] = useState('50');
   const [cupboardKeyFee, setCupboardKeyFee] = useState('30');
+  const [partitionKeyFee, setPartitionKeyFee] = useState('50');
   const [unpaidRent, setUnpaidRent] = useState('0');
   const [damageCharges, setDamageCharges] = useState('0');
   const [notes, setNotes] = useState('');
@@ -43,7 +49,9 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
     cupboardKeyReturned,
     Number(doorKeyFee) || 0,
     Number(cupboardKeyFee) || 0,
-    Number(damageCharges) || 0
+    Number(damageCharges) || 0,
+    inPartition ? partitionKeyReturned : undefined,
+    Number(partitionKeyFee) || 0
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,13 +64,14 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
       unpaidRentDeduction: Number(unpaidRent) || 0,
       keyReturnedDoor: doorKeyReturned,
       keyReturnedCupboard: cupboardKeyReturned,
+      keyReturnedPartition: inPartition ? partitionKeyReturned : undefined,
       lostKeyCharges: settlement.totalKeyCharges,
       damageCharges: Number(damageCharges) || 0,
       giveBackAmount: settlement.giveBackAmount,
       notes: notes.trim()
     };
 
-    onConfirmCheckOut(tenant.id, record);
+    onConfirmCheckOut(tenant.id, record, phone.trim());
     onClose();
   };
 
@@ -122,6 +131,20 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
             </div>
           </div>
 
+          {/* Contact Phone Verification for Follow-up WhatsApp Messages */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Contact Phone Number (saved to Follow-ups for future room vacancy outreach)
+            </label>
+            <input
+              type="text"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+971 50 123 4567"
+              className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900 bg-white"
+            />
+          </div>
+
           {/* Key Return Checklist & Lost Key Charges */}
           <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
             <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
@@ -178,6 +201,33 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
                 </div>
               )}
             </div>
+
+            {/* Partition Key - ONLY FOR PARTITION CUSTOMERS */}
+            {inPartition && (
+              <div className="flex items-center justify-between gap-3 text-xs bg-purple-50/70 p-2 rounded-lg border border-purple-200">
+                <label className="flex items-center gap-2 font-semibold text-purple-950 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={partitionKeyReturned}
+                    onChange={(e) => setPartitionKeyReturned(e.target.checked)}
+                    className="rounded text-purple-900 focus:ring-purple-900 w-4 h-4"
+                  />
+                  Partition Key Returned (P/k)
+                </label>
+
+                {!partitionKeyReturned && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-purple-700 text-[11px] font-bold">Lost Fee: AED</span>
+                    <input
+                      type="number"
+                      value={partitionKeyFee}
+                      onChange={(e) => setPartitionKeyFee(e.target.value)}
+                      className="w-16 px-2 py-1 border border-purple-300 rounded-lg text-xs font-bold text-purple-900 bg-white"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Deductions: Unpaid Rent & Damage Charges */}
@@ -280,6 +330,16 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
             />
           </div>
 
+          {/* Automatic Follow-up Pipeline Conversion Notice */}
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-[#8E32E9]/15 text-[#8E32E9] shrink-0">
+              <Users className="w-4 h-4" />
+            </div>
+            <p className="text-[11px] text-slate-600">
+              <strong className="text-slate-900 font-semibold">Automatic Follow-Up Transfer:</strong> Because this customer is leaving our rooms, their contact information and stay preferences will automatically be converted to the <strong>Follow-up & Leads</strong> page so you can inquire with them later when rooms open up.
+            </p>
+          </div>
+
           {/* Footer Buttons */}
           <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
             <button
@@ -291,7 +351,7 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm transition flex items-center gap-1.5"
+              className="px-5 py-2 text-xs font-bold bg-[#181824] hover:bg-[#252538] text-[#38CE3C] hover:text-[#45e649] rounded-lg shadow-sm transition flex items-center gap-1.5 border border-[#2f2f45]"
             >
               <LogOut className="w-4 h-4" />
               <span>Confirm Check-Out & Refund</span>

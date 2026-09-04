@@ -41,6 +41,7 @@ import {
 } from './data/initialData';
 import { calculateRentDueInfo, parseFlexibleDate } from './utils/dateUtils';
 import { exportFlatToExcel } from './utils/exportUtils';
+import { convertVacatedTenantToInquiry } from './utils/tenantConversion';
 import { 
   fetchLocationsFromDb, 
   fetchBuildingsFromDb, 
@@ -379,25 +380,73 @@ export const App: React.FC = () => {
     deleteTenantFromDb(id);
   };
 
-  const handleConfirmCheckOut = (tenantId: string, checkoutRecord: CheckOutRecord) => {
-    setTenants(prev =>
-      prev.map(t => {
-        if (t.id !== tenantId) return t;
-        const updated: Tenant = {
-          ...t,
-          status: 'Checked Out',
-          leavingDate: checkoutRecord.checkOutDate,
-          doorKey: checkoutRecord.keyReturnedDoor,
-          cupboardKey: checkoutRecord.keyReturnedCupboard,
-          remarks: checkoutRecord.giveBackAmount >= 0
-            ? `Give-back refund: AED ${checkoutRecord.giveBackAmount}${checkoutRecord.notes ? ` (${checkoutRecord.notes})` : ''}`
-            : `Deduction settled${checkoutRecord.notes ? ` (${checkoutRecord.notes})` : ''}`,
-          checkOutRecord: checkoutRecord,
-        };
-        upsertTenantToDb(updated);
-        return updated;
-      })
-    );
+  const handleConfirmCheckOut = (
+    tenantId: string, 
+    checkoutRecord: CheckOutRecord,
+    updatedPhone?: string
+  ) => {
+    const currentT = tenants.find(t => t.id === tenantId);
+    if (!currentT) return;
+
+    const updatedTenant: Tenant = {
+      ...currentT,
+      phone: updatedPhone && updatedPhone.trim() ? updatedPhone.trim() : currentT.phone,
+      status: 'Checked Out',
+      leavingDate: checkoutRecord.checkOutDate,
+      doorKey: checkoutRecord.keyReturnedDoor,
+      cupboardKey: checkoutRecord.keyReturnedCupboard,
+      partitionKey: checkoutRecord.keyReturnedPartition !== undefined 
+        ? checkoutRecord.keyReturnedPartition 
+        : currentT.partitionKey,
+      remarks: checkoutRecord.giveBackAmount >= 0
+        ? `Give-back refund: AED ${checkoutRecord.giveBackAmount}${checkoutRecord.notes ? ` (${checkoutRecord.notes})` : ''}`
+        : `Deduction settled${checkoutRecord.notes ? ` (${checkoutRecord.notes})` : ''}`,
+      checkOutRecord: checkoutRecord,
+    };
+
+    setTenants(prev => prev.map(t => (t.id === tenantId ? updatedTenant : t)));
+    upsertTenantToDb(updatedTenant);
+
+    // Automatically convert vacated tenant to Follow-Up Lead for month-end outreach
+    const bld = buildings.find(b => b.id === updatedTenant.buildingId);
+    const rm = rooms.find(r => r.id === updatedTenant.roomId);
+    const convertedLead = convertVacatedTenantToInquiry(updatedTenant, checkoutRecord, bld?.name, rm?.roomNumber);
+
+    setInquiries(prev => {
+      const filtered = prev.filter(i => i.id !== convertedLead.id && i.tenantId !== updatedTenant.id);
+      return [convertedLead, ...filtered];
+    });
+    upsertInquiryToDb(convertedLead);
+  };
+
+  const handleSyncTenantToFollowup = (tenant: Tenant) => {
+    const bld = buildings.find(b => b.id === tenant.buildingId);
+    const rm = rooms.find(r => r.id === tenant.roomId);
+    const lead = convertVacatedTenantToInquiry(tenant, tenant.checkOutRecord, bld?.name, rm?.roomNumber);
+
+    setInquiries(prev => {
+      const filtered = prev.filter(i => i.id !== lead.id && i.tenantId !== tenant.id);
+      return [lead, ...filtered];
+    });
+    upsertInquiryToDb(lead);
+  };
+
+  const handleSyncAllPastToFollowups = () => {
+    const newLeads: CustomerInquiry[] = [];
+    pastTenants.forEach(pt => {
+      const bld = buildings.find(b => b.id === pt.buildingId);
+      const rm = rooms.find(r => r.id === pt.roomId);
+      const lead = convertVacatedTenantToInquiry(pt, pt.checkOutRecord, bld?.name, rm?.roomNumber);
+      newLeads.push(lead);
+      upsertInquiryToDb(lead);
+    });
+
+    setInquiries(prev => {
+      const existingIds = new Set(newLeads.map(l => l.id));
+      const existingTenantIds = new Set(newLeads.map(l => l.tenantId).filter(Boolean));
+      const untouched = prev.filter(i => !existingIds.has(i.id) && (!i.tenantId || !existingTenantIds.has(i.tenantId)));
+      return [...newLeads, ...untouched];
+    });
   };
 
   const handleOpenAddExpense = (roomId?: string) => {
@@ -420,15 +469,18 @@ export const App: React.FC = () => {
     deleteExpenseFromDb(expenseId);
   };
 
-  const handleToggleKey = (tenantId: string, keyType: 'cupboard' | 'door') => {
+  const handleToggleKey = (tenantId: string, keyType: 'cupboard' | 'door' | 'partition') => {
     setTenants(prev =>
       prev.map(t => {
         if (t.id !== tenantId) return t;
-        const updated = {
-          ...t,
-          [keyType === 'cupboard' ? 'cupboardKey' : 'doorKey']:
-            keyType === 'cupboard' ? !t.cupboardKey : !t.doorKey,
-        };
+        let updated: Tenant;
+        if (keyType === 'cupboard') {
+          updated = { ...t, cupboardKey: !t.cupboardKey };
+        } else if (keyType === 'door') {
+          updated = { ...t, doorKey: !t.doorKey };
+        } else {
+          updated = { ...t, partitionKey: !t.partitionKey };
+        }
         upsertTenantToDb(updated);
         return updated;
       })
@@ -1022,6 +1074,9 @@ export const App: React.FC = () => {
         pastTenants={pastTenants}
         buildings={buildings}
         rooms={rooms}
+        inquiries={inquiries}
+        onSyncTenantToFollowup={handleSyncTenantToFollowup}
+        onSyncAllPastToFollowups={handleSyncAllPastToFollowups}
       />
 
       {/* Flat Expense Modal */}
