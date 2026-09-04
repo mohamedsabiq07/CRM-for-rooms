@@ -59,17 +59,39 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
   if (!sections.includes('HALL')) sections.unshift('HALL');
   if (!sections.includes('ROOM')) sections.push('ROOM');
 
+  const capacity = room?.capacity || 10;
+  const activeCount = filteredTenants.filter(t => t.status === 'Active').length;
+  const vacancyCount = Math.max(0, capacity - activeCount);
+
   const sheetTitle = room 
     ? `${building.name.toUpperCase()} - ROOM ${room.roomNumber} - PARTITION` 
     : `${building.name.toUpperCase()} - PARTITION`;
 
   return (
     <div className="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden mb-8">
-      {/* Title Header: Golden Banner matching the reference photo */}
-      <div className="bg-amber-400 py-2.5 px-6 border-b-2 border-amber-500/80 flex items-center justify-between">
-        <h2 className="text-base sm:text-lg font-black tracking-widest text-slate-900 uppercase mx-auto text-center">
+      {/* Title Header: Golden Banner matching the reference photo + Capacity & Vacancy Badge */}
+      <div className="bg-amber-400 py-2.5 px-4 sm:px-6 border-b-2 border-amber-500/80 flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-base sm:text-lg font-black tracking-widest text-slate-900 uppercase">
           {sheetTitle}
         </h2>
+
+        {/* Capacity & Vacancy Indicator */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-slate-900 text-white px-3 py-1 rounded-xl text-xs font-bold shadow-sm">
+            <span className="text-amber-400 font-normal">Capacity:</span>
+            <span>{capacity} Beds</span>
+            <span className="text-slate-500">•</span>
+            <span className="text-emerald-400">{activeCount} Occupied</span>
+          </div>
+
+          <div className={`px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border shadow-sm ${
+            vacancyCount > 0 
+              ? 'bg-rose-600 text-white border-rose-700' 
+              : 'bg-emerald-700 text-white border-emerald-800'
+          }`}>
+            {vacancyCount > 0 ? `⚠️ ${vacancyCount} Vacant Bed${vacancyCount > 1 ? 's' : ''}` : '✅ Fully Occupied'}
+          </div>
+        </div>
       </div>
 
       {/* Spreadsheet Table Container */}

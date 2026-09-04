@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { LocationItem, Building, RoomUnit, Tenant } from '../types/crm';
+import { LocationItem, Building, RoomUnit, Tenant, ExpenseItem } from '../types/crm';
 
 // --- LOCATIONS ---
 export async function fetchLocationsFromDb(): Promise<LocationItem[]> {
@@ -96,6 +96,15 @@ export async function fetchRoomsFromDb(): Promise<RoomUnit[]> {
       buildingId: d.building_id,
       roomNumber: d.room_number,
       roomType: d.room_type || 'Partition Flat',
+      capacity: Number(d.capacity) || 10,
+      actualRentAnnual: Number(d.actual_rent_annual) || 0,
+      paymentTerms: d.payment_terms || 'Quarterly',
+      realEstateName: d.real_estate_name || '',
+      realEstatePhone: d.real_estate_phone || '',
+      ejariNumber: d.ejari_number || '',
+      securityDepositToOwner: Number(d.security_deposit_owner) || 0,
+      contractStartDate: d.contract_start_date || '',
+      contractEndDate: d.contract_end_date || '',
       notes: d.notes || '',
       dewaBill: d.dewa_bill || { provider: 'DEWA', amount: 0, status: 'Due', dueDate: '', accountNumber: '' },
       wifiBill: d.wifi_bill || { provider: 'Du', amount: 0, status: 'Due', dueDate: '', accountNumber: '' },
@@ -113,6 +122,15 @@ export async function upsertRoomToDb(room: RoomUnit) {
       building_id: room.buildingId,
       room_number: room.roomNumber,
       room_type: room.roomType,
+      capacity: room.capacity || 10,
+      actual_rent_annual: room.actualRentAnnual || 0,
+      payment_terms: room.paymentTerms || 'Quarterly',
+      real_estate_name: room.realEstateName || '',
+      real_estate_phone: room.realEstatePhone || '',
+      ejari_number: room.ejariNumber || '',
+      security_deposit_owner: room.securityDepositToOwner || 0,
+      contract_start_date: room.contractStartDate || '',
+      contract_end_date: room.contractEndDate || '',
       notes: room.notes,
       dewa_bill: room.dewaBill,
       wifi_bill: room.wifiBill,
@@ -207,5 +225,56 @@ export async function deleteTenantFromDb(tenantId: string) {
     await supabase.from('room_crm_tenants').delete().eq('id', tenantId);
   } catch (err) {
     console.error('Error deleting tenant from Supabase:', err);
+  }
+}
+
+// --- EXPENSES ---
+export async function fetchExpensesFromDb(): Promise<ExpenseItem[]> {
+  try {
+    const { data, error } = await supabase.from('room_crm_expenses').select('*').order('date', { ascending: false });
+    if (error || !data) return [];
+    return data.map(d => ({
+      id: d.id,
+      roomId: d.room_id,
+      buildingId: d.building_id,
+      title: d.title,
+      category: d.category as any,
+      amount: Number(d.amount) || 0,
+      date: d.date,
+      paidBy: d.paid_by || 'Cash',
+      invoiceRef: d.invoice_ref || '',
+      notes: d.notes || '',
+      createdAt: d.created_at,
+    }));
+  } catch (err) {
+    console.error('Error fetching expenses from Supabase:', err);
+    return [];
+  }
+}
+
+export async function upsertExpenseToDb(expense: ExpenseItem) {
+  try {
+    await supabase.from('room_crm_expenses').upsert({
+      id: expense.id,
+      room_id: expense.roomId,
+      building_id: expense.buildingId,
+      title: expense.title,
+      category: expense.category,
+      amount: expense.amount,
+      date: expense.date,
+      paid_by: expense.paidBy || 'Cash',
+      invoice_ref: expense.invoiceRef || '',
+      notes: expense.notes || '',
+    });
+  } catch (err) {
+    console.error('Error saving expense to Supabase:', err);
+  }
+}
+
+export async function deleteExpenseFromDb(expenseId: string) {
+  try {
+    await supabase.from('room_crm_expenses').delete().eq('id', expenseId);
+  } catch (err) {
+    console.error('Error deleting expense from Supabase:', err);
   }
 }

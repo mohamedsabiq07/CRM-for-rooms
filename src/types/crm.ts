@@ -19,11 +19,71 @@ export interface UtilityBill {
 export interface RoomUnit {
   id: string;
   buildingId: string;
-  roomNumber: string; // e.g. "103", "601"
+  roomNumber: string; // e.g. "103", "601", "304"
   roomType: string; // e.g. "Partition Flat", "Master Bedspace", "Studio"
+  capacity: number; // Total accommodable beds / persons, e.g. 7, 15
+  actualRentAnnual: number; // Actual rent paid to real estate / landlord in AED/year
+  paymentTerms?: PaymentTermsType; // Quarterly, Semi-Annually, Annually, Monthly
+  realEstateName?: string; // Real estate company or landlord name
+  realEstatePhone?: string; // Contact phone
+  contractStartDate?: string; // DD.MM.YYYY
+  contractEndDate?: string; // DD.MM.YYYY
+  ejariNumber?: string; // Ejari certificate number
+  securityDepositToOwner?: number; // Deposit paid to real estate
   dewaBill: UtilityBill;
   wifiBill: UtilityBill;
   notes?: string;
+}
+
+export type ExpenseCategory =
+  | 'DEWA / Electricity & Water'
+  | 'Wi-Fi / Internet'
+  | 'Gas / LPG Cylinder'
+  | 'AC Maintenance & Repair'
+  | 'Plumbing & Electrical'
+  | 'Cleaning & Maid Service'
+  | 'Supplies (Bedding, Locks, Curtains)'
+  | 'Pest Control'
+  | 'Real Estate Commission / Brokerage'
+  | 'Ejari Registration Fee'
+  | 'Other / Miscellaneous';
+
+export interface ExpenseItem {
+  id: string;
+  roomId: string; // which flat / room
+  buildingId: string;
+  title: string;
+  category: ExpenseCategory;
+  amount: number;
+  date: string; // DD.MM.YYYY
+  paidBy?: 'Cash' | 'Bank Transfer' | 'Card' | 'Cheque';
+  invoiceRef?: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+export interface FlatFinancialMetrics {
+  roomId: string;
+  roomNumber: string;
+  buildingId: string;
+  buildingName: string;
+  capacity: number;
+  occupiedCount: number;
+  vacancyCount: number;
+  occupancyRate: number; // percentage, e.g. 85.7
+  averageBedRent: number;
+  monthlyPotentialRent: number;
+  monthlyVacancyLoss: number;
+  annualVacancyLoss: number;
+  annualGrossPotentialRevenue: number;
+  annualRealizedRevenue: number; // from active tenants
+  annualRealEstateRent: number;
+  annualDewaBills: number;
+  annualWifiBills: number;
+  annualLoggedExpenses: number;
+  totalAnnualExpenses: number;
+  netAnnualProfit: number;
+  profitMarginPercent: number;
 }
 
 export interface Building {

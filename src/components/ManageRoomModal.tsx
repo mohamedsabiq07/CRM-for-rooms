@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, Zap, Wifi, DoorOpen, Calendar, Trash2, CheckCircle2 } from 'lucide-react';
-import { RoomUnit, Building } from '../types/crm';
+import { X, Zap, Wifi, DoorOpen, Calendar, Trash2, CheckCircle2, Users, Building2, Coins, FileText } from 'lucide-react';
+import { RoomUnit, Building, PaymentTermsType } from '../types/crm';
 
 interface ManageRoomModalProps {
   isOpen: boolean;
@@ -25,6 +25,15 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
 
   const [roomNumber, setRoomNumber] = useState(room ? room.roomNumber : '');
   const [roomType, setRoomType] = useState(room ? room.roomType : 'Partition Flat');
+  const [capacity, setCapacity] = useState(room ? (room.capacity || 7).toString() : '7');
+  const [actualRentAnnual, setActualRentAnnual] = useState(room?.actualRentAnnual?.toString() || '36000');
+  const [paymentTerms, setPaymentTerms] = useState<PaymentTermsType>(room?.paymentTerms || 'Quarterly');
+  const [realEstateName, setRealEstateName] = useState(room?.realEstateName || building.ownerName || 'Real Estate Agency');
+  const [realEstatePhone, setRealEstatePhone] = useState(room?.realEstatePhone || building.ownerPhone || '');
+  const [ejariNumber, setEjariNumber] = useState(room?.ejariNumber || '');
+  const [securityDepositToOwner, setSecurityDepositToOwner] = useState(room?.securityDepositToOwner?.toString() || '3000');
+  const [contractStartDate, setContractStartDate] = useState(room?.contractStartDate || '01.01.2026');
+  const [contractEndDate, setContractEndDate] = useState(room?.contractEndDate || '31.12.2026');
   const [notes, setNotes] = useState(room?.notes || '');
 
   // DEWA
@@ -48,6 +57,15 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
       buildingId: building.id,
       roomNumber: roomNumber.trim(),
       roomType: roomType.trim(),
+      capacity: Number(capacity) || 7,
+      actualRentAnnual: Number(actualRentAnnual) || 0,
+      paymentTerms,
+      realEstateName: realEstateName.trim(),
+      realEstatePhone: realEstatePhone.trim(),
+      ejariNumber: ejariNumber.trim(),
+      securityDepositToOwner: Number(securityDepositToOwner) || 0,
+      contractStartDate: contractStartDate.trim(),
+      contractEndDate: contractEndDate.trim(),
       notes: notes.trim(),
       dewaBill: {
         provider: 'DEWA',
@@ -93,8 +111,8 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
           
-          {/* Room Number & Type */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Room Number, Type & Capacity */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Room / Flat Number *
@@ -104,7 +122,7 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                 required
                 value={roomNumber}
                 onChange={(e) => setRoomNumber(e.target.value)}
-                placeholder="e.g. 103, 601"
+                placeholder="e.g. 103, 304, 601"
                 className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-bold"
               />
             </div>
@@ -122,7 +140,114 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
                 <option value="Master Bedspace">Master Bedspace</option>
                 <option value="Studio Partition">Studio Partition</option>
                 <option value="1BHK Bedspace">1BHK Bedspace</option>
+                <option value="2BHK Partition">2BHK Partition</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                <Users className="w-3.5 h-3.5 text-blue-600" />
+                <span>Total Capacity (Beds) *</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                required
+                value={capacity}
+                onChange={(e) => setCapacity(e.target.value)}
+                placeholder="e.g. 7"
+                className="w-full text-sm px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 font-black text-blue-900"
+              />
+              <span className="text-[10px] text-slate-500 block mt-0.5">e.g. Flat 304 accommodates 7 beds</span>
+            </div>
+          </div>
+
+          {/* Real Estate Master Contract & Actual Rent */}
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-300 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5 uppercase tracking-wider">
+                <Building2 className="w-4 h-4 text-slate-700" />
+                Real Estate Contract & Actual Flat Rent
+              </h4>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-800 font-mono">
+                AED {Math.round((Number(actualRentAnnual) || 0) / 12).toLocaleString()} / month
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Actual Rent to Real Estate (AED/Year) *
+                </label>
+                <div className="relative">
+                  <Coins className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="number"
+                    value={actualRentAnnual}
+                    onChange={(e) => setActualRentAnnual(e.target.value)}
+                    placeholder="e.g. 36000"
+                    className="w-full text-xs pl-9 pr-3 py-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Payment Terms</label>
+                <select
+                  value={paymentTerms}
+                  onChange={(e) => setPaymentTerms(e.target.value as PaymentTermsType)}
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-semibold"
+                >
+                  <option value="Quarterly">Quarterly (4 Cheques)</option>
+                  <option value="Semi-Annually">Semi-Annually (2 Cheques)</option>
+                  <option value="Annually">Annually (1 Cheque)</option>
+                  <option value="Monthly">Monthly (12 Cheques)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Real Estate / Landlord Name</label>
+                <input
+                  type="text"
+                  value={realEstateName}
+                  onChange={(e) => setRealEstateName(e.target.value)}
+                  placeholder="e.g. Vienna Real Estate Management"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Real Estate Phone</label>
+                <input
+                  type="text"
+                  value={realEstatePhone}
+                  onChange={(e) => setRealEstatePhone(e.target.value)}
+                  placeholder="+971 4 399 1122"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Ejari Number</label>
+                <input
+                  type="text"
+                  value={ejariNumber}
+                  onChange={(e) => setEjariNumber(e.target.value)}
+                  placeholder="EJR-2026-3047"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Security Deposit to Owner (AED)</label>
+                <input
+                  type="number"
+                  value={securityDepositToOwner}
+                  onChange={(e) => setSecurityDepositToOwner(e.target.value)}
+                  placeholder="3000"
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-semibold"
+                />
+              </div>
             </div>
           </div>
 

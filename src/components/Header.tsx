@@ -8,6 +8,8 @@ import {
   Search, 
   Calculator,
   History,
+  TrendingUp,
+  Receipt,
   DoorOpen,
   LayoutGrid,
   LogOut,
@@ -16,8 +18,8 @@ import {
 import { LocationItem, Building, RoomUnit, RentNotification, OwnerChequeNotification, UtilityNotification } from '../types/crm';
 
 interface HeaderProps {
-  currentView: 'sheet' | 'buildings';
-  onChangeView: (view: 'sheet' | 'buildings') => void;
+  currentView: 'sheet' | 'buildings' | 'profit_loss';
+  onChangeView: (view: 'sheet' | 'buildings' | 'profit_loss') => void;
   locations: LocationItem[];
   buildings: Building[];
   rooms: RoomUnit[];
@@ -31,6 +33,7 @@ interface HeaderProps {
   onSearchChange: (q: string) => void;
   onOpenAddTenant: () => void;
   onOpenAddBuilding: () => void;
+  onOpenAddExpense?: () => void;
   onOpenRentCalculator: () => void;
   onOpenPastTenants: () => void;
   pastTenantsCount: number;
@@ -59,6 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSearchChange,
   onOpenAddTenant,
   onOpenAddBuilding,
+  onOpenAddExpense,
   onOpenRentCalculator,
   onOpenPastTenants,
   pastTenantsCount,
@@ -121,6 +125,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
                 <span>Buildings & Utilities ({buildings.length})</span>
+              </button>
+
+              <button
+                onClick={() => onChangeView('profit_loss')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  currentView === 'profit_loss'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>Profit & Loss</span>
               </button>
             </div>
 
@@ -206,6 +222,18 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
             </button>
+
+            {/* Quick Add Expense Button */}
+            {onOpenAddExpense && (
+              <button
+                onClick={onOpenAddExpense}
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-300 hover:text-rose-200 rounded-lg text-xs font-semibold border border-rose-600/40 shadow-sm transition cursor-pointer"
+                title="Log Flat Expense (AC, maintenance, cleaning, supplies)"
+              >
+                <Receipt className="w-3.5 h-3.5 text-rose-400" />
+                <span className="hidden sm:inline">+ Expense</span>
+              </button>
+            )}
 
             {/* Excel Export (if in sheet) */}
             {currentView === 'sheet' && (

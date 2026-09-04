@@ -281,16 +281,25 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                             {/* Room Header & Quick Access */}
                             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
                               <div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                   <span className="text-sm font-black text-slate-900">
                                     Room {room.roomNumber}
                                   </span>
                                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-700">
                                     {room.roomType || 'Partition Flat'}
                                   </span>
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                    Math.max(0, (room.capacity || 10) - roomTenants.length) > 0 
+                                      ? 'bg-amber-100 text-amber-900 border border-amber-300' 
+                                      : 'bg-emerald-100 text-emerald-800'
+                                  }`}>
+                                    {Math.max(0, (room.capacity || 10) - roomTenants.length) > 0 
+                                      ? `${Math.max(0, (room.capacity || 10) - roomTenants.length)} Vacant (${roomTenants.length}/${room.capacity || 10} Beds)` 
+                                      : `Full (${room.capacity || 10} Beds)`}
+                                  </span>
                                 </div>
                                 <p className="text-[11px] text-slate-500 mt-0.5">
-                                  {roomTenants.length} Tenants • Monthly Rent Inflow: <strong className="text-slate-900">AED {roomIncome.toLocaleString()}</strong>
+                                  Real Estate Rent: <strong className="text-slate-800">AED {Number(room.actualRentAnnual || 0).toLocaleString()}/yr</strong> • Tenant Inflow: <strong className="text-emerald-700">AED {roomIncome.toLocaleString()}/mo</strong>
                                 </p>
                               </div>
 

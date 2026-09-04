@@ -13,17 +13,20 @@ import { ManageRoomModal } from './components/ManageRoomModal';
 import { CheckOutModal } from './components/CheckOutModal';
 import { RentCalculatorModal } from './components/RentCalculatorModal';
 import { PastTenantsModal } from './components/PastTenantsModal';
+import { ProfitAndLossPage } from './components/ProfitAndLossPage';
+import { AddExpenseModal } from './components/AddExpenseModal';
 import { 
   LocationItem, 
   Building, 
   RoomUnit, 
   Tenant, 
+  ExpenseItem,
   CheckOutRecord,
   RentNotification, 
   OwnerChequeNotification, 
   UtilityNotification 
 } from './types/crm';
-import { INITIAL_LOCATIONS, INITIAL_BUILDINGS, INITIAL_ROOMS, INITIAL_TENANTS } from './data/initialData';
+import { INITIAL_LOCATIONS, INITIAL_BUILDINGS, INITIAL_ROOMS, INITIAL_TENANTS, INITIAL_EXPENSES } from './data/initialData';
 import { calculateRentDueInfo, parseFlexibleDate } from './utils/dateUtils';
 import { exportFlatToExcel } from './utils/exportUtils';
 import { 
@@ -31,13 +34,16 @@ import {
   fetchBuildingsFromDb, 
   fetchRoomsFromDb, 
   fetchTenantsFromDb,
+  fetchExpensesFromDb,
   upsertLocationToDb,
   upsertBuildingToDb,
   deleteBuildingFromDb,
   upsertRoomToDb,
   deleteRoomFromDb,
   upsertTenantToDb,
-  deleteTenantFromDb
+  deleteTenantFromDb,
+  upsertExpenseToDb,
+  deleteExpenseFromDb
 } from './lib/dbService';
 import { AlertTriangle, Plus, Building2, DoorOpen, ArrowLeft, Zap, Wifi, Database, Cloud } from 'lucide-react';
 
@@ -47,8 +53,8 @@ export const App: React.FC = () => {
     return localStorage.getItem('room_crm_auth') === 'true';
   });
 
-  // --- Current View State ('sheet' or 'buildings') ---
-  const [currentView, setCurrentView] = useState<'sheet' | 'buildings'>('sheet');
+  // --- Current View State ('sheet' | 'buildings' | 'profit_loss') ---
+  const [currentView, setCurrentView] = useState<'sheet' | 'buildings' | 'profit_loss'>('sheet');
   const [isDbLoaded, setIsDbLoaded] = useState(false);
 
   // --- State with Fallback ---
@@ -72,6 +78,11 @@ export const App: React.FC = () => {
     return saved ? JSON.parse(saved) : INITIAL_TENANTS;
   });
 
+  const [expenses, setExpenses] = useState<ExpenseItem[]>(() => {
+    const saved = localStorage.getItem('room_crm_expenses');
+    return saved ? JSON.parse(saved) : INITIAL_EXPENSES;
+  });
+
   // Selected Building & Room
   const [selectedLocationId, setSelectedLocationId] = useState<string>(() => {
     return locations[0]?.id || 'loc-barsha';
@@ -93,6 +104,8 @@ export const App: React.FC = () => {
   const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
   const [addTenantSection, setAddTenantSection] = useState('HALL');
   const [isAddBuildingOpen, setIsAddBuildingOpen] = useState(false);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [addExpenseRoomId, setAddExpenseRoomId] = useState<string | undefined>(undefined);
 
   // Manage Room Modal State
   const [isManageRoomOpen, setIsManageRoomOpen] = useState(false);
@@ -109,17 +122,19 @@ export const App: React.FC = () => {
   useEffect(() => {
     async function loadCloudData() {
       try {
-        const [cloudLocs, cloudBlds, cloudRooms, cloudTenants] = await Promise.all([
+        const [cloudLocs, cloudBlds, cloudRooms, cloudTenants, cloudExpenses] = await Promise.all([
           fetchLocationsFromDb(),
           fetchBuildingsFromDb(),
           fetchRoomsFromDb(),
           fetchTenantsFromDb(),
+          fetchExpensesFromDb(),
         ]);
 
         if (cloudLocs.length > 0) setLocations(cloudLocs);
         if (cloudBlds.length > 0) setBuildings(cloudBlds);
         if (cloudRooms.length > 0) setRooms(cloudRooms);
         if (cloudTenants.length > 0) setTenants(cloudTenants);
+        if (cloudExpenses.length > 0) setExpenses(cloudExpenses);
         setIsDbLoaded(true);
       } catch (e) {
         console.error('Database connection notice:', e);
@@ -132,6 +147,10 @@ export const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('room_crm_locations', JSON.stringify(locations));
   }, [locations]);
+
+  useEffect(() => {
+    localStorage.setItem('room_crm_expenses', JSON.stringify(expenses));
+  }, [expenses]);
 
   useEffect(() => {
     localStorage.setItem('room_crm_buildings', JSON.stringify(buildings));
@@ -324,6 +343,26 @@ export const App: React.FC = () => {
     );
   };
 
+  const handleOpenAddExpense = (roomId?: string) => {
+    setAddExpenseRoomId(roomId);
+    setIsAddExpenseOpen(true);
+  };
+
+  const handleAddExpense = (newExpData: Omit<ExpenseItem, 'id'>) => {
+    const newId = `exp-${Date.now()}`;
+    const newExp: ExpenseItem = {
+      ...newExpData,
+      id: newId,
+    };
+    setExpenses(prev => [newExp, ...prev]);
+    upsertExpenseToDb(newExp);
+  };
+
+  const handleDeleteExpense = (expenseId: string) => {
+    setExpenses(prev => prev.filter(e => e.id !== expenseId));
+    deleteExpenseFromDb(expenseId);
+  };
+
   const handleToggleKey = (tenantId: string, keyType: 'cupboard' | 'door') => {
     setTenants(prev =>
       prev.map(t => {
@@ -407,11 +446,20 @@ export const App: React.FC = () => {
       id: newBldId,
     };
 
+    const perRoomRent = initialRoomsData.length > 0 
+      ? Math.round(newBld.ownerRentAnnual / initialRoomsData.length) 
+      : 36000;
+
     const newRooms: RoomUnit[] = initialRoomsData.map((rm, idx) => ({
       id: `room-${Date.now()}-${idx}`,
       buildingId: newBldId,
       roomNumber: rm.roomNumber,
       roomType: rm.roomType,
+      capacity: 10,
+      actualRentAnnual: perRoomRent,
+      paymentTerms: newBld.paymentTerms,
+      realEstateName: newBld.ownerName,
+      realEstatePhone: newBld.ownerPhone,
       dewaBill: {
         provider: 'DEWA',
         accountNumber: '',
@@ -509,6 +557,7 @@ export const App: React.FC = () => {
           setIsAddTenantOpen(true);
         }}
         onOpenAddBuilding={() => setIsAddBuildingOpen(true)}
+        onOpenAddExpense={() => handleOpenAddExpense()}
         onOpenRentCalculator={() => setIsRentCalculatorOpen(true)}
         onOpenPastTenants={() => setIsPastTenantsOpen(true)}
         pastTenantsCount={pastTenants.length}
@@ -576,6 +625,23 @@ export const App: React.FC = () => {
               setCurrentView('sheet');
             }}
             onQuickToggleBillStatus={handleQuickToggleBillStatus}
+          />
+        )}
+
+        {/* --- VIEW 3: DEDICATED PROFIT & LOSS DASHBOARD --- */}
+        {currentView === 'profit_loss' && (
+          <ProfitAndLossPage
+            rooms={rooms}
+            buildings={buildings}
+            tenants={tenants}
+            expenses={expenses}
+            onOpenAddExpense={handleOpenAddExpense}
+            onDeleteExpense={handleDeleteExpense}
+            onSelectRoomInSheet={(bldId, roomId) => {
+              setSelectedBuildingId(bldId);
+              setSelectedRoomId(roomId);
+              setCurrentView('sheet');
+            }}
           />
         )}
 
@@ -749,6 +815,19 @@ export const App: React.FC = () => {
         pastTenants={pastTenants}
         buildings={buildings}
         rooms={rooms}
+      />
+
+      {/* Flat Expense Modal */}
+      <AddExpenseModal
+        isOpen={isAddExpenseOpen}
+        onClose={() => {
+          setIsAddExpenseOpen(false);
+          setAddExpenseRoomId(undefined);
+        }}
+        rooms={rooms}
+        buildings={buildings}
+        defaultRoomId={addExpenseRoomId || selectedRoomId}
+        onAddExpense={handleAddExpense}
       />
 
       {/* Persistent Footer with Live Database Indicator */}
