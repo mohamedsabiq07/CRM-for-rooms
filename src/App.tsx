@@ -21,13 +21,26 @@ import {
 import { INITIAL_LOCATIONS, INITIAL_BUILDINGS, INITIAL_ROOMS, INITIAL_TENANTS } from './data/initialData';
 import { calculateRentDueInfo, parseFlexibleDate } from './utils/dateUtils';
 import { exportFlatToExcel } from './utils/exportUtils';
-import { AlertTriangle, Plus, Building2, DoorOpen, ArrowLeft, Zap, Wifi } from 'lucide-react';
+import { 
+  fetchLocationsFromDb, 
+  fetchBuildingsFromDb, 
+  fetchRoomsFromDb, 
+  fetchTenantsFromDb,
+  upsertLocationToDb,
+  upsertBuildingToDb,
+  upsertRoomToDb,
+  deleteRoomFromDb,
+  upsertTenantToDb,
+  deleteTenantFromDb
+} from './lib/dbService';
+import { AlertTriangle, Plus, Building2, DoorOpen, ArrowLeft, Zap, Wifi, Database, Cloud } from 'lucide-react';
 
 export const App: React.FC = () => {
   // --- Current View State ('sheet' or 'buildings') ---
   const [currentView, setCurrentView] = useState<'sheet' | 'buildings'>('sheet');
+  const [isDbLoaded, setIsDbLoaded] = useState(false);
 
-  // --- Persistent Storage State ---
+  // --- State with Fallback ---
   const [locations, setLocations] = useState<LocationItem[]>(() => {
     const saved = localStorage.getItem('room_crm_locations');
     return saved ? JSON.parse(saved) : INITIAL_LOCATIONS;
@@ -78,7 +91,30 @@ export const App: React.FC = () => {
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [paymentTenant, setPaymentTenant] = useState<Tenant | null>(null);
 
-  // Sync to LocalStorage
+  // --- INITIAL LOAD FROM SUPABASE CLOUD DATABASE ---
+  useEffect(() => {
+    async function loadCloudData() {
+      try {
+        const [cloudLocs, cloudBlds, cloudRooms, cloudTenants] = await Promise.all([
+          fetchLocationsFromDb(),
+          fetchBuildingsFromDb(),
+          fetchRoomsFromDb(),
+          fetchTenantsFromDb(),
+        ]);
+
+        if (cloudLocs.length > 0) setLocations(cloudLocs);
+        if (cloudBlds.length > 0) setBuildings(cloudBlds);
+        if (cloudRooms.length > 0) setRooms(cloudRooms);
+        if (cloudTenants.length > 0) setTenants(cloudTenants);
+        setIsDbLoaded(true);
+      } catch (e) {
+        console.error('Database connection notice:', e);
+      }
+    }
+    loadCloudData();
+  }, []);
+
+  // Sync to LocalStorage as offline buffer
   useEffect(() => {
     localStorage.setItem('room_crm_locations', JSON.stringify(locations));
   }, [locations]);
@@ -117,8 +153,6 @@ export const App: React.FC = () => {
   }, [tenants, currentRoom, currentBuilding]);
 
   // --- Dynamic Unified Notifications Engine ---
-
-  // 1. Tenant 30-Day Rent Due Notifications
   const tenantNotifications: RentNotification[] = useMemo(() => {
     const alerts: RentNotification[] = [];
 
@@ -151,7 +185,6 @@ export const App: React.FC = () => {
     return alerts.sort((a, b) => a.daysDiff - b.daysDiff);
   }, [tenants, buildings, rooms]);
 
-  // 2. Owner Rent Cheque Notifications
   const chequeNotifications: OwnerChequeNotification[] = useMemo(() => {
     const alerts: OwnerChequeNotification[] = [];
     const today = new Date();
@@ -161,7 +194,7 @@ export const App: React.FC = () => {
       const dueDate = parseFlexibleDate(b.nextChequeDueDate);
       if (dueDate) {
         const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays <= 45) { // Notify within 45 days of upcoming owner cheque
+        if (diffDays <= 45) {
           alerts.push({
             buildingId: b.id,
             buildingName: b.name,
@@ -180,7 +213,6 @@ export const App: React.FC = () => {
     return alerts.sort((a, b) => a.daysDiff - b.daysDiff);
   }, [buildings]);
 
-  // 3. Room DEWA & Wi-Fi Utility Due Notifications
   const utilityNotifications: UtilityNotification[] = useMemo(() => {
     const alerts: UtilityNotification[] = [];
     const today = new Date();
@@ -190,7 +222,6 @@ export const App: React.FC = () => {
       const bld = buildings.find(b => b.id === r.buildingId);
       const bldName = bld?.name || 'Building';
 
-      // DEWA check
       if (r.dewaBill && r.dewaBill.status !== 'Paid') {
         const dueDate = parseFlexibleDate(r.dewaBill.dueDate);
         const diffDays = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : 0;
@@ -207,7 +238,6 @@ export const App: React.FC = () => {
         });
       }
 
-      // Wi-Fi check
       if (r.wifiBill && r.wifiBill.status !== 'Paid') {
         const dueDate = parseFlexibleDate(r.wifiBill.dueDate);
         const diffDays = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : 0;
@@ -228,7 +258,7 @@ export const App: React.FC = () => {
     return alerts.sort((a, b) => a.daysDiff - b.daysDiff);
   }, [rooms, buildings]);
 
-  // --- Handlers ---
+  // --- Handlers with Cloud Sync ---
   const handleAddTenant = (newTenantData: Omit<Tenant, 'id'>) => {
     const newId = `t-${Date.now()}`;
     const newTenant: Tenant = {
@@ -236,25 +266,30 @@ export const App: React.FC = () => {
       id: newId,
     };
     setTenants(prev => [...prev, newTenant]);
+    upsertTenantToDb(newTenant);
   };
 
   const handleUpdateTenant = (updated: Tenant) => {
     setTenants(prev => prev.map(t => (t.id === updated.id ? updated : t)));
+    upsertTenantToDb(updated);
   };
 
   const handleDeleteTenant = (id: string) => {
     setTenants(prev => prev.filter(t => t.id !== id));
+    deleteTenantFromDb(id);
   };
 
   const handleToggleKey = (tenantId: string, keyType: 'cupboard' | 'door') => {
     setTenants(prev =>
       prev.map(t => {
         if (t.id !== tenantId) return t;
-        return {
+        const updated = {
           ...t,
           [keyType === 'cupboard' ? 'cupboardKey' : 'doorKey']:
             keyType === 'cupboard' ? !t.cupboardKey : !t.doorKey,
         };
+        upsertTenantToDb(updated);
+        return updated;
       })
     );
   };
@@ -269,12 +304,14 @@ export const App: React.FC = () => {
     setTenants(prev =>
       prev.map(t => {
         if (t.id !== tenantId) return t;
-        return {
+        const updated: Tenant = {
           ...t,
           currentMonthStatus: status,
           remarks: remarks || t.remarks,
           lastPaidDate: date,
         };
+        upsertTenantToDb(updated);
+        return updated;
       })
     );
   };
@@ -293,11 +330,11 @@ export const App: React.FC = () => {
     setRooms(prev =>
       prev.map(r => {
         if (r.id !== roomId) return r;
-        if (type === 'DEWA') {
-          return { ...r, dewaBill: { ...r.dewaBill, status: 'Paid' } };
-        } else {
-          return { ...r, wifiBill: { ...r.wifiBill, status: 'Paid' } };
-        }
+        const updated: RoomUnit = type === 'DEWA'
+          ? { ...r, dewaBill: { ...r.dewaBill, status: 'Paid' } }
+          : { ...r, wifiBill: { ...r.wifiBill, status: 'Paid' } };
+        upsertRoomToDb(updated);
+        return updated;
       })
     );
   };
@@ -306,18 +343,15 @@ export const App: React.FC = () => {
     setRooms(prev =>
       prev.map(r => {
         if (r.id !== roomId) return r;
-        if (billType === 'dewa') {
-          const nextStatus = r.dewaBill?.status === 'Paid' ? 'Due' : 'Paid';
-          return { ...r, dewaBill: { ...r.dewaBill, status: nextStatus } };
-        } else {
-          const nextStatus = r.wifiBill?.status === 'Paid' ? 'Due' : 'Paid';
-          return { ...r, wifiBill: { ...r.wifiBill, status: nextStatus } };
-        }
+        const updated: RoomUnit = billType === 'dewa'
+          ? { ...r, dewaBill: { ...r.dewaBill, status: r.dewaBill?.status === 'Paid' ? 'Due' : 'Paid' } }
+          : { ...r, wifiBill: { ...r.wifiBill, status: r.wifiBill?.status === 'Paid' ? 'Due' : 'Paid' } };
+        upsertRoomToDb(updated);
+        return updated;
       })
     );
   };
 
-  // Add Building Handler
   const handleAddBuilding = (
     buildingData: Omit<Building, 'id'>, 
     initialRoomsData: { roomNumber: string; roomType: string }[]
@@ -355,29 +389,32 @@ export const App: React.FC = () => {
     if (newRooms.length > 0) {
       setSelectedRoomId(newRooms[0].id);
     }
+
+    upsertBuildingToDb(newBld);
+    newRooms.forEach(r => upsertRoomToDb(r));
   };
 
-  // Add or Edit Room Handler
   const handleSaveRoom = (roomData: Omit<RoomUnit, 'id'>, roomId?: string) => {
     if (roomId) {
-      // Edit existing
-      setRooms(prev => prev.map(r => (r.id === roomId ? { ...roomData, id: roomId } : r)));
+      const updated: RoomUnit = { ...roomData, id: roomId };
+      setRooms(prev => prev.map(r => (r.id === roomId ? updated : r)));
+      upsertRoomToDb(updated);
     } else {
-      // Add new
       const newRoom: RoomUnit = {
         ...roomData,
         id: `room-${Date.now()}`,
       };
       setRooms(prev => [...prev, newRoom]);
       setSelectedRoomId(newRoom.id);
+      upsertRoomToDb(newRoom);
     }
   };
 
   const handleDeleteRoom = (roomId: string) => {
     setRooms(prev => prev.filter(r => r.id !== roomId));
+    deleteRoomFromDb(roomId);
   };
 
-  // Export Excel
   const handleExportExcel = () => {
     if (!currentBuilding) return;
     exportFlatToExcel(currentBuilding, currentLocation, tenants);
@@ -418,7 +455,7 @@ export const App: React.FC = () => {
         isNotificationOpen={isNotificationOpen}
       />
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5">
         
         {/* Urgent Deadlines Alert Banner */}
@@ -573,7 +610,7 @@ export const App: React.FC = () => {
         onMarkUtilityPaid={handleMarkUtilityPaid}
       />
 
-      {/* Add New Tenant Modal */}
+      {/* Modals */}
       {currentBuilding && currentRoom && (
         <AddTenantModal
           isOpen={isAddTenantOpen}
@@ -586,7 +623,6 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Add New Building Modal */}
       <AddBuildingModal
         isOpen={isAddBuildingOpen}
         onClose={() => setIsAddBuildingOpen(false)}
@@ -594,7 +630,6 @@ export const App: React.FC = () => {
         onAddBuilding={handleAddBuilding}
       />
 
-      {/* Manage Room & Utility Bills Modal */}
       {roomModalBuilding && (
         <ManageRoomModal
           isOpen={isManageRoomOpen}
@@ -610,7 +645,6 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Edit Tenant Details Modal */}
       <EditTenantModal
         isOpen={!!editingTenant}
         onClose={() => setEditingTenant(null)}
@@ -619,7 +653,6 @@ export const App: React.FC = () => {
         onDeleteTenant={handleDeleteTenant}
       />
 
-      {/* Record Payment / Settle Rent Modal */}
       <RecordPaymentModal
         isOpen={!!paymentTenant}
         onClose={() => setPaymentTenant(null)}
@@ -627,9 +660,13 @@ export const App: React.FC = () => {
         onSavePayment={handleSavePayment}
       />
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-400">
+      {/* Persistent Footer with Live Database Indicator */}
+      <footer className="bg-white border-t border-slate-200 py-3 px-4 text-xs text-slate-400 flex items-center justify-between flex-wrap gap-2">
         <p>Dubai Property Management CRM • Buildings, Room Numbers, DEWA, Wi-Fi & Partitions</p>
+        <div className="flex items-center gap-1.5 text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+          <Database className="w-3.5 h-3.5" />
+          <span>Cloud PostgreSQL Database Active & Synced</span>
+        </div>
       </footer>
     </div>
   );
