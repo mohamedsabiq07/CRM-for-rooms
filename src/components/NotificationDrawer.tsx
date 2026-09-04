@@ -24,7 +24,7 @@ interface NotificationDrawerProps {
   chequeNotifications: OwnerChequeNotification[];
   utilityNotifications: UtilityNotification[];
   onMarkTenantPaid: (tenantId: string) => void;
-  onMarkUtilityPaid: (roomId: string, type: 'DEWA' | 'Wi-Fi') => void;
+  onMarkUtilityPaid: (roomId: string, type: 'DEWA' | 'SEWA' | 'Wi-Fi') => void;
 }
 
 export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({

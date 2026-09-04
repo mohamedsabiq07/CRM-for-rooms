@@ -11,7 +11,11 @@ import {
   ExternalLink,
   Plus,
   LogOut,
-  Bed
+  Bed,
+  Calendar,
+  FastForward,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Tenant, Building, RoomUnit } from '../types/crm';
 import { calculateStayDuration, calculateRentDueInfo, generateWhatsAppLink } from '../utils/dateUtils';
@@ -21,6 +25,9 @@ interface TenantSheetProps {
   room?: RoomUnit;
   tenants: Tenant[];
   searchQuery: string;
+  selectedMonth?: string;
+  onMonthChange?: (month: string) => void;
+  onCarryForwardMonth?: () => void;
   onEditTenant: (tenant: Tenant) => void;
   onDeleteTenant: (tenantId: string) => void;
   onCheckOutTenant: (tenant: Tenant) => void;
@@ -34,6 +41,9 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
   room,
   tenants,
   searchQuery,
+  selectedMonth = 'Sep-2026',
+  onMonthChange,
+  onCarryForwardMonth,
   onEditTenant,
   onDeleteTenant,
   onCheckOutTenant,
@@ -96,6 +106,33 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
         </div>
       </div>
 
+      {/* Month Navigation & Carry Forward Action Bar */}
+      <div className="bg-slate-50 px-4 sm:px-6 py-2.5 border-b border-slate-200 flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-semibold text-slate-500">Current Stay Month:</span>
+          <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-slate-300 shadow-2xs">
+            <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="text-xs font-bold text-slate-900">{selectedMonth}</span>
+          </div>
+          <span className="text-[11px] text-slate-400 hidden sm:inline">
+            • Displaying tenant occupancy & collections for {selectedMonth}
+          </span>
+        </div>
+
+        {onCarryForwardMonth && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onCarryForwardMonth}
+              title="Carry forward all active tenants and their room/bed allocations to next month"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-sm transition cursor-pointer border border-indigo-500"
+            >
+              <FastForward className="w-3.5 h-3.5" />
+              <span>Carry Forward to Next Month</span>
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Spreadsheet Table Container */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs sm:text-sm border-collapse select-none">
@@ -107,7 +144,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
               <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[100px] font-medium">Deposit</th>
               <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[110px] font-medium">Joining Date</th>
               <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[110px] font-medium">Duration</th>
-              <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[110px] font-semibold">Rent (AED)</th>
+              <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[120px] font-semibold">{selectedMonth} Rent</th>
               <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Cupboard Key">Cu/k</th>
               <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Door Key">D/k</th>
               <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[120px] font-medium">Partition</th>

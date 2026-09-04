@@ -15,6 +15,8 @@ import { RentCalculatorModal } from './components/RentCalculatorModal';
 import { PastTenantsModal } from './components/PastTenantsModal';
 import { ProfitAndLossPage } from './components/ProfitAndLossPage';
 import { AddExpenseModal } from './components/AddExpenseModal';
+import { MonthlyBillsModal } from './components/MonthlyBillsModal';
+import { FollowUpPage } from './components/FollowUpPage';
 import { 
   LocationItem, 
   Building, 
@@ -24,9 +26,19 @@ import {
   CheckOutRecord,
   RentNotification, 
   OwnerChequeNotification, 
-  UtilityNotification 
+  UtilityNotification,
+  MonthlyUtilityBill,
+  CustomerInquiry
 } from './types/crm';
-import { INITIAL_LOCATIONS, INITIAL_BUILDINGS, INITIAL_ROOMS, INITIAL_TENANTS, INITIAL_EXPENSES } from './data/initialData';
+import { 
+  INITIAL_LOCATIONS, 
+  INITIAL_BUILDINGS, 
+  INITIAL_ROOMS, 
+  INITIAL_TENANTS, 
+  INITIAL_EXPENSES,
+  INITIAL_UTILITY_BILLS,
+  INITIAL_INQUIRIES
+} from './data/initialData';
 import { calculateRentDueInfo, parseFlexibleDate } from './utils/dateUtils';
 import { exportFlatToExcel } from './utils/exportUtils';
 import { 
@@ -35,6 +47,8 @@ import {
   fetchRoomsFromDb, 
   fetchTenantsFromDb,
   fetchExpensesFromDb,
+  fetchUtilityBillsFromDb,
+  fetchInquiriesFromDb,
   upsertLocationToDb,
   upsertBuildingToDb,
   deleteBuildingFromDb,
@@ -43,9 +57,13 @@ import {
   upsertTenantToDb,
   deleteTenantFromDb,
   upsertExpenseToDb,
-  deleteExpenseFromDb
+  deleteExpenseFromDb,
+  upsertUtilityBillToDb,
+  upsertInquiryToDb,
+  deleteInquiryFromDb,
+  batchUpdateInquiryStatus
 } from './lib/dbService';
-import { AlertTriangle, Plus, Building2, DoorOpen, ArrowLeft, Zap, Wifi, Database, Cloud } from 'lucide-react';
+import { AlertTriangle, Plus, Building2, DoorOpen, ArrowLeft, Zap, Wifi, Database, Cloud, Users } from 'lucide-react';
 
 export const App: React.FC = () => {
   // --- Authentication State ---
@@ -53,12 +71,15 @@ export const App: React.FC = () => {
     return localStorage.getItem('room_crm_auth') === 'true';
   });
 
-  // --- Current View State ('sheet' | 'buildings' | 'profit_loss') ---
-  const [currentView, setCurrentView] = useState<'sheet' | 'buildings' | 'profit_loss'>('sheet');
+  // --- Current View State ('sheet' | 'buildings' | 'profit_loss' | 'followups') ---
+  const [currentView, setCurrentView] = useState<'sheet' | 'buildings' | 'profit_loss' | 'followups'>('sheet');
   const [isDbLoaded, setIsDbLoaded] = useState(false);
 
-  // Cache buster to ensure real Excel dataset loads fresh
-  const CRM_DATA_VERSION = 'v3_real_sheets_data';
+  // Active Month (defaults to Sep-2026 as per user requirement)
+  const [selectedMonth, setSelectedMonth] = useState<string>('Sep-2026');
+
+  // Cache buster to ensure 7 rooms, utilities, and inquiries load fresh
+  const CRM_DATA_VERSION = 'v4_7rooms_utilities_followups';
   if (typeof window !== 'undefined' && localStorage.getItem('room_crm_version') !== CRM_DATA_VERSION) {
     localStorage.removeItem('room_crm_locations');
     localStorage.removeItem('room_crm_buildings');
@@ -94,6 +115,16 @@ export const App: React.FC = () => {
     return saved ? JSON.parse(saved) : INITIAL_EXPENSES;
   });
 
+  const [utilityBills, setUtilityBills] = useState<MonthlyUtilityBill[]>(() => {
+    const saved = localStorage.getItem('room_crm_utility_bills');
+    return saved ? JSON.parse(saved) : INITIAL_UTILITY_BILLS;
+  });
+
+  const [inquiries, setInquiries] = useState<CustomerInquiry[]>(() => {
+    const saved = localStorage.getItem('room_crm_inquiries');
+    return saved ? JSON.parse(saved) : INITIAL_INQUIRIES;
+  });
+
   // Selected Building & Room (Default: Loussane Building -> Room 202)
   const [selectedLocationId, setSelectedLocationId] = useState<string>(() => {
     return locations[0]?.id || 'loc-barsha';
@@ -117,6 +148,7 @@ export const App: React.FC = () => {
   const [isAddBuildingOpen, setIsAddBuildingOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [addExpenseRoomId, setAddExpenseRoomId] = useState<string | undefined>(undefined);
+  const [isMonthlyBillsOpen, setIsMonthlyBillsOpen] = useState(false);
 
   // Manage Room Modal State
   const [isManageRoomOpen, setIsManageRoomOpen] = useState(false);
@@ -133,12 +165,14 @@ export const App: React.FC = () => {
   useEffect(() => {
     async function loadCloudData() {
       try {
-        const [cloudLocs, cloudBlds, cloudRooms, cloudTenants, cloudExpenses] = await Promise.all([
+        const [cloudLocs, cloudBlds, cloudRooms, cloudTenants, cloudExpenses, cloudBills, cloudInqs] = await Promise.all([
           fetchLocationsFromDb(),
           fetchBuildingsFromDb(),
           fetchRoomsFromDb(),
           fetchTenantsFromDb(),
           fetchExpensesFromDb(),
+          fetchUtilityBillsFromDb(),
+          fetchInquiriesFromDb(),
         ]);
 
         if (cloudLocs.length > 0) setLocations(cloudLocs);
@@ -146,6 +180,8 @@ export const App: React.FC = () => {
         if (cloudRooms.length > 0) setRooms(cloudRooms);
         if (cloudTenants.length > 0) setTenants(cloudTenants);
         if (cloudExpenses.length > 0) setExpenses(cloudExpenses);
+        if (cloudBills.length > 0) setUtilityBills(cloudBills);
+        if (cloudInqs.length > 0) setInquiries(cloudInqs);
         setIsDbLoaded(true);
       } catch (e) {
         console.error('Database connection notice:', e);
@@ -158,6 +194,14 @@ export const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('room_crm_locations', JSON.stringify(locations));
   }, [locations]);
+
+  useEffect(() => {
+    localStorage.setItem('room_crm_utility_bills', JSON.stringify(utilityBills));
+  }, [utilityBills]);
+
+  useEffect(() => {
+    localStorage.setItem('room_crm_inquiries', JSON.stringify(inquiries));
+  }, [inquiries]);
 
   useEffect(() => {
     localStorage.setItem('room_crm_expenses', JSON.stringify(expenses));
@@ -421,11 +465,11 @@ export const App: React.FC = () => {
     handleSavePayment(tenantId, 0, 'Paid', 'Payment settled', todayStr);
   };
 
-  const handleMarkUtilityPaid = (roomId: string, type: 'DEWA' | 'Wi-Fi') => {
+  const handleMarkUtilityPaid = (roomId: string, type: 'DEWA' | 'SEWA' | 'Wi-Fi') => {
     setRooms(prev =>
       prev.map(r => {
         if (r.id !== roomId) return r;
-        const updated: RoomUnit = type === 'DEWA'
+        const updated: RoomUnit = (type === 'DEWA' || type === 'SEWA')
           ? { ...r, dewaBill: { ...r.dewaBill, status: 'Paid' } }
           : { ...r, wifiBill: { ...r.wifiBill, status: 'Paid' } };
         upsertRoomToDb(updated);
@@ -531,6 +575,112 @@ export const App: React.FC = () => {
     deleteRoomFromDb(roomId);
   };
 
+  // --- Monthly Utility Bill Handler ---
+  const handleSaveUtilityBill = (bill: MonthlyUtilityBill) => {
+    setUtilityBills(prev => {
+      const existingIndex = prev.findIndex(b => b.id === bill.id || (b.roomId === bill.roomId && b.month === bill.month && b.utilityType === bill.utilityType));
+      let updated: MonthlyUtilityBill[];
+      if (existingIndex >= 0) {
+        updated = [...prev];
+        updated[existingIndex] = bill;
+      } else {
+        updated = [bill, ...prev];
+      }
+      return updated;
+    });
+    upsertUtilityBillToDb(bill);
+
+    // If this bill is for the room's current month, sync room dewa/wifi state
+    if (bill.month === selectedMonth) {
+      setRooms(prev =>
+        prev.map(r => {
+          if (r.id !== bill.roomId) return r;
+          const updatedRoom: RoomUnit = (bill.utilityType === 'DEWA' || bill.utilityType === 'SEWA')
+            ? {
+                ...r,
+                dewaBill: {
+                  provider: bill.utilityType,
+                  accountNumber: bill.accountNumber || r.dewaBill.accountNumber,
+                  amount: bill.amount,
+                  dueDate: bill.dueDate || r.dewaBill.dueDate,
+                  status: bill.status,
+                }
+              }
+            : {
+                ...r,
+                wifiBill: {
+                  provider: 'Du',
+                  accountNumber: bill.accountNumber || r.wifiBill.accountNumber,
+                  amount: bill.amount,
+                  dueDate: bill.dueDate || r.wifiBill.dueDate,
+                  status: bill.status,
+                }
+              };
+          upsertRoomToDb(updatedRoom);
+          return updatedRoom;
+        })
+      );
+    }
+  };
+
+  // --- Carry Forward Month Handler ---
+  const handleCarryForwardMonth = () => {
+    const months = ['Jun-2026', 'Jul-2026', 'Aug-2026', 'Sep-2026', 'Oct-2026', 'Nov-2026', 'Dec-2026'];
+    const currentIndex = months.indexOf(selectedMonth);
+    const nextMonth = currentIndex >= 0 && currentIndex < months.length - 1 ? months[currentIndex + 1] : 'Oct-2026';
+
+    const confirmed = window.confirm(
+      `Carry forward all active tenants and their bed allocations from ${selectedMonth} to ${nextMonth}?\n\n` +
+      `• Current ${selectedMonth} collection data will remain safely saved in history.\n` +
+      `• For ${nextMonth}, payment statuses will start fresh as Due so you can track the new month's collections.`
+    );
+    if (!confirmed) return;
+
+    setTenants(prev =>
+      prev.map(t => {
+        if (t.status !== 'Active') return t;
+        const updatedHistory = {
+          ...(t.monthStatusHistory || {}),
+          [selectedMonth]: t.currentMonthStatus,
+        };
+        const updated: Tenant = {
+          ...t,
+          stayMonth: nextMonth,
+          monthStatusHistory: updatedHistory,
+          currentMonthStatus: 'Due',
+        };
+        upsertTenantToDb(updated);
+        return updated;
+      })
+    );
+
+    setSelectedMonth(nextMonth);
+    alert(`Successfully carried forward all active tenants to ${nextMonth}!`);
+  };
+
+  // --- Customer Inquiry Handlers ---
+  const handleAddInquiry = (inquiry: CustomerInquiry) => {
+    setInquiries(prev => [inquiry, ...prev]);
+    upsertInquiryToDb(inquiry);
+  };
+
+  const handleUpdateInquiry = (inquiry: CustomerInquiry) => {
+    setInquiries(prev => prev.map(i => i.id === inquiry.id ? inquiry : i));
+    upsertInquiryToDb(inquiry);
+  };
+
+  const handleDeleteInquiry = (inquiryId: string) => {
+    setInquiries(prev => prev.filter(i => i.id !== inquiryId));
+    deleteInquiryFromDb(inquiryId);
+  };
+
+  const handleBatchUpdateInquiryStatus = (ids: string[], status: string, date: string) => {
+    setInquiries(prev =>
+      prev.map(i => ids.includes(i.id) ? { ...i, status: status as any, lastContactedDate: date } : i)
+    );
+    batchUpdateInquiryStatus(ids, status, date);
+  };
+
   const handleExportExcel = () => {
     if (!currentBuilding) return;
     exportFlatToExcel(currentBuilding, currentLocation, tenants);
@@ -571,7 +721,9 @@ export const App: React.FC = () => {
         onOpenAddExpense={() => handleOpenAddExpense()}
         onOpenRentCalculator={() => setIsRentCalculatorOpen(true)}
         onOpenPastTenants={() => setIsPastTenantsOpen(true)}
+        onOpenMonthlyBills={() => setIsMonthlyBillsOpen(true)}
         pastTenantsCount={pastTenants.length}
+        inquiryCount={inquiries.length}
         onToggleNotifications={() => setIsNotificationOpen(prev => !prev)}
         onExportExcel={handleExportExcel}
         onLogout={handleLogout}
@@ -656,9 +808,48 @@ export const App: React.FC = () => {
           />
         )}
 
+        {/* --- VIEW 4: CUSTOMER INQUIRIES & WHATSAPP BROADCAST --- */}
+        {currentView === 'followups' && (
+          <FollowUpPage
+            inquiries={inquiries}
+            selectedMonth={selectedMonth}
+            onAddInquiry={handleAddInquiry}
+            onUpdateInquiry={handleUpdateInquiry}
+            onDeleteInquiry={handleDeleteInquiry}
+            onBatchUpdateStatus={handleBatchUpdateInquiryStatus}
+            onConvertToTenant={(inq) => {
+              setAddTenantSection('HALL');
+              setIsAddTenantOpen(true);
+            }}
+          />
+        )}
+
         {/* --- VIEW 2: TENANTS SPREADSHEET VIEW --- */}
         {currentView === 'sheet' && (
           <>
+            {/* Monthly Utility Alert Prompt */}
+            {(currentRoom?.dewaBill?.status === 'Due' || currentRoom?.wifiBill?.status === 'Due') && (
+              <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between flex-wrap gap-2 text-xs">
+                <div className="flex items-center gap-2.5 text-amber-900">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shrink-0">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="font-bold block">Monthly Utility Bills Notice ({selectedMonth})</span>
+                    <span className="text-amber-800 text-[11px]">
+                      {currentBuilding?.name} Room {currentRoom?.roomNumber} has pending {currentRoom?.dewaBill?.status === 'Due' ? 'DEWA/SEWA' : ''} {currentRoom?.wifiBill?.status === 'Due' ? 'Wi-Fi' : ''} bills for this month.
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsMonthlyBillsOpen(true)}
+                  className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-lg shadow-2xs transition cursor-pointer text-xs"
+                >
+                  Enter & Settle {selectedMonth} Bills
+                </button>
+              </div>
+            )}
+
             {/* Building & Room Selector Banner */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
               <div>
@@ -722,6 +913,9 @@ export const App: React.FC = () => {
                 room={currentRoom}
                 tenants={currentRoomTenants}
                 searchQuery={searchQuery}
+                selectedMonth={selectedMonth}
+                onMonthChange={setSelectedMonth}
+                onCarryForwardMonth={handleCarryForwardMonth}
                 onEditTenant={setEditingTenant}
                 onDeleteTenant={handleDeleteTenant}
                 onCheckOutTenant={setCheckoutTenant}
@@ -839,6 +1033,18 @@ export const App: React.FC = () => {
         buildings={buildings}
         defaultRoomId={addExpenseRoomId || selectedRoomId}
         onAddExpense={handleAddExpense}
+      />
+
+      {/* Monthly Utility Bills (DEWA / SEWA / Wi-Fi) Modal */}
+      <MonthlyBillsModal
+        isOpen={isMonthlyBillsOpen}
+        onClose={() => setIsMonthlyBillsOpen(false)}
+        rooms={rooms}
+        buildings={buildings}
+        selectedMonth={selectedMonth}
+        onMonthChange={setSelectedMonth}
+        utilityBills={utilityBills}
+        onSaveBill={handleSaveUtilityBill}
       />
 
       {/* Persistent Footer with Live Database Indicator */}

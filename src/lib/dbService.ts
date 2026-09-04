@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { LocationItem, Building, RoomUnit, Tenant, ExpenseItem } from '../types/crm';
+import { LocationItem, Building, RoomUnit, Tenant, ExpenseItem, MonthlyUtilityBill, CustomerInquiry } from '../types/crm';
 
 // --- LOCATIONS ---
 export async function fetchLocationsFromDb(): Promise<LocationItem[]> {
@@ -276,5 +276,120 @@ export async function deleteExpenseFromDb(expenseId: string) {
     await supabase.from('room_crm_expenses').delete().eq('id', expenseId);
   } catch (err) {
     console.error('Error deleting expense from Supabase:', err);
+  }
+}
+
+// --- MONTHLY UTILITY BILLS (DEWA / SEWA / Wi-Fi) ---
+export async function fetchUtilityBillsFromDb(): Promise<MonthlyUtilityBill[]> {
+  try {
+    const { data, error } = await supabase.from('room_crm_utility_bills').select('*').order('created_at', { ascending: false });
+    if (error || !data) return [];
+    return data.map(d => ({
+      id: d.id,
+      roomId: d.room_id,
+      month: d.month,
+      utilityType: d.utility_type as any,
+      amount: Number(d.amount) || 0,
+      status: d.status as any || 'Due',
+      dueDate: d.due_date || '',
+      paidDate: d.paid_date || '',
+      accountNumber: d.account_number || '',
+      notes: d.notes || '',
+      createdAt: d.created_at,
+    }));
+  } catch (err) {
+    console.error('Error fetching utility bills from Supabase:', err);
+    return [];
+  }
+}
+
+export async function upsertUtilityBillToDb(bill: MonthlyUtilityBill) {
+  try {
+    await supabase.from('room_crm_utility_bills').upsert({
+      id: bill.id,
+      room_id: bill.roomId,
+      month: bill.month,
+      utility_type: bill.utilityType,
+      amount: bill.amount,
+      status: bill.status,
+      due_date: bill.dueDate,
+      paid_date: bill.paidDate,
+      account_number: bill.accountNumber,
+      notes: bill.notes,
+    });
+  } catch (err) {
+    console.error('Error saving utility bill to Supabase:', err);
+  }
+}
+
+export async function deleteUtilityBillFromDb(billId: string) {
+  try {
+    await supabase.from('room_crm_utility_bills').delete().eq('id', billId);
+  } catch (err) {
+    console.error('Error deleting utility bill from Supabase:', err);
+  }
+}
+
+// --- CUSTOMER INQUIRIES & FOLLOW-UP LEADS ---
+export async function fetchInquiriesFromDb(): Promise<CustomerInquiry[]> {
+  try {
+    const { data, error } = await supabase.from('room_crm_inquiries').select('*').order('inquiry_date', { ascending: false });
+    if (error || !data) return [];
+    return data.map(d => ({
+      id: d.id,
+      name: d.name,
+      phone: d.phone,
+      inquiryDate: d.inquiry_date,
+      lookingFor: d.looking_for as any,
+      preferredLocation: d.preferred_location || '',
+      budget: Number(d.budget) || 0,
+      status: d.status as any || 'New',
+      notes: d.notes || '',
+      lastContactedDate: d.last_contacted_date || '',
+      createdAt: d.created_at,
+    }));
+  } catch (err) {
+    console.error('Error fetching customer inquiries from Supabase:', err);
+    return [];
+  }
+}
+
+export async function upsertInquiryToDb(inquiry: CustomerInquiry) {
+  try {
+    await supabase.from('room_crm_inquiries').upsert({
+      id: inquiry.id,
+      name: inquiry.name,
+      phone: inquiry.phone,
+      inquiry_date: inquiry.inquiryDate,
+      looking_for: inquiry.lookingFor,
+      preferred_location: inquiry.preferredLocation,
+      budget: inquiry.budget,
+      status: inquiry.status,
+      notes: inquiry.notes,
+      last_contacted_date: inquiry.lastContactedDate,
+    });
+  } catch (err) {
+    console.error('Error saving customer inquiry to Supabase:', err);
+  }
+}
+
+export async function deleteInquiryFromDb(inquiryId: string) {
+  try {
+    await supabase.from('room_crm_inquiries').delete().eq('id', inquiryId);
+  } catch (err) {
+    console.error('Error deleting customer inquiry from Supabase:', err);
+  }
+}
+
+export async function batchUpdateInquiryStatus(ids: string[], status: string, contactedDate: string) {
+  try {
+    for (const id of ids) {
+      await supabase.from('room_crm_inquiries').update({
+        status,
+        last_contacted_date: contactedDate,
+      }).eq('id', id);
+    }
+  } catch (err) {
+    console.error('Error batch updating customer inquiries in Supabase:', err);
   }
 }

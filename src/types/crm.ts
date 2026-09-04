@@ -151,10 +151,40 @@ export interface Tenant {
   cupboardKey: boolean; // Cu/k
   doorKey: boolean; // D/k
   currentMonthStatus: 'Paid' | 'Pending' | 'Due' | 'Partial'; // e.g. Sep-26
+  stayMonth?: string; // e.g. 'Sep-2026'
+  monthStatusHistory?: Record<string, 'Paid' | 'Pending' | 'Due' | 'Partial'>;
   remarks: string; // "she has money", "she will do it before 10th", "she came at night", "500 balance"
   lastPaidDate?: string;
   checkOutRecord?: CheckOutRecord;
   history?: PaymentRecord[];
+}
+
+export interface MonthlyUtilityBill {
+  id: string;
+  roomId: string;
+  month: string; // e.g., 'Sep-2026', 'Oct-2026'
+  utilityType: 'DEWA' | 'SEWA' | 'Wi-Fi';
+  amount: number;
+  status: 'Paid' | 'Due';
+  dueDate?: string;
+  paidDate?: string;
+  accountNumber?: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+export interface CustomerInquiry {
+  id: string;
+  name: string;
+  phone: string;
+  inquiryDate: string; // DD.MM.YYYY
+  lookingFor: 'Bed Space (Upper)' | 'Bed Space (Lower)' | 'Partition' | 'Private Room' | 'Any';
+  preferredLocation?: string;
+  budget?: number; // in AED
+  status: 'New' | 'Followed Up' | 'Interested' | 'Converted' | 'Not Interested';
+  notes?: string;
+  lastContactedDate?: string;
+  createdAt?: string;
 }
 
 export interface RentNotification {
@@ -190,7 +220,7 @@ export interface UtilityNotification {
   roomId: string;
   buildingName: string;
   roomNumber: string;
-  type: 'DEWA' | 'Wi-Fi';
+  type: 'DEWA' | 'SEWA' | 'Wi-Fi';
   accountNumber: string;
   amount: number;
   dueDate: string;

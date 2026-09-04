@@ -13,13 +13,15 @@ import {
   DoorOpen,
   LayoutGrid,
   LogOut,
-  User
+  User,
+  Users,
+  Zap
 } from 'lucide-react';
 import { LocationItem, Building, RoomUnit, RentNotification, OwnerChequeNotification, UtilityNotification } from '../types/crm';
 
 interface HeaderProps {
-  currentView: 'sheet' | 'buildings' | 'profit_loss';
-  onChangeView: (view: 'sheet' | 'buildings' | 'profit_loss') => void;
+  currentView: 'sheet' | 'buildings' | 'profit_loss' | 'followups';
+  onChangeView: (view: 'sheet' | 'buildings' | 'profit_loss' | 'followups') => void;
   locations: LocationItem[];
   buildings: Building[];
   rooms: RoomUnit[];
@@ -36,7 +38,9 @@ interface HeaderProps {
   onOpenAddExpense?: () => void;
   onOpenRentCalculator: () => void;
   onOpenPastTenants: () => void;
+  onOpenMonthlyBills?: () => void;
   pastTenantsCount: number;
+  inquiryCount?: number;
   onToggleNotifications: () => void;
   onExportExcel: () => void;
   onLogout: () => void;
@@ -65,7 +69,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAddExpense,
   onOpenRentCalculator,
   onOpenPastTenants,
+  onOpenMonthlyBills,
   pastTenantsCount,
+  inquiryCount = 0,
   onToggleNotifications,
   onExportExcel,
   onLogout,
@@ -124,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }`}
               >
                 <LayoutGrid className="w-3.5 h-3.5 text-blue-400" />
-                <span>Buildings & Utilities ({buildings.length})</span>
+                <span>Buildings & Rooms ({buildings.length})</span>
               </button>
 
               <button
@@ -137,6 +143,23 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Profit & Loss</span>
+              </button>
+
+              <button
+                onClick={() => onChangeView('followups')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                  currentView === 'followups'
+                    ? 'bg-slate-800 text-white shadow-sm font-semibold border border-slate-700'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Follow-ups & Leads</span>
+                {inquiryCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-600 text-white">
+                    {inquiryCount}
+                  </span>
+                )}
               </button>
             </div>
 
@@ -232,6 +255,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Receipt className="w-3.5 h-3.5 text-slate-400" />
                 <span className="hidden sm:inline">Add Expense</span>
+              </button>
+            )}
+
+            {/* Monthly Utility Bills (DEWA / SEWA / Wi-Fi) */}
+            {onOpenMonthlyBills && (
+              <button
+                onClick={onOpenMonthlyBills}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 hover:text-amber-200 rounded-md text-xs font-medium border border-slate-800 transition cursor-pointer"
+                title="Monthly Utility Bills (DEWA, SEWA & Wi-Fi) for all 7 rooms"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Monthly Bills</span>
               </button>
             )}
 
