@@ -7,7 +7,9 @@ import {
   FileSpreadsheet, 
   Search, 
   DoorOpen,
-  LayoutGrid
+  LayoutGrid,
+  LogOut,
+  User
 } from 'lucide-react';
 import { LocationItem, Building, RoomUnit, RentNotification, OwnerChequeNotification, UtilityNotification } from '../types/crm';
 
@@ -29,6 +31,7 @@ interface HeaderProps {
   onOpenAddBuilding: () => void;
   onToggleNotifications: () => void;
   onExportExcel: () => void;
+  onLogout: () => void;
   tenantNotifications: RentNotification[];
   chequeNotifications: OwnerChequeNotification[];
   utilityNotifications: UtilityNotification[];
@@ -53,6 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAddBuilding,
   onToggleNotifications,
   onExportExcel,
+  onLogout,
   tenantNotifications,
   chequeNotifications,
   utilityNotifications,
@@ -156,10 +160,10 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Search, Action Buttons & Notifications */}
+          {/* Search, Action Buttons, User Profile & Notifications */}
           <div className="flex items-center flex-wrap gap-2">
             {/* Search Input */}
-            <div className="relative min-w-[170px] sm:min-w-[200px]">
+            <div className="relative min-w-[150px] sm:min-w-[180px]">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
@@ -206,7 +210,7 @@ export const Header: React.FC<HeaderProps> = ({
             {currentView === 'sheet' ? (
               <button
                 onClick={onOpenAddTenant}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold shadow-md shadow-amber-500/20 transition cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold shadow-md shadow-amber-500/20 transition cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Add Tenant</span>
@@ -214,12 +218,28 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <button
                 onClick={onOpenAddBuilding}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold shadow-md shadow-amber-500/20 transition cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold shadow-md shadow-amber-500/20 transition cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Add Building</span>
               </button>
             )}
+
+            {/* User Profile & Logout */}
+            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-700">
+              <div className="flex items-center gap-1 bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700 text-xs font-semibold text-amber-300">
+                <User className="w-3.5 h-3.5 text-amber-400" />
+                <span>abuthalif</span>
+              </div>
+              <button
+                onClick={onLogout}
+                title="Log Out"
+                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+
           </div>
 
         </div>

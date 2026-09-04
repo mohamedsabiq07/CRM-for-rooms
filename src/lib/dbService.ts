@@ -73,6 +73,19 @@ export async function upsertBuildingToDb(bld: Building) {
   }
 }
 
+export async function deleteBuildingFromDb(buildingId: string) {
+  try {
+    // Delete tenants in this building
+    await supabase.from('room_crm_tenants').delete().eq('building_id', buildingId);
+    // Delete rooms in this building
+    await supabase.from('room_crm_rooms').delete().eq('building_id', buildingId);
+    // Delete building
+    await supabase.from('room_crm_buildings').delete().eq('id', buildingId);
+  } catch (err) {
+    console.error('Error deleting building from Supabase:', err);
+  }
+}
+
 // --- ROOMS ---
 export async function fetchRoomsFromDb(): Promise<RoomUnit[]> {
   try {
@@ -111,6 +124,7 @@ export async function upsertRoomToDb(room: RoomUnit) {
 
 export async function deleteRoomFromDb(roomId: string) {
   try {
+    await supabase.from('room_crm_tenants').delete().eq('room_id', roomId);
     await supabase.from('room_crm_rooms').delete().eq('id', roomId);
   } catch (err) {
     console.error('Error deleting room from Supabase:', err);

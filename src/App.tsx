@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { LoginPage } from './components/LoginPage';
 import { Header } from './components/Header';
 import { StatsCards } from './components/StatsCards';
 import { TenantSheet } from './components/TenantSheet';
@@ -28,6 +29,7 @@ import {
   fetchTenantsFromDb,
   upsertLocationToDb,
   upsertBuildingToDb,
+  deleteBuildingFromDb,
   upsertRoomToDb,
   deleteRoomFromDb,
   upsertTenantToDb,
@@ -36,6 +38,11 @@ import {
 import { AlertTriangle, Plus, Building2, DoorOpen, ArrowLeft, Zap, Wifi, Database, Cloud } from 'lucide-react';
 
 export const App: React.FC = () => {
+  // --- Authentication State ---
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('room_crm_auth') === 'true';
+  });
+
   // --- Current View State ('sheet' or 'buildings') ---
   const [currentView, setCurrentView] = useState<'sheet' | 'buildings'>('sheet');
   const [isDbLoaded, setIsDbLoaded] = useState(false);
@@ -258,7 +265,12 @@ export const App: React.FC = () => {
     return alerts.sort((a, b) => a.daysDiff - b.daysDiff);
   }, [rooms, buildings]);
 
-  // --- Handlers with Cloud Sync ---
+  // --- Handlers ---
+  const handleLogout = () => {
+    localStorage.removeItem('room_crm_auth');
+    setIsAuthenticated(false);
+  };
+
   const handleAddTenant = (newTenantData: Omit<Tenant, 'id'>) => {
     const newId = `t-${Date.now()}`;
     const newTenant: Tenant = {
@@ -394,6 +406,18 @@ export const App: React.FC = () => {
     newRooms.forEach(r => upsertRoomToDb(r));
   };
 
+  const handleDeleteBuilding = (buildingId: string) => {
+    setBuildings(prev => prev.filter(b => b.id !== buildingId));
+    setRooms(prev => prev.filter(r => r.buildingId !== buildingId));
+    setTenants(prev => prev.filter(t => t.buildingId !== buildingId));
+    deleteBuildingFromDb(buildingId);
+
+    const remaining = buildings.filter(b => b.id !== buildingId);
+    if (remaining.length > 0) {
+      setSelectedBuildingId(remaining[0].id);
+    }
+  };
+
   const handleSaveRoom = (roomData: Omit<RoomUnit, 'id'>, roomId?: string) => {
     if (roomId) {
       const updated: RoomUnit = { ...roomData, id: roomId };
@@ -419,6 +443,11 @@ export const App: React.FC = () => {
     if (!currentBuilding) return;
     exportFlatToExcel(currentBuilding, currentLocation, tenants);
   };
+
+  // If not logged in, show Login Screen
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   const totalUrgentCount = 
     tenantNotifications.filter(n => n.status === 'overdue' || n.status === 'due_today').length +
@@ -449,6 +478,7 @@ export const App: React.FC = () => {
         onOpenAddBuilding={() => setIsAddBuildingOpen(true)}
         onToggleNotifications={() => setIsNotificationOpen(prev => !prev)}
         onExportExcel={handleExportExcel}
+        onLogout={handleLogout}
         tenantNotifications={tenantNotifications}
         chequeNotifications={chequeNotifications}
         utilityNotifications={utilityNotifications}
@@ -493,6 +523,7 @@ export const App: React.FC = () => {
             tenants={tenants}
             locations={locations}
             onOpenAddBuilding={() => setIsAddBuildingOpen(true)}
+            onDeleteBuilding={handleDeleteBuilding}
             onOpenAddRoom={(building) => {
               setRoomModalBuilding(building);
               setRoomModalTargetRoom(null);

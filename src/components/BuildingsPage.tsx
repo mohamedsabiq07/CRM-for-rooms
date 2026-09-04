@@ -13,6 +13,7 @@ import {
   AlertCircle,
   FileSpreadsheet,
   Edit2,
+  Trash2,
   TrendingUp,
   CreditCard,
   DollarSign
@@ -25,6 +26,7 @@ interface BuildingsPageProps {
   tenants: Tenant[];
   locations: LocationItem[];
   onOpenAddBuilding: () => void;
+  onDeleteBuilding: (buildingId: string) => void;
   onOpenAddRoom: (building: Building) => void;
   onEditRoom: (building: Building, room: RoomUnit) => void;
   onSelectRoomInSheet: (buildingId: string, roomId: string) => void;
@@ -37,6 +39,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
   tenants,
   locations,
   onOpenAddBuilding,
+  onDeleteBuilding,
   onOpenAddRoom,
   onEditRoom,
   onSelectRoomInSheet,
@@ -393,12 +396,22 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                 </div>
               </div>
 
-              {/* Building Bottom Footer */}
-              <div className="bg-slate-100/80 px-5 py-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-                <span>{buildingRooms.length} room units configured</span>
-                <span className="text-[11px] font-semibold text-slate-700">
-                  {building.notes || 'Dubai Residential Flat'}
-                </span>
+              {/* Building Bottom Footer with Vacate/Remove Building Option */}
+              <div className="bg-slate-100/90 px-5 py-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                <span className="font-semibold text-slate-600">{buildingRooms.length} room units configured</span>
+                
+                <button
+                  onClick={() => {
+                    if (confirm(`Are you sure you want to remove "${building.name}" from your CRM?\n\nThis will vacate and remove the building, its rooms, and utilities from your active dashboard.`)) {
+                      onDeleteBuilding(building.id);
+                    }
+                  }}
+                  className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 transition"
+                  title="Vacate and remove this building"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Vacate / Remove Building</span>
+                </button>
               </div>
             </div>
           );
