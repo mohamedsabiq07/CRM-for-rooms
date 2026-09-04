@@ -86,13 +86,12 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
             <span className="text-slate-600">•</span>
             <span className="text-slate-300">{activeCount} Occupied</span>
           </div>
-
           <div className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
             vacancyCount > 0 
-              ? 'bg-slate-800 text-slate-300 border-slate-700' 
-              : 'bg-slate-800 text-emerald-400 border-slate-700'
+              ? 'bg-amber-950/40 text-amber-300 border-amber-500/30' 
+              : 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30'
           }`}>
-            {vacancyCount > 0 ? `${vacancyCount} Vacant Bed${vacancyCount > 1 ? 's' : ''}` : 'Fully Occupied'}
+            {vacancyCount > 0 ? `⚠️ ${vacancyCount} Vacant Bed${vacancyCount > 1 ? 's' : ''}` : '✓ Fully Occupied'}
           </div>
         </div>
       </div>
@@ -108,18 +107,12 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
               <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[100px] font-medium">Deposit</th>
               <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[110px] font-medium">Joining Date</th>
               <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[110px] font-medium">Duration</th>
-              <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[100px] font-semibold">
-                Rent / Status
-              </th>
-              <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Cupboard Key">
-                Cu/k
-              </th>
-              <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Door Key">
-                D/k
-              </th>
-              <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[160px] font-medium">Remarks</th>
-              <th className="py-2.5 px-2.5 border-r border-slate-200/60 text-center min-w-[80px] font-semibold">Partition</th>
-              <th className="py-2.5 px-3 text-center min-w-[170px] font-medium">Actions</th>
+              <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[110px] font-semibold">Rent (AED)</th>
+              <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Cupboard Key">Cu/k</th>
+              <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Door Key">D/k</th>
+              <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[120px] font-medium">Partition</th>
+              <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[140px] font-medium">Remarks</th>
+              <th className="py-2.5 px-3 text-center min-w-[140px] font-semibold">Actions</th>
             </tr>
           </thead>
 
@@ -129,19 +122,25 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
 
               return (
                 <React.Fragment key={sectionName}>
-                  {/* Clean Section Divider (HALL / ROOM) */}
-                  <tr className="bg-slate-100 text-slate-800 font-bold uppercase tracking-wider text-xs border-y border-slate-200">
-                    <td colSpan={12} className="py-2 px-4 text-center">
+                  {/* Subtle Section Divider */}
+                  <tr className="bg-slate-100/90 border-y border-slate-200">
+                    <td colSpan={12} className="py-2 px-4">
                       <div className="flex items-center justify-between">
-                        <span className="w-1/4"></span>
-                        <span className="text-slate-800 font-bold text-center tracking-wide">{sectionName}</span>
-                        <div className="w-1/4 text-right">
+                        <span className="text-xs font-bold text-slate-800 tracking-wider uppercase flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-slate-600"></span>
+                          {sectionName}
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[11px] font-medium text-slate-500">
+                            {sectionTenants.length} tenants • AED {sectionTenants.reduce((s, t) => s + (t.rentAmount || 0), 0).toLocaleString()}
+                          </span>
                           {onAddTenantToSection && (
                             <button
                               onClick={() => onAddTenantToSection(sectionName)}
-                              className="text-[11px] text-slate-700 hover:text-slate-900 font-semibold px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:border-slate-300 shadow-sm transition"
+                              className="text-[11px] font-semibold text-slate-700 hover:text-slate-950 flex items-center gap-1 bg-white hover:bg-slate-50 px-2 py-0.5 rounded border border-slate-200 shadow-xs transition"
                             >
-                              + Add to {sectionName}
+                              <Plus className="w-3 h-3 stroke-[2.5]" />
+                              <span>Add</span>
                             </button>
                           )}
                         </div>
@@ -191,15 +190,25 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                                   </span>
                                 )}
                               </div>
-                              {/* Space & Bed Type Tag */}
-                              <div className="flex items-center gap-1 mt-0.5">
-                                {t.bedType && (
-                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                              {/* Space & Bed Type Tag with Tasteful Colors */}
+                              <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                                {t.bedType === 'Upper Bed' && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                    Upper Bed
+                                  </span>
+                                )}
+                                {t.bedType === 'Lower Bed' && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-semibold bg-sky-50 text-sky-800 border border-sky-200">
+                                    Lower Bed
+                                  </span>
+                                )}
+                                {t.bedType && t.bedType !== 'Upper Bed' && t.bedType !== 'Lower Bed' && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-medium bg-slate-100 text-slate-700 border border-slate-200">
                                     {t.bedType}
                                   </span>
                                 )}
                                 {t.spaceType && t.spaceType !== 'Partition' && (
-                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
                                     {t.spaceType}
                                   </span>
                                 )}
@@ -213,12 +222,16 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           </td>
 
                           {/* Deposit */}
-                          <td className={`py-2.5 px-3 text-center border-r border-slate-200/60 text-xs ${
-                            t.depositNote === 'No Advance' || t.deposit === 0 
-                              ? 'text-slate-400 font-normal italic' 
-                              : 'text-slate-900 font-semibold'
-                          }`}>
-                            {t.depositNote ? t.depositNote : t.deposit > 0 ? `AED ${t.deposit}` : '-'}
+                          <td className="py-2.5 px-3 text-center border-r border-slate-200/60 text-xs">
+                            {t.depositNote ? (
+                              <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                {t.depositNote}
+                              </span>
+                            ) : t.deposit > 0 ? (
+                              <span className="text-slate-900 font-semibold">AED {t.deposit}</span>
+                            ) : (
+                              <span className="text-slate-400 font-normal italic">-</span>
+                            )}
                           </td>
 
                           {/* Joining Date */}
@@ -243,12 +256,12 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                               <span className="text-xs font-bold text-slate-900">
                                 AED {t.rentAmount || '0'}
                               </span>
-                              <span className={`text-[10px] px-2 py-0.2 rounded-full font-medium border mt-0.5 ${
+                              <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 ${
                                 t.currentMonthStatus === 'Paid' 
                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                                   : dueInfo.status === 'overdue'
                                     ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                                    : 'bg-amber-50 text-amber-800 border border-amber-200'
                               }`}>
                                 {t.currentMonthStatus || 'Due'}
                               </span>

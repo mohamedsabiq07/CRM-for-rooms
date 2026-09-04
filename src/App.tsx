@@ -57,6 +57,17 @@ export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'sheet' | 'buildings' | 'profit_loss'>('sheet');
   const [isDbLoaded, setIsDbLoaded] = useState(false);
 
+  // Cache buster to ensure real Excel dataset loads fresh
+  const CRM_DATA_VERSION = 'v3_real_sheets_data';
+  if (typeof window !== 'undefined' && localStorage.getItem('room_crm_version') !== CRM_DATA_VERSION) {
+    localStorage.removeItem('room_crm_locations');
+    localStorage.removeItem('room_crm_buildings');
+    localStorage.removeItem('room_crm_rooms');
+    localStorage.removeItem('room_crm_tenants');
+    localStorage.removeItem('room_crm_expenses');
+    localStorage.setItem('room_crm_version', CRM_DATA_VERSION);
+  }
+
   // --- State with Fallback ---
   const [locations, setLocations] = useState<LocationItem[]>(() => {
     const saved = localStorage.getItem('room_crm_locations');
@@ -83,17 +94,17 @@ export const App: React.FC = () => {
     return saved ? JSON.parse(saved) : INITIAL_EXPENSES;
   });
 
-  // Selected Building & Room
+  // Selected Building & Room (Default: Loussane Building -> Room 202)
   const [selectedLocationId, setSelectedLocationId] = useState<string>(() => {
     return locations[0]?.id || 'loc-barsha';
   });
 
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>(() => {
-    return buildings[0]?.id || 'bld-vienna';
+    return buildings[0]?.id || 'bld-loussane';
   });
 
   const [selectedRoomId, setSelectedRoomId] = useState<string>(() => {
-    return 'room-vienna-103';
+    return 'room-loussane-202';
   });
 
   // Search Query

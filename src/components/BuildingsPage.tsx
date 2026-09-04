@@ -84,7 +84,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
 
           <button
             onClick={onOpenAddBuilding}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-100 text-slate-950 font-semibold rounded-lg text-xs shadow-sm transition self-start md:self-auto cursor-pointer border border-slate-200"
+            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-xs shadow-sm transition self-start md:self-auto cursor-pointer border border-indigo-500"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Add Property</span>

@@ -100,7 +100,7 @@ export const ProfitAndLossPage: React.FC<ProfitAndLossPageProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => onOpenAddExpense(selectedRoomFilter !== 'all' ? selectedRoomFilter : undefined)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-950 font-semibold rounded-lg text-xs shadow-sm transition cursor-pointer border border-slate-200"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-xs shadow-sm transition cursor-pointer border border-indigo-500"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>Add Expense</span>
@@ -111,7 +111,7 @@ export const ProfitAndLossPage: React.FC<ProfitAndLossPageProps> = ({
               className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-lg text-xs border border-slate-700 transition cursor-pointer shadow-sm"
               title="Download full P&L balance sheet and flat breakdown to Excel"
             >
-              <FileSpreadsheet className="w-4 h-4 text-slate-400" />
+              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
               <span>Export P&L (.xlsx)</span>
             </button>
           </div>

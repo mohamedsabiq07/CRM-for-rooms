@@ -90,12 +90,12 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Brand & Main View Navigation */}
           <div className="flex items-center flex-wrap gap-4">
             <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-200 font-bold shrink-0">
-                <Building2 className="w-5 h-5 text-slate-300" />
+              <div className="w-9 h-9 rounded-lg bg-indigo-600 border border-indigo-500 flex items-center justify-center text-white font-bold shrink-0 shadow-sm shadow-indigo-600/25">
+                <Building2 className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
-                  Room CRM <span className="text-[10px] bg-slate-800 text-slate-300 font-medium px-2 py-0.5 rounded border border-slate-700">Dubai</span>
+                  Room CRM <span className="text-[10px] bg-indigo-950/80 text-indigo-300 font-medium px-2 py-0.5 rounded border border-indigo-800/60">Dubai</span>
                 </h1>
                 <p className="text-[11px] text-slate-400 font-normal">Property & Tenant Management</p>
               </div>
@@ -111,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Tenants Sheet</span>
               </button>
 
@@ -123,7 +123,7 @@ export const Header: React.FC<HeaderProps> = ({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
+                <LayoutGrid className="w-3.5 h-3.5 text-blue-400" />
                 <span>Buildings & Utilities ({buildings.length})</span>
               </button>
 
@@ -135,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <TrendingUp className="w-3.5 h-3.5" />
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Profit & Loss</span>
               </button>
             </div>
@@ -271,7 +271,7 @@ export const Header: React.FC<HeaderProps> = ({
             {currentView === 'sheet' ? (
               <button
                 onClick={onOpenAddTenant}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-950 rounded-md text-xs font-semibold shadow-sm transition cursor-pointer border border-slate-200"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-semibold shadow-sm transition cursor-pointer border border-indigo-500"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Add Tenant</span>
@@ -279,7 +279,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <button
                 onClick={onOpenAddBuilding}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-950 rounded-md text-xs font-semibold shadow-sm transition cursor-pointer border border-slate-200"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-semibold shadow-sm transition cursor-pointer border border-indigo-500"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Add Building</span>
