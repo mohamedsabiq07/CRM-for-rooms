@@ -65,32 +65,42 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
     );
   });
 
-  const sections = Array.from(new Set(tenants.map(t => t.section || 'HALL')));
-  if (!sections.includes('HALL')) sections.unshift('HALL');
-  if (!sections.includes('ROOM')) sections.push('ROOM');
+  // Only display sections that actually contain tenants in this filtered list (or fallback to ['MAIN'] if empty)
+  const rawSections = Array.from(new Set(filteredTenants.map(t => (t.section || '').trim()).filter(Boolean))) as string[];
+  const sections = rawSections.length > 0 ? rawSections : ['MAIN'];
 
   const capacity = room?.capacity || 10;
   const activeCount = filteredTenants.filter(t => t.status === 'Active').length;
   const vacancyCount = Math.max(0, capacity - activeCount);
 
+  const rawRoomNum = room?.roomNumber || '';
+  const isUnitOrNamed = /unit|hall/i.test(rawRoomNum);
+  const cleanRoomNum = rawRoomNum.replace(/^(room|flat)\s*/i, '').replace(/\s*\(.*\)$/, '').trim();
+  const formattedRoomLabel = isUnitOrNamed 
+    ? rawRoomNum.toUpperCase() 
+    : `FLAT ${cleanRoomNum}`;
+  const roomTypeLabel = room?.roomType
+    ? room.roomType.toUpperCase().replace(/\s*FLAT$/i, '')
+    : 'PARTITION';
   const sheetTitle = room 
-    ? `${building.name.toUpperCase()} - ROOM ${room.roomNumber} - PARTITION` 
+    ? `${building.name.toUpperCase()} - ${formattedRoomLabel} - ${roomTypeLabel}` 
     : `${building.name.toUpperCase()} - PARTITION`;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
-      {/* Title Header: Executive Slate Banner + Capacity & Vacancy Badge */}
-      <div className="bg-slate-900 py-3.5 px-4 sm:px-6 border-b border-slate-800 flex items-center justify-between flex-wrap gap-2 text-white">
+      {/* Title Header: Executive Stellar Dark Banner + Capacity & Vacancy Badge */}
+      <div className="bg-[#181824] py-3.5 px-4 sm:px-6 border-b border-[#262638] flex items-center justify-between flex-wrap gap-2 text-white">
         <div>
-          <h2 className="text-sm sm:text-base font-bold tracking-tight text-white uppercase">
+          <h2 className="text-sm sm:text-base font-bold tracking-tight text-white uppercase flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#38CE3C]"></span>
             {sheetTitle}
           </h2>
-          <p className="text-[11px] text-slate-400 font-normal">Live Tenant Registry & Partition Management</p>
+          <p className="text-[11px] text-slate-400 font-normal">Live Tenant Registry & Bedspace/Partition Allocation</p>
         </div>
 
         {/* Capacity & Vacancy Indicator */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-2 bg-slate-800 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700">
+          <div className="flex items-center gap-2 bg-[#222234] text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#2f2f45]">
             <span className="text-slate-400 font-normal">Capacity:</span>
             <span className="font-semibold text-white">{capacity} Beds</span>
             <span className="text-slate-600">•</span>
@@ -98,8 +108,8 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
           </div>
           <div className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
             vacancyCount > 0 
-              ? 'bg-amber-950/40 text-amber-300 border-amber-500/30' 
-              : 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30'
+              ? 'bg-[#FFDE73]/15 text-[#FFDE73] border-[#FFDE73]/40' 
+              : 'bg-[#38CE3C]/15 text-[#38CE3C] border-[#38CE3C]/40'
           }`}>
             {vacancyCount > 0 ? `⚠️ ${vacancyCount} Vacant Bed${vacancyCount > 1 ? 's' : ''}` : '✓ Fully Occupied'}
           </div>
@@ -230,12 +240,12 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                               {/* Space & Bed Type Tag with Tasteful Colors */}
                               <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                                 {t.bedType === 'Upper Bed' && (
-                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-[#FFF9E6] text-[#8C6B00] border border-[#FFDE73]">
                                     Upper Bed
                                   </span>
                                 )}
                                 {t.bedType === 'Lower Bed' && (
-                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-semibold bg-sky-50 text-sky-800 border border-sky-200">
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-medium bg-slate-100 text-slate-700 border border-slate-200">
                                     Lower Bed
                                   </span>
                                 )}
@@ -245,7 +255,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                                   </span>
                                 )}
                                 {t.spaceType && t.spaceType !== 'Partition' && (
-                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-semibold bg-[#8E32E9]/10 text-[#7116CE] border border-[#8E32E9]/30">
                                     {t.spaceType}
                                   </span>
                                 )}
@@ -261,7 +271,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           {/* Deposit */}
                           <td className="py-2.5 px-3 text-center border-r border-slate-200/60 text-xs">
                             {t.depositNote ? (
-                              <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                              <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold bg-[#FFF0F3] text-[#D1183E] border border-[#FF4D6B]/40">
                                 {t.depositNote}
                               </span>
                             ) : t.deposit > 0 ? (
@@ -295,10 +305,10 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                               </span>
                               <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 ${
                                 t.currentMonthStatus === 'Paid' 
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                  ? 'bg-[#EAFBF0] text-[#1B8020] border-[#38CE3C]/60' 
                                   : dueInfo.status === 'overdue'
-                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                    : 'bg-amber-50 text-amber-800 border border-amber-200'
+                                    ? 'bg-[#FFF0F3] text-[#D1183E] border-[#FF4D6B]/40'
+                                    : 'bg-[#FFF9E6] text-[#8C6B00] border border-[#FFDE73]/60'
                               }`}>
                                 {t.currentMonthStatus || 'Due'}
                               </span>
@@ -313,7 +323,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           >
                             <button className={`w-4 h-4 mx-auto rounded flex items-center justify-center border transition ${
                               t.cupboardKey 
-                                ? 'bg-slate-900 text-white border-slate-900' 
+                                ? 'bg-[#181824] text-[#38CE3C] border-[#181824]' 
                                 : 'bg-white text-transparent border-slate-300 hover:border-slate-400'
                             }`}>
                               <Check className="w-3 h-3 stroke-[3]" />
@@ -328,7 +338,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           >
                             <button className={`w-4 h-4 mx-auto rounded flex items-center justify-center border transition ${
                               t.doorKey 
-                                ? 'bg-slate-900 text-white border-slate-900' 
+                                ? 'bg-[#181824] text-[#38CE3C] border-[#181824]' 
                                 : 'bg-white text-transparent border-slate-300 hover:border-slate-400'
                             }`}>
                               <Check className="w-3 h-3 stroke-[3]" />

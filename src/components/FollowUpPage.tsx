@@ -224,11 +224,11 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner */}
-      <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-sm border border-slate-800">
+      <div className="bg-[#181824] text-white p-6 rounded-2xl shadow-sm border border-[#262638]">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-800">
           <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-400 uppercase tracking-widest">
-              <Users className="w-4 h-4 text-indigo-400" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#38CE3C] uppercase tracking-widest">
+              <Users className="w-4 h-4 text-[#38CE3C]" />
               <span>Customer Inquiries & Lead Pipeline</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mt-1">
@@ -242,7 +242,7 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleOpenAddModal}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-xs shadow-sm transition cursor-pointer border border-indigo-500"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-[#38CE3C] hover:bg-[#30b533] text-[#181824] font-bold rounded-lg text-xs shadow-sm transition cursor-pointer border border-[#38CE3C]"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>Add Customer Inquiry</span>
@@ -250,9 +250,9 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
 
             <button
               onClick={handleOpenBroadcastModal}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-xs shadow-sm transition cursor-pointer border border-emerald-500"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-[#222234] hover:bg-[#2c2c42] text-[#38CE3C] hover:text-[#46e64a] font-semibold rounded-lg text-xs shadow-sm transition cursor-pointer border border-[#2f2f45]"
             >
-              <MessageSquare className="w-4 h-4 text-white" />
+              <MessageSquare className="w-4 h-4 text-[#38CE3C]" />
               <span>Month-End WhatsApp Broadcast</span>
             </button>
           </div>

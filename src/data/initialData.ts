@@ -50,13 +50,26 @@ export const INITIAL_BUILDINGS: Building[] = [
     locationId: 'loc-barsha',
     name: 'Vienna Building',
     address: 'Al Barsha 1, Near MOE, Dubai',
-    ownerRentAnnual: 96000,
+    ownerRentAnnual: 48000,
     paymentTerms: 'Quarterly',
-    chequeAmount: 24000,
+    chequeAmount: 12000,
     nextChequeDueDate: '01.10.2026',
     ownerName: 'Vienna Properties LLC',
     ownerPhone: '+971 4 345 9900',
-    notes: 'Houses Room 103 (Partition) and Room 102 (Bed Space)'
+    notes: 'Houses Room 103 (Partition)'
+  },
+  {
+    id: 'bld-al-shaiba',
+    locationId: 'loc-barsha',
+    name: 'Al Shaiba Building',
+    address: 'Al Barsha 1, Dubai',
+    ownerRentAnnual: 46000,
+    paymentTerms: 'Quarterly',
+    chequeAmount: 11500,
+    nextChequeDueDate: '01.10.2026',
+    ownerName: 'Al Shaiba Real Estate',
+    ownerPhone: '+971 4 399 2200',
+    notes: 'Houses Flat 210 (Bed Space Flat)'
   }
 ];
 
@@ -201,7 +214,7 @@ export const INITIAL_ROOMS: RoomUnit[] = [
   {
     id: 'room-vienna-103',
     buildingId: 'bld-vienna',
-    roomNumber: 'Room 103 (Partition)',
+    roomNumber: '103',
     roomType: 'Partition Flat',
     capacity: 15,
     actualRentAnnual: 48000,
@@ -226,16 +239,16 @@ export const INITIAL_ROOMS: RoomUnit[] = [
     }
   },
   {
-    id: 'room-vienna-102',
-    buildingId: 'bld-vienna',
-    roomNumber: 'Room 102 (Bed Space)',
+    id: 'room-alshaiba-210',
+    buildingId: 'bld-al-shaiba',
+    roomNumber: '210',
     roomType: 'Bed Space Flat',
     capacity: 13,
     actualRentAnnual: 46000,
     paymentTerms: 'Quarterly',
-    realEstateName: 'Vienna Properties',
-    realEstatePhone: '+971 4 345 9900',
-    ejariNumber: 'EJR-VIE-102',
+    realEstateName: 'Al Shaiba Real Estate',
+    realEstatePhone: '+971 4 399 2200',
+    ejariNumber: 'EJR-SHB-210',
     securityDepositToOwner: 4000,
     dewaBill: {
       provider: 'DEWA',
@@ -1634,12 +1647,12 @@ export const INITIAL_TENANTS: Tenant[] = [
     remarks: ''
   },
 
-  // --- VIENNA ROOM 102 (BED SPACE) (12 Active Tenants, 1 Vacant) ---
+  // --- AL SHAIBA ROOM 210 (BED SPACE) (12 Active Tenants, 1 Vacant) ---
   {
     id: 't-vienna-bs1',
     sno: 1,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Ravinder',
     place: 'Indian',
     phone: '',
@@ -1660,8 +1673,8 @@ export const INITIAL_TENANTS: Tenant[] = [
   {
     id: 't-vienna-bs2',
     sno: 2,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Nithin',
     place: 'Malayali',
     phone: '',
@@ -1682,8 +1695,8 @@ export const INITIAL_TENANTS: Tenant[] = [
   {
     id: 't-vienna-bs3',
     sno: 3,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Seva ganapathy',
     place: 'Tamil',
     phone: '',
@@ -1704,8 +1717,8 @@ export const INITIAL_TENANTS: Tenant[] = [
   {
     id: 't-vienna-bs4',
     sno: 4,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Xavier',
     place: 'Malayali',
     phone: '',
@@ -1726,8 +1739,8 @@ export const INITIAL_TENANTS: Tenant[] = [
   {
     id: 't-vienna-bs5',
     sno: 5,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Tamil',
     place: 'Tamil',
     phone: '',
@@ -1748,8 +1761,8 @@ export const INITIAL_TENANTS: Tenant[] = [
   {
     id: 't-vienna-bs6',
     sno: 6,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Vinay',
     place: 'hindi',
     phone: '',
@@ -1770,8 +1783,8 @@ export const INITIAL_TENANTS: Tenant[] = [
   {
     id: 't-vienna-bs7',
     sno: 7,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Abul hassan khadir',
     place: 'Tamil',
     phone: '',
@@ -1792,8 +1805,8 @@ export const INITIAL_TENANTS: Tenant[] = [
   {
     id: 't-vienna-bs8',
     sno: 8,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Moorthy',
     place: 'Tamil',
     phone: '',
@@ -1814,8 +1827,8 @@ export const INITIAL_TENANTS: Tenant[] = [
   {
     id: 't-vienna-bs9',
     sno: 9,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Seethu friend',
     place: 'Malayali',
     phone: '',
@@ -1836,8 +1849,8 @@ export const INITIAL_TENANTS: Tenant[] = [
   {
     id: 't-vienna-bs10',
     sno: 10,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Haris',
     place: 'Malayali',
     phone: '',
@@ -1858,8 +1871,8 @@ export const INITIAL_TENANTS: Tenant[] = [
   {
     id: 't-vienna-bs11',
     sno: 11,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Shareef',
     place: 'Hindi',
     phone: '',
@@ -1880,8 +1893,8 @@ export const INITIAL_TENANTS: Tenant[] = [
   {
     id: 't-vienna-bs12',
     sno: 12,
-    buildingId: 'bld-vienna',
-    roomId: 'room-vienna-102',
+    buildingId: 'bld-al-shaiba',
+    roomId: 'room-alshaiba-210',
     name: 'Seethu',
     place: 'Malayali',
     phone: '',
@@ -1914,8 +1927,8 @@ export const INITIAL_UTILITY_BILLS: MonthlyUtilityBill[] = [
   { id: 'util-avari-wifi-sep26', roomId: 'room-avari-101', month: 'Sep-2026', utilityType: 'Wi-Fi', amount: 350, status: 'Paid', dueDate: '25.09.2026', accountNumber: '04-295-1010', notes: 'Wi-Fi' },
   { id: 'util-vien103-dewa-sep26', roomId: 'room-vienna-103', month: 'Sep-2026', utilityType: 'DEWA', amount: 820, status: 'Due', dueDate: '15.09.2026', accountNumber: '210459201', notes: 'DEWA Bill' },
   { id: 'util-vien103-wifi-sep26', roomId: 'room-vienna-103', month: 'Sep-2026', utilityType: 'Wi-Fi', amount: 389, status: 'Due', dueDate: '18.09.2026', accountNumber: '04-399-4411', notes: 'Wi-Fi' },
-  { id: 'util-vien102-dewa-sep26', roomId: 'room-vienna-102', month: 'Sep-2026', utilityType: 'DEWA', amount: 750, status: 'Due', dueDate: '15.09.2026', accountNumber: '210459202', notes: 'DEWA Bill' },
-  { id: 'util-vien102-wifi-sep26', roomId: 'room-vienna-102', month: 'Sep-2026', utilityType: 'Wi-Fi', amount: 389, status: 'Due', dueDate: '18.09.2026', accountNumber: '04-399-4412', notes: 'Wi-Fi' }
+  { id: 'util-alshaiba210-dewa-sep26', roomId: 'room-alshaiba-210', month: 'Sep-2026', utilityType: 'DEWA', amount: 750, status: 'Due', dueDate: '15.09.2026', accountNumber: '210459202', notes: 'DEWA Bill' },
+  { id: 'util-alshaiba210-wifi-sep26', roomId: 'room-alshaiba-210', month: 'Sep-2026', utilityType: 'Wi-Fi', amount: 389, status: 'Due', dueDate: '18.09.2026', accountNumber: '04-399-4412', notes: 'Wi-Fi' }
 ];
 
 export const INITIAL_INQUIRIES: CustomerInquiry[] = [

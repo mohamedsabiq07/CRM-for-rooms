@@ -89,19 +89,19 @@ export const Header: React.FC<HeaderProps> = ({
     utilityNotifications.filter(u => u.status === 'overdue' || u.status === 'due_today').length;
 
   return (
-    <header className="bg-slate-950 text-white sticky top-0 z-30 shadow-sm border-b border-slate-800">
+    <header className="bg-[#181824] text-white sticky top-0 z-30 shadow-sm border-b border-[#262638]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           
           {/* Brand & Main View Navigation */}
           <div className="flex items-center flex-wrap gap-4">
             <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-lg bg-indigo-600 border border-indigo-500 flex items-center justify-center text-white font-bold shrink-0 shadow-sm shadow-indigo-600/25">
-                <Building2 className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-lg bg-[#38CE3C] border border-[#38CE3C] flex items-center justify-center text-[#181824] font-bold shrink-0 shadow-sm">
+                <Building2 className="w-5 h-5 text-[#181824]" />
               </div>
               <div>
                 <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
-                  Room CRM <span className="text-[10px] bg-indigo-950/80 text-indigo-300 font-medium px-2 py-0.5 rounded border border-indigo-800/60">Dubai</span>
+                  Room CRM <span className="text-[10px] bg-[#38CE3C]/15 text-[#38CE3C] font-semibold px-2 py-0.5 rounded border border-[#38CE3C]/30">Dubai</span>
                 </h1>
                 <p className="text-[11px] text-slate-400 font-normal">Property & Tenant Management</p>
               </div>
@@ -193,13 +193,19 @@ export const Header: React.FC<HeaderProps> = ({
                     className="bg-transparent text-xs font-medium text-slate-200 focus:outline-none cursor-pointer pr-1"
                   >
                     {currentRooms.length === 0 ? (
-                      <option value="" className="bg-slate-900 text-slate-400">No rooms</option>
+                      <option value="" className="bg-[#181824] text-slate-400">No rooms</option>
                     ) : (
-                      currentRooms.map((room) => (
-                        <option key={room.id} value={room.id} className="bg-slate-900 text-white">
-                          Room {room.roomNumber} ({room.roomType.split(' ')[0]})
-                        </option>
-                      ))
+                      currentRooms.map((room) => {
+                        const rawNum = room.roomNumber;
+                        const isNamed = /unit|hall/i.test(rawNum);
+                        const cleanNum = rawNum.replace(/^(room|flat)\s*/i, '').replace(/\s*\(.*\)$/, '').trim();
+                        const label = isNamed ? rawNum : `Flat ${cleanNum}`;
+                        return (
+                          <option key={room.id} value={room.id} className="bg-[#181824] text-white">
+                            {label} ({room.roomType.split(' ')[0]})
+                          </option>
+                        );
+                      })
                     )}
                   </select>
                 </div>
@@ -306,7 +312,7 @@ export const Header: React.FC<HeaderProps> = ({
             {currentView === 'sheet' ? (
               <button
                 onClick={onOpenAddTenant}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-semibold shadow-sm transition cursor-pointer border border-indigo-500"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#38CE3C] hover:bg-[#30b533] text-[#181824] rounded-md text-xs font-bold shadow-sm transition cursor-pointer border border-[#38CE3C]"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Add Tenant</span>
@@ -314,7 +320,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <button
                 onClick={onOpenAddBuilding}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-semibold shadow-sm transition cursor-pointer border border-indigo-500"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#38CE3C] hover:bg-[#30b533] text-[#181824] rounded-md text-xs font-bold shadow-sm transition cursor-pointer border border-[#38CE3C]"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Add Building</span>

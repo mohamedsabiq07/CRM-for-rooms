@@ -78,14 +78,16 @@ export const App: React.FC = () => {
   // Active Month (defaults to Sep-2026 as per user requirement)
   const [selectedMonth, setSelectedMonth] = useState<string>('Sep-2026');
 
-  // Cache buster to ensure 7 rooms, utilities, and inquiries load fresh
-  const CRM_DATA_VERSION = 'v4_7rooms_utilities_followups';
+  // Cache buster to ensure 7 rooms (including Al Shaiba 210), utilities, and inquiries load fresh
+  const CRM_DATA_VERSION = 'v5_alshaiba_210_stellar';
   if (typeof window !== 'undefined' && localStorage.getItem('room_crm_version') !== CRM_DATA_VERSION) {
     localStorage.removeItem('room_crm_locations');
     localStorage.removeItem('room_crm_buildings');
     localStorage.removeItem('room_crm_rooms');
     localStorage.removeItem('room_crm_tenants');
     localStorage.removeItem('room_crm_expenses');
+    localStorage.removeItem('room_crm_utility_bills');
+    localStorage.removeItem('room_crm_inquiries');
     localStorage.setItem('room_crm_version', CRM_DATA_VERSION);
   }
 

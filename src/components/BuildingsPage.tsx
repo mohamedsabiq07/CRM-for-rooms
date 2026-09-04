@@ -67,11 +67,11 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner & Financial Metrics */}
-      <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-sm border border-slate-800">
+      <div className="bg-[#181824] text-white p-6 rounded-2xl shadow-sm border border-[#262638]">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-800">
           <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-400 uppercase tracking-widest">
-              <Building2 className="w-4 h-4 text-slate-400" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#38CE3C] uppercase tracking-widest">
+              <Building2 className="w-4 h-4 text-[#38CE3C]" />
               <span>Building Portfolio & Utility Operations</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mt-1">
@@ -84,7 +84,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
 
           <button
             onClick={onOpenAddBuilding}
-            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-xs shadow-sm transition self-start md:self-auto cursor-pointer border border-indigo-500"
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#38CE3C] hover:bg-[#30b533] text-[#181824] font-bold rounded-lg text-xs shadow-sm transition self-start md:self-auto cursor-pointer border border-[#38CE3C]"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Add Property</span>
@@ -272,6 +272,9 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                       {buildingRooms.map((room) => {
                         const roomTenants = tenants.filter(t => t.roomId === room.id && t.status === 'Active');
                         const roomIncome = roomTenants.reduce((sum, t) => sum + (Number(t.rentAmount) || 0), 0);
+                        const isNamed = /unit|hall/i.test(room.roomNumber);
+                        const cleanNum = room.roomNumber.replace(/^(room|flat)\s*/i, '').replace(/\s*\(.*\)$/, '').trim();
+                        const displayRoomLabel = isNamed ? room.roomNumber : `Flat ${cleanNum}`;
 
                         return (
                           <div
@@ -283,7 +286,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                               <div>
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="text-sm font-bold text-slate-900">
-                                    Room {room.roomNumber}
+                                    {displayRoomLabel}
                                   </span>
                                   <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-200 text-slate-700">
                                     {room.roomType || 'Partition Flat'}
