@@ -174,3 +174,83 @@ export function generateWhatsAppLink(
   const message = `Hello ${tenantName},\n\nThis is a gentle reminder regarding the room rent for ${flatName} (${partition.toUpperCase()}).\n\n💰 Amount: AED ${rentAmount || 'Rent'}\n📅 Due Status: ${dueText}\n\nKindly arrange the payment at your earliest convenience. Thank you! 🙏`;
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
+
+export const STANDARD_MONTHS = [
+  'Jan-2026', 'Feb-2026', 'Mar-2026', 'Apr-2026', 'May-2026', 'Jun-2026',
+  'Jul-2026', 'Aug-2026', 'Sep-2026', 'Oct-2026', 'Nov-2026', 'Dec-2026'
+];
+
+const MONTH_NAMES_MAP: Record<string, string[]> = {
+  'jan': ['jan', 'january', '1', '01'],
+  'feb': ['feb', 'february', '2', '02'],
+  'mar': ['mar', 'march', '3', '03'],
+  'apr': ['apr', 'april', '4', '04'],
+  'may': ['may', '5', '05'],
+  'jun': ['jun', 'june', '6', '06'],
+  'jul': ['jul', 'july', '7', '07'],
+  'aug': ['aug', 'august', '8', '08'],
+  'sep': ['sep', 'september', '9', '09'],
+  'oct': ['oct', 'october', '10'],
+  'nov': ['nov', 'november', '11'],
+  'dec': ['dec', 'december', '12']
+};
+
+/**
+ * Checks if a search query matches a given month string (e.g. 'Aug-2026' matches 'aug', 'august', '8', '2026')
+ */
+export function searchMatchesMonth(monthString: string, query: string): boolean {
+  if (!query.trim()) return true;
+  const q = query.trim().toLowerCase();
+  const mLower = monthString.toLowerCase();
+  
+  if (mLower.includes(q)) return true;
+
+  const prefix = mLower.slice(0, 3);
+  const aliases = MONTH_NAMES_MAP[prefix];
+  if (aliases && aliases.some(alias => alias === q || q.includes(alias))) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Accurately gets a tenant's payment status for a specific month.
+ * If historical status exists for that month in monthStatusHistory, returns it.
+ * If viewing the tenant's current stayMonth, returns currentMonthStatus.
+ * Otherwise defaults to 'Due'.
+ */
+export function getTenantStatusForMonth(
+  tenant: {
+    currentMonthStatus?: 'Paid' | 'Pending' | 'Due' | 'Partial';
+    stayMonth?: string;
+    monthStatusHistory?: Record<string, 'Paid' | 'Pending' | 'Due' | 'Partial'>;
+  },
+  month: string
+): 'Paid' | 'Pending' | 'Due' | 'Partial' {
+  if (tenant.monthStatusHistory && tenant.monthStatusHistory[month]) {
+    return tenant.monthStatusHistory[month];
+  }
+  if ((tenant.stayMonth || 'Sep-2026') === month && tenant.currentMonthStatus) {
+    return tenant.currentMonthStatus;
+  }
+  return 'Due';
+}
+
+/**
+ * Returns previous month from a list
+ */
+export function getPreviousMonth(currentMonth: string, list: string[] = STANDARD_MONTHS): string | null {
+  const idx = list.indexOf(currentMonth);
+  if (idx > 0) return list[idx - 1];
+  return null;
+}
+
+/**
+ * Returns next month from a list
+ */
+export function getNextMonth(currentMonth: string, list: string[] = STANDARD_MONTHS): string | null {
+  const idx = list.indexOf(currentMonth);
+  if (idx >= 0 && idx < list.length - 1) return list[idx + 1];
+  return null;
+}

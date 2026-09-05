@@ -1,6 +1,6 @@
-# Room & Tenant Management CRM
+# RentPulse - Room & Tenant Management CRM
 
-A modern, fast, responsive Property & Tenant CRM built specifically for room partition and bedspace management in Dubai (e.g. Al Barsha, Deira), inspired directly by the **Vienna - Partition** spreadsheet.
+**RentPulse** is a modern, fast, responsive Property & Tenant CRM built specifically for room partition, flat, and bedspace management in Dubai (e.g. Al Barsha, Deira), inspired directly by the **Vienna - Partition** spreadsheet.
 
 ## 🚀 Features
 

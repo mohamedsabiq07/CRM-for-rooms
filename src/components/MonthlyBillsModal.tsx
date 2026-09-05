@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Zap, 
@@ -15,6 +15,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { RoomUnit, Building, MonthlyUtilityBill } from '../types/crm';
+import { STANDARD_MONTHS } from '../utils/dateUtils';
 
 interface MonthlyBillsModalProps {
   isOpen: boolean;
@@ -23,19 +24,10 @@ interface MonthlyBillsModalProps {
   buildings: Building[];
   selectedMonth: string; // e.g. "Sep-2026"
   onMonthChange: (month: string) => void;
+  availableMonths?: string[];
   utilityBills: MonthlyUtilityBill[];
   onSaveBill: (bill: MonthlyUtilityBill) => void;
 }
-
-const AVAILABLE_MONTHS = [
-  'Jun-2026',
-  'Jul-2026',
-  'Aug-2026',
-  'Sep-2026',
-  'Oct-2026',
-  'Nov-2026',
-  'Dec-2026'
-];
 
 export const MonthlyBillsModal: React.FC<MonthlyBillsModalProps> = ({
   isOpen,
@@ -44,24 +36,15 @@ export const MonthlyBillsModal: React.FC<MonthlyBillsModalProps> = ({
   buildings,
   selectedMonth,
   onMonthChange,
+  availableMonths = STANDARD_MONTHS,
   utilityBills,
   onSaveBill,
 }) => {
   if (!isOpen) return null;
 
-  // Local draft state for editing current month bills
-  const [localDrafts, setLocalDrafts] = useState<Record<string, {
-    dewaType: 'DEWA' | 'SEWA';
-    dewaAmount: number;
-    dewaStatus: 'Paid' | 'Due';
-    dewaDueDate: string;
-    dewaAccount: string;
-    wifiAmount: number;
-    wifiStatus: 'Paid' | 'Due';
-    wifiDueDate: string;
-    wifiAccount: string;
-    saved?: boolean;
-  }>>(() => {
+  const monthsList = availableMonths && availableMonths.length > 0 ? availableMonths : STANDARD_MONTHS;
+
+  const buildInitialDrafts = () => {
     const initial: Record<string, any> = {};
     rooms.forEach(r => {
       const dewaBill = utilityBills.find(b => b.roomId === r.id && b.month === selectedMonth && (b.utilityType === 'DEWA' || b.utilityType === 'SEWA'));
@@ -80,21 +63,40 @@ export const MonthlyBillsModal: React.FC<MonthlyBillsModalProps> = ({
       };
     });
     return initial;
-  });
+  };
+
+  // Local draft state for editing current month bills
+  const [localDrafts, setLocalDrafts] = useState<Record<string, {
+    dewaType: 'DEWA' | 'SEWA';
+    dewaAmount: number;
+    dewaStatus: 'Paid' | 'Due';
+    dewaDueDate: string;
+    dewaAccount: string;
+    wifiAmount: number;
+    wifiStatus: 'Paid' | 'Due';
+    wifiDueDate: string;
+    wifiAccount: string;
+    saved?: boolean;
+  }>>(buildInitialDrafts);
+
+  // Sync draft state whenever selectedMonth, isOpen, utilityBills, or rooms change
+  useEffect(() => {
+    setLocalDrafts(buildInitialDrafts());
+  }, [selectedMonth, isOpen, utilityBills, rooms]);
 
   const [savedSuccessMsg, setSavedSuccessMsg] = useState('');
 
-  const currentMonthIndex = AVAILABLE_MONTHS.indexOf(selectedMonth);
+  const currentMonthIndex = monthsList.indexOf(selectedMonth);
 
   const handlePrevMonth = () => {
     if (currentMonthIndex > 0) {
-      onMonthChange(AVAILABLE_MONTHS[currentMonthIndex - 1]);
+      onMonthChange(monthsList[currentMonthIndex - 1]);
     }
   };
 
   const handleNextMonth = () => {
-    if (currentMonthIndex < AVAILABLE_MONTHS.length - 1) {
-      onMonthChange(AVAILABLE_MONTHS[currentMonthIndex + 1]);
+    if (currentMonthIndex < monthsList.length - 1) {
+      onMonthChange(monthsList[currentMonthIndex + 1]);
     }
   };
 
@@ -219,14 +221,14 @@ export const MonthlyBillsModal: React.FC<MonthlyBillsModalProps> = ({
                 onChange={(e) => onMonthChange(e.target.value)}
                 className="bg-transparent font-bold text-indigo-700 focus:outline-none cursor-pointer border-b border-indigo-400"
               >
-                {AVAILABLE_MONTHS.map(m => (
+                {monthsList.map(m => (
                   <option key={m} value={m}>{m}</option>
                 ))}
               </select>
             </div>
             <button
               onClick={handleNextMonth}
-              disabled={currentMonthIndex >= AVAILABLE_MONTHS.length - 1}
+              disabled={currentMonthIndex >= monthsList.length - 1}
               className="p-1 text-slate-500 hover:text-slate-800 disabled:opacity-30 cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />

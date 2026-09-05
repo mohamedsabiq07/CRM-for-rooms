@@ -15,7 +15,9 @@ import {
   LogOut,
   User,
   Users,
-  Zap
+  Zap,
+  Calendar,
+  FolderArchive
 } from 'lucide-react';
 import { LocationItem, Building, RoomUnit, RentNotification, OwnerChequeNotification, UtilityNotification } from '../types/crm';
 
@@ -41,6 +43,10 @@ interface HeaderProps {
   onOpenMonthlyBills?: () => void;
   pastTenantsCount: number;
   inquiryCount?: number;
+  selectedMonth?: string;
+  onMonthChange?: (month: string) => void;
+  availableMonths?: string[];
+  onOpenMonthHistory?: () => void;
   onToggleNotifications: () => void;
   onExportExcel: () => void;
   onLogout: () => void;
@@ -72,6 +78,10 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMonthlyBills,
   pastTenantsCount,
   inquiryCount = 0,
+  selectedMonth,
+  onMonthChange,
+  availableMonths = [],
+  onOpenMonthHistory,
   onToggleNotifications,
   onExportExcel,
   onLogout,
@@ -101,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <div>
                 <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
-                  Room CRM <span className="text-[10px] bg-[#38CE3C]/15 text-[#38CE3C] font-semibold px-2 py-0.5 rounded border border-[#38CE3C]/30">Dubai</span>
+                  RentPulse <span className="text-[10px] bg-[#38CE3C]/15 text-[#38CE3C] font-semibold px-2 py-0.5 rounded border border-[#38CE3C]/30">Dubai</span>
                 </h1>
                 <p className="text-[11px] text-slate-400 font-normal">Property & Tenant Management</p>
               </div>
@@ -209,6 +219,25 @@ export const Header: React.FC<HeaderProps> = ({
                     )}
                   </select>
                 </div>
+
+                {/* Month Selector */}
+                {selectedMonth && onMonthChange && (
+                  <div className="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800">
+                    <Calendar className="w-3.5 h-3.5 text-[#38CE3C] shrink-0" />
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => onMonthChange(e.target.value)}
+                      aria-label="Select Stay Month"
+                      className="bg-transparent text-xs font-bold text-slate-200 focus:outline-none cursor-pointer pr-1"
+                    >
+                      {availableMonths.map((m) => (
+                        <option key={m} value={m} className="bg-[#181824] text-white">
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -226,6 +255,18 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full bg-slate-900 text-xs text-white placeholder-slate-500 pl-8 pr-3 py-1.5 rounded-md border border-slate-800 focus:outline-none focus:border-slate-600 transition"
               />
             </div>
+
+            {/* Month Archives & Historical Review Button */}
+            {onOpenMonthHistory && (
+              <button
+                onClick={onOpenMonthHistory}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-[#38CE3C] hover:text-white rounded-md text-xs font-medium border border-slate-800 transition cursor-pointer"
+                title="Search & Review Any Month's Data (Collections, Occupancy, Utility Bills)"
+              >
+                <FolderArchive className="w-3.5 h-3.5 text-[#38CE3C]" />
+                <span className="hidden sm:inline">Month Review</span>
+              </button>
+            )}
 
             {/* Pro-Rata Rent Calculator Quick Tool */}
             <button

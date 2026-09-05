@@ -15,10 +15,20 @@ import {
   Calendar,
   FastForward,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Search,
+  FolderArchive
 } from 'lucide-react';
 import { Tenant, Building, RoomUnit } from '../types/crm';
-import { calculateStayDuration, calculateRentDueInfo, generateWhatsAppLink } from '../utils/dateUtils';
+import { 
+  calculateStayDuration, 
+  calculateRentDueInfo, 
+  generateWhatsAppLink,
+  getTenantStatusForMonth,
+  getPreviousMonth,
+  getNextMonth,
+  STANDARD_MONTHS
+} from '../utils/dateUtils';
 import { isTenantInPartition } from '../utils/tenantConversion';
 
 interface TenantSheetProps {
@@ -27,7 +37,10 @@ interface TenantSheetProps {
   tenants: Tenant[];
   searchQuery: string;
   selectedMonth?: string;
+  activeStayMonth?: string;
+  availableMonths?: string[];
   onMonthChange?: (month: string) => void;
+  onOpenMonthHistory?: () => void;
   onCarryForwardMonth?: () => void;
   onEditTenant: (tenant: Tenant) => void;
   onDeleteTenant: (tenantId: string) => void;
@@ -43,7 +56,10 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
   tenants,
   searchQuery,
   selectedMonth = 'Sep-2026',
+  activeStayMonth = 'Sep-2026',
+  availableMonths = STANDARD_MONTHS,
   onMonthChange,
+  onOpenMonthHistory,
   onCarryForwardMonth,
   onEditTenant,
   onDeleteTenant,
@@ -117,15 +133,92 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
         </div>
       </div>
 
+      {/* Historical Mode Alert Banner if viewing past or future reference month */}
+      {selectedMonth !== activeStayMonth && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 sm:px-6 py-2.5 flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div className="flex items-center gap-2 text-amber-900">
+            <span className="px-2 py-0.5 rounded bg-amber-200 text-amber-900 font-bold text-[10px] uppercase tracking-wider">
+              Reference Mode
+            </span>
+            <span className="font-semibold text-amber-900">
+              You are currently viewing archived reference data for <strong>{selectedMonth}</strong>.
+            </span>
+          </div>
+          {onMonthChange && (
+            <button
+              onClick={() => onMonthChange(activeStayMonth)}
+              className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs transition cursor-pointer shadow-2xs"
+            >
+              Back to Active Month ({activeStayMonth}) ➔
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Month Navigation & Carry Forward Action Bar */}
       <div className="bg-slate-50 px-4 sm:px-6 py-2.5 border-b border-slate-200 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-semibold text-slate-500">Current Stay Month:</span>
+          <span className="text-xs font-semibold text-slate-500">Viewing Month:</span>
+          
+          {/* Interactive Month Selector Dropdown */}
           <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-slate-300 shadow-2xs">
-            <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="text-xs font-bold text-slate-900">{selectedMonth}</span>
+            <Calendar className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+            <select
+              value={selectedMonth}
+              onChange={(e) => onMonthChange?.(e.target.value)}
+              aria-label="Select month to view"
+              className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer pr-1"
+            >
+              {availableMonths.map((m) => (
+                <option key={m} value={m}>
+                  {m} {m === activeStayMonth ? '★ (Current)' : ''}
+                </option>
+              ))}
+            </select>
           </div>
-          <span className="text-[11px] text-slate-400 hidden sm:inline">
+
+          {/* Stepper Buttons: Previous & Next */}
+          <div className="flex items-center gap-0.5 bg-white border border-slate-300 rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                const prev = getPreviousMonth(selectedMonth, availableMonths);
+                if (prev && onMonthChange) onMonthChange(prev);
+              }}
+              disabled={!getPreviousMonth(selectedMonth, availableMonths)}
+              title="Previous Month"
+              className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded disabled:opacity-30 cursor-pointer"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const next = getNextMonth(selectedMonth, availableMonths);
+                if (next && onMonthChange) onMonthChange(next);
+              }}
+              disabled={!getNextMonth(selectedMonth, availableMonths)}
+              title="Next Month"
+              className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded disabled:opacity-30 cursor-pointer"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Search & Review Archive Button */}
+          {onOpenMonthHistory && (
+            <button
+              type="button"
+              onClick={onOpenMonthHistory}
+              title="Search and review any historical month's collections, vacancy, and utility bills"
+              className="flex items-center gap-1.5 px-3 py-1 bg-[#181824] hover:bg-slate-800 text-[#38CE3C] hover:text-white text-xs font-semibold rounded-lg shadow-2xs transition cursor-pointer border border-[#262638]"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Search & Review Months</span>
+            </button>
+          )}
+
+          <span className="text-[11px] text-slate-400 hidden lg:inline">
             • Displaying tenant occupancy & collections for {selectedMonth}
           </span>
         </div>
@@ -181,7 +274,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                         </span>
                         <div className="flex items-center gap-3">
                           <span className="text-[11px] font-medium text-slate-500">
-                            {sectionTenants.length} tenants • AED {sectionTenants.reduce((s, t) => s + (t.rentAmount || 0), 0).toLocaleString()}
+                            {sectionTenants.length} tenants • AED {sectionTenants.filter(t => getTenantStatusForMonth(t, selectedMonth) === 'Paid').reduce((s, t) => s + (t.rentAmount || 0), 0).toLocaleString()} Paid / AED {sectionTenants.reduce((s, t) => s + (t.rentAmount || 0), 0).toLocaleString()} Total
                           </span>
                           {onAddTenantToSection && (
                             <button
@@ -205,7 +298,8 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                     </tr>
                   ) : (
                     sectionTenants.map((t, idx) => {
-                      const dueInfo = calculateRentDueInfo(t.joiningDate, t.lastPaidDate, t.currentMonthStatus);
+                      const monthStatus = getTenantStatusForMonth(t, selectedMonth);
+                      const dueInfo = calculateRentDueInfo(t.joiningDate, t.lastPaidDate, monthStatus);
                       const isEven = idx % 2 === 0;
                       const waUrl = generateWhatsAppLink(
                         t.phone,
@@ -213,7 +307,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                         building.name,
                         t.partition,
                         t.rentAmount,
-                        dueInfo.status === 'overdue' ? `${Math.abs(dueInfo.daysDiff)} days overdue` : 'Rent Cycle'
+                        dueInfo.status === 'overdue' ? `${Math.abs(dueInfo.daysDiff)} days overdue` : `${selectedMonth} Rent`
                       );
 
                       return (
@@ -298,7 +392,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           {/* Rent / Monthly Status */}
                           <td 
                             onClick={() => onStatusClick(t)}
-                            title="Click to update payment status"
+                            title={`Click to update payment status for ${selectedMonth}`}
                             className="py-2 px-2 text-center border-r border-slate-200/60 cursor-pointer transition hover:bg-slate-100/80"
                           >
                             <div className="flex flex-col items-center">
@@ -306,13 +400,13 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                                 AED {t.rentAmount || '0'}
                               </span>
                               <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 ${
-                                t.currentMonthStatus === 'Paid' 
+                                monthStatus === 'Paid' 
                                   ? 'bg-[#EAFBF0] text-[#1B8020] border-[#38CE3C]/60' 
                                   : dueInfo.status === 'overdue'
                                     ? 'bg-[#FFF0F3] text-[#D1183E] border-[#FF4D6B]/40'
                                     : 'bg-[#FFF9E6] text-[#8C6B00] border border-[#FFDE73]/60'
                               }`}>
-                                {t.currentMonthStatus || 'Due'}
+                                {monthStatus || 'Due'}
                               </span>
                             </div>
                           </td>

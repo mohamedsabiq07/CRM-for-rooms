@@ -410,7 +410,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                 
                 <button
                   onClick={() => {
-                    if (confirm(`Are you sure you want to remove "${building.name}" from your CRM?\n\nThis will vacate and remove the building, its rooms, and utilities from your active dashboard.`)) {
+                    if (confirm(`Are you sure you want to remove "${building.name}" from RentPulse?\n\nThis will vacate and remove the building, its rooms, and utilities from your active dashboard.`)) {
                       onDeleteBuilding(building.id);
                     }
                   }}

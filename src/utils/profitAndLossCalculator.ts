@@ -218,7 +218,7 @@ export function exportProfitLossToExcel(
 
   // Sheet 1: Executive P&L Statement
   const summaryData = [
-    ['DUBAI ROOM & FLAT CRM - END OF YEAR PROFIT & LOSS STATEMENT'],
+    ['RENTPULSE DUBAI - END OF YEAR PROFIT & LOSS STATEMENT'],
     ['Generated On', new Date().toLocaleDateString('en-GB')],
     [''],
     ['EXECUTIVE SUMMARY', 'AMOUNT (AED)', 'NOTES'],
@@ -286,5 +286,5 @@ export function exportProfitLossToExcel(
 
   // Generate and trigger download
   const dateStr = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `Dubai_Room_CRM_Profit_Loss_${dateStr}.xlsx`);
+  XLSX.writeFile(wb, `RentPulse_Dubai_Profit_Loss_${dateStr}.xlsx`);
 }

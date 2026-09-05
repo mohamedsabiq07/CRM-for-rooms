@@ -6,13 +6,22 @@ interface RecordPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   tenant: Tenant | null;
-  onSavePayment: (tenantId: string, amount: number, status: 'Paid' | 'Partial' | 'Due' | 'Pending', remarks: string, date: string) => void;
+  selectedMonth?: string;
+  onSavePayment: (
+    tenantId: string, 
+    amount: number, 
+    status: 'Paid' | 'Partial' | 'Due' | 'Pending', 
+    remarks: string, 
+    date: string,
+    month?: string
+  ) => void;
 }
 
 export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   isOpen,
   onClose,
   tenant,
+  selectedMonth,
   onSavePayment,
 }) => {
   if (!isOpen || !tenant) return null;
@@ -24,13 +33,18 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   }).replace(/\//g, '.');
 
   const [amount, setAmount] = useState(tenant.rentAmount.toString());
-  const [status, setStatus] = useState<'Paid' | 'Partial' | 'Due' | 'Pending'>('Paid');
+  const [status, setStatus] = useState<'Paid' | 'Partial' | 'Due' | 'Pending'>(() => {
+    if (selectedMonth && tenant.monthStatusHistory && tenant.monthStatusHistory[selectedMonth]) {
+      return tenant.monthStatusHistory[selectedMonth];
+    }
+    return tenant.currentMonthStatus || 'Paid';
+  });
   const [remarks, setRemarks] = useState(tenant.remarks || '');
   const [paymentDate, setPaymentDate] = useState(todayStr);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSavePayment(tenant.id, Number(amount) || 0, status, remarks, paymentDate);
+    onSavePayment(tenant.id, Number(amount) || 0, status, remarks, paymentDate, selectedMonth);
     onClose();
   };
 
@@ -45,7 +59,14 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold">Record Rent Payment</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold">Record Rent Payment</h3>
+                {selectedMonth && (
+                  <span className="text-[11px] px-2 py-0.5 rounded font-bold bg-indigo-600 text-white">
+                    {selectedMonth}
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-slate-400">{tenant.name} • {tenant.partition.toUpperCase()} ({tenant.section})</p>
             </div>
           </div>

@@ -1,19 +1,24 @@
 import React from 'react';
 import { Users, Coins, AlertCircle, Key, CheckCircle2 } from 'lucide-react';
 import { Tenant } from '../types/crm';
+import { getTenantStatusForMonth } from '../utils/dateUtils';
 
 interface StatsCardsProps {
   tenants: Tenant[];
   flatName: string;
+  selectedMonth?: string;
 }
 
-export const StatsCards: React.FC<StatsCardsProps> = ({ tenants, flatName }) => {
+export const StatsCards: React.FC<StatsCardsProps> = ({ tenants, flatName, selectedMonth = 'Sep-2026' }) => {
   const activeTenants = tenants.filter(t => t.status === 'Active');
   const totalDeposit = activeTenants.reduce((sum, t) => sum + (Number(t.deposit) || 0), 0);
   const totalRent = activeTenants.reduce((sum, t) => sum + (Number(t.rentAmount) || 0), 0);
   
-  const paidCount = activeTenants.filter(t => t.currentMonthStatus === 'Paid').length;
-  const dueCount = activeTenants.filter(t => t.currentMonthStatus === 'Due' || t.currentMonthStatus === 'Pending').length;
+  const paidCount = activeTenants.filter(t => getTenantStatusForMonth(t, selectedMonth) === 'Paid').length;
+  const dueCount = activeTenants.filter(t => {
+    const st = getTenantStatusForMonth(t, selectedMonth);
+    return st === 'Due' || st === 'Pending';
+  }).length;
   const keysGiven = activeTenants.filter(t => t.cupboardKey && t.doorKey).length;
 
   return (
@@ -64,7 +69,9 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ tenants, flatName }) => 
           <AlertCircle className="w-4 h-4" />
         </div>
         <div>
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Rent Status</p>
+          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+            {selectedMonth} Status
+          </p>
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-semibold text-[#1e7e22] flex items-center gap-0.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-[#38CE3C]" /> {paidCount}

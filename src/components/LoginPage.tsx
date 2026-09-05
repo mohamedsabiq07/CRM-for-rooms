@@ -36,7 +36,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <Building2 className="w-7 h-7 text-slate-200" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            Room & Tenant CRM
+            RentPulse
           </h1>
           <p className="text-xs text-slate-400 font-medium mt-1 uppercase tracking-wider">
             Property & Partition Management

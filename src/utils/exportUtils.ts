@@ -1,14 +1,16 @@
 import * as XLSX from 'xlsx';
 import { Tenant, FlatItem, LocationItem } from '../types/crm';
-import { calculateStayDuration } from './dateUtils';
+import { calculateStayDuration, getTenantStatusForMonth } from './dateUtils';
+import { isTenantInPartition } from './tenantConversion';
 
 export function exportFlatToExcel(
   flat: FlatItem,
   location: LocationItem | undefined,
-  tenants: Tenant[]
+  tenants: Tenant[],
+  selectedMonth: string = 'Sep-2026'
 ) {
-  // Group by section or keep list
-  const flatTenants = tenants.filter(t => t.flatId === flat.id);
+  // Filter tenants for this flat/building
+  const flatTenants = tenants.filter(t => t.buildingId === flat.id || t.flatId === flat.id);
 
   const rows = flatTenants.map(t => ({
     'Sno': t.sno,
@@ -22,7 +24,8 @@ export function exportFlatToExcel(
     'Stay Duration': calculateStayDuration(t.joiningDate, t.leavingDate),
     'Cu/k (Cupboard)': t.cupboardKey ? 'Yes' : 'No',
     'D/k (Door)': t.doorKey ? 'Yes' : 'No',
-    'Sep-26 / Status': t.currentMonthStatus,
+    'P/k (Partition)': isTenantInPartition(t) ? (t.partitionKey ? 'Yes' : 'No') : '-',
+    [`${selectedMonth} / Status`]: getTenantStatusForMonth(t, selectedMonth),
     'Remarks': t.remarks,
     'Phone': t.phone
   }));
@@ -31,7 +34,7 @@ export function exportFlatToExcel(
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, flat.name.substring(0, 30));
 
-  const fileName = `${location ? location.name + '_' : ''}${flat.name.replace(/\s+/g, '_')}_Tenants.xlsx`;
+  const fileName = `${location ? location.name + '_' : ''}${flat.name.replace(/\s+/g, '_')}_Tenants_${selectedMonth}.xlsx`;
   XLSX.writeFile(workbook, fileName);
 }
 
