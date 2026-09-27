@@ -15,7 +15,7 @@ import {
   Star
 } from 'lucide-react';
 import { Tenant, RoomUnit, MonthlyUtilityBill } from '../types/crm';
-import { getTenantStatusForMonth, searchMatchesMonth, STANDARD_MONTHS } from '../utils/dateUtils';
+import { getTenantStatusForMonth, searchMatchesMonth, STANDARD_MONTHS, isTenantInMonth } from '../utils/dateUtils';
 
 interface MonthHistoryModalProps {
   isOpen: boolean;
@@ -160,7 +160,10 @@ export const MonthHistoryModal: React.FC<MonthHistoryModalProps> = ({
                 const isActiveMonth = m === activeStayMonth;
 
                 // Compute financial & occupancy breakdown for month m
-                const activeTenantsInM = tenants.filter(t => t.status === 'Active');
+                const activeTenantsInM = tenants.filter(t => 
+                  (t.status === 'Active' || t.status === 'Waiting for new tenant') &&
+                  isTenantInMonth(t, m)
+                );
                 const totalPotentialRent = activeTenantsInM.reduce((sum, t) => sum + (t.rentAmount || 0), 0);
                 
                 let paidCount = 0;
@@ -207,7 +210,7 @@ export const MonthHistoryModal: React.FC<MonthHistoryModalProps> = ({
                         <div className="flex items-center gap-1">
                           {isActiveMonth && (
                             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                              <Star className="w-2.5 h-2.5 fill-current" /> Active Month
+                              <Star className="w-2.5 h-2.5 fill-current" /> Current Month
                             </span>
                           )}
                           {isSelected && (

@@ -293,3 +293,52 @@ export function isFutureMonth(dateStr: string | undefined, referenceMonth?: stri
   if (parsed.getFullYear() === today.getFullYear() && parsed.getMonth() > today.getMonth()) return true;
   return false;
 }
+
+/**
+ * Returns the current calendar month formatted as 'Mon-YYYY' (e.g. 'Sep-2026')
+ * strictly derived from the real-world live calendar clock.
+ */
+export function getLiveCalendarMonth(): string {
+  const now = new Date();
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${monthNames[now.getMonth()]}-${now.getFullYear()}`;
+}
+
+/**
+ * Checks whether a tenant is active in a specified month.
+ * A tenant is visible in targetMonth if:
+ * 1. monthStatusHistory explicitly contains an entry for targetMonth, OR
+ * 2. Their current stayMonth equals targetMonth, OR
+ * 3. For the current calendar month, they are active in the system.
+ * 
+ * If targetMonth is in the future (e.g. 'Oct-2026') and the user has NOT pressed
+ * "Carry Forward to Next Month" into that month, this returns false so nothing is visible.
+ */
+export function isTenantInMonth(
+  tenant: {
+    status?: string;
+    stayMonth?: string;
+    monthStatusHistory?: Record<string, string>;
+    joiningDate?: string;
+  },
+  targetMonth: string
+): boolean {
+  // If explicitly recorded in monthStatusHistory for this month
+  if (tenant.monthStatusHistory && tenant.monthStatusHistory[targetMonth] !== undefined) {
+    return true;
+  }
+
+  // If the tenant's current stayMonth is this month
+  if (tenant.stayMonth === targetMonth) {
+    return true;
+  }
+
+  // Fallback ONLY for legacy or newly added tenants that lack a stayMonth:
+  // they belong to the live calendar month
+  const liveMonth = getLiveCalendarMonth();
+  if (targetMonth === liveMonth && !tenant.stayMonth) {
+    return true;
+  }
+
+  return false;
+}

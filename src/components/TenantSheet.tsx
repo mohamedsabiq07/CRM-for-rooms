@@ -45,7 +45,7 @@ interface TenantSheetProps {
   onSelectTenant?: (tenantId: string | null) => void;
   onMonthChange?: (month: string) => void;
   onOpenMonthHistory?: () => void;
-  onCarryForwardMonth?: () => void;
+  onCarryForwardMonth?: (fromMonth?: string, toMonth?: string) => void;
   onResequenceSnos?: () => void;
   onEditTenant: (tenant: Tenant) => void;
   onDeleteTenant: (tenantId: string) => void;
@@ -146,6 +146,9 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
     ? `${building.name.toUpperCase()} - ${formattedRoomLabel} - ${roomTypeLabel}` 
     : `${building.name.toUpperCase()} - PARTITION`;
 
+  const nextMonth = getNextMonth(selectedMonth, availableMonths);
+  const prevMonth = getPreviousMonth(selectedMonth, availableMonths);
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
       {/* Title Header: Executive Stellar Dark Banner + Capacity & Vacancy Badge */}
@@ -184,7 +187,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
         </div>
       </div>
 
-      {/* Historical Mode Alert Banner if viewing past or future reference month */}
+      {/* Historical/Future Reference Mode Alert Banner if viewing month other than live calendar month */}
       {selectedMonth !== activeStayMonth && (
         <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 sm:px-6 py-2.5 flex items-center justify-between flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-2 text-amber-900">
@@ -192,7 +195,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
               Reference Mode
             </span>
             <span className="font-semibold text-amber-900">
-              You are currently viewing archived reference data for <strong>{selectedMonth}</strong>.
+              You are currently viewing data for <strong>{selectedMonth}</strong> (Live Calendar Month: <strong>{activeStayMonth}</strong>).
             </span>
           </div>
           {onMonthChange && (
@@ -200,7 +203,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
               onClick={() => onMonthChange(activeStayMonth)}
               className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs transition cursor-pointer shadow-2xs"
             >
-              Back to Active Month ({activeStayMonth}) ➔
+              Back to Current Month ({activeStayMonth}) ➔
             </button>
           )}
         </div>
@@ -222,7 +225,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
             >
               {availableMonths.map((m) => (
                 <option key={m} value={m}>
-                  {m} {m === activeStayMonth ? '★ (Current)' : ''}
+                  {m} {m === activeStayMonth ? '★ (Current Month)' : ''}
                 </option>
               ))}
             </select>
@@ -290,17 +293,56 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
           )}
 
           {onCarryForwardMonth && (
-            <button
-              onClick={onCarryForwardMonth}
-              title="Carry forward all active tenants and their room/bed allocations to next month"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-sm transition cursor-pointer border border-indigo-500"
-            >
-              <FastForward className="w-3.5 h-3.5" />
-              <span>Carry Forward to Next Month</span>
-            </button>
+            filteredTenants.length > 0 ? (
+              <button
+                onClick={() => onCarryForwardMonth(selectedMonth, nextMonth || undefined)}
+                title={`Carry forward all active tenants and their room/bed allocations to ${nextMonth || 'next month'}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-sm transition cursor-pointer border border-indigo-500"
+              >
+                <FastForward className="w-3.5 h-3.5" />
+                <span>Carry Forward to {nextMonth || 'Next Month'}</span>
+              </button>
+            ) : prevMonth ? (
+              <button
+                onClick={() => onCarryForwardMonth(prevMonth, selectedMonth)}
+                title={`Carry forward all active tenants from ${prevMonth} to ${selectedMonth}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-sm transition cursor-pointer border border-indigo-500"
+              >
+                <FastForward className="w-3.5 h-3.5" />
+                <span>Carry Forward from {prevMonth}</span>
+              </button>
+            ) : null
           )}
         </div>
       </div>
+
+      {/* Empty Month Banner with Quick Carry Forward */}
+      {filteredTenants.length === 0 && !searchQuery.trim() && (
+        <div className="p-8 sm:p-12 text-center bg-slate-50/80 border-b border-slate-200">
+          <div className="max-w-md mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 mx-auto mb-3 shadow-2xs">
+              <FastForward className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-800">
+              No Tenants in {selectedMonth} Yet
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1.5 mb-5 leading-relaxed">
+              {prevMonth 
+                ? `Customer and tenant data from ${prevMonth} has not been carried forward to ${selectedMonth} yet. Click below to copy all active tenants and their room allocations into ${selectedMonth}.`
+                : `No active tenants are present in this month yet.`}
+            </p>
+            {prevMonth && onCarryForwardMonth && (
+              <button
+                onClick={() => onCarryForwardMonth(prevMonth, selectedMonth)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-sm transition cursor-pointer"
+              >
+                <FastForward className="w-4 h-4" />
+                <span>Carry Forward from {prevMonth} to {selectedMonth}</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Spreadsheet Table Container */}
       <div className="overflow-x-auto">

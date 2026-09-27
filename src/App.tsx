@@ -40,7 +40,16 @@ import {
   INITIAL_UTILITY_BILLS,
   INITIAL_INQUIRIES
 } from './data/initialData';
-import { calculateRentDueInfo, parseFlexibleDate, STANDARD_MONTHS, getNextMonth, getPreviousMonth, isFutureMonth } from './utils/dateUtils';
+import { 
+  calculateRentDueInfo, 
+  parseFlexibleDate, 
+  STANDARD_MONTHS, 
+  getNextMonth, 
+  getPreviousMonth, 
+  isFutureMonth,
+  getLiveCalendarMonth,
+  isTenantInMonth
+} from './utils/dateUtils';
 import { exportFlatToExcel } from './utils/exportUtils';
 import { convertVacatedTenantToInquiry } from './utils/tenantConversion';
 import { normalizeTenantsOrder } from './utils/tenantSequencer';
@@ -78,9 +87,12 @@ export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'sheet' | 'buildings' | 'profit_loss' | 'followups'>('sheet');
   const [isDbLoaded, setIsDbLoaded] = useState(false);
 
-  // Active Month (defaults to Sep-2026 as per user requirement)
-  const [selectedMonth, setSelectedMonth] = useState<string>('Sep-2026');
-  const [activeStayMonth, setActiveStayMonth] = useState<string>('Sep-2026');
+  // --- Calendar-Based Live Date Month System ---
+  // Live calendar current month strictly derived from system clock (e.g. 'Sep-2026')
+  const liveCalendarMonth = useMemo(() => getLiveCalendarMonth(), []);
+
+  // Currently viewed month in the CRM (strictly defaults to the live calendar month)
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => getLiveCalendarMonth());
   const [isMonthHistoryOpen, setIsMonthHistoryOpen] = useState<boolean>(false);
 
   // Cache buster to ensure 7 rooms (including Al Shaiba 210), utilities, and inquiries load fresh
@@ -192,11 +204,6 @@ export const App: React.FC = () => {
           if (updatedTenants.length > 0) {
             updatedTenants.forEach(t => upsertTenantToDb(t));
           }
-          const activeMonthFound = normalized.find(t => t.stayMonth)?.stayMonth;
-          if (activeMonthFound) {
-            setActiveStayMonth(activeMonthFound);
-            setSelectedMonth(activeMonthFound);
-          }
         }
         if (cloudExpenses.length > 0) setExpenses(cloudExpenses);
         if (cloudBills.length > 0) setUtilityBills(cloudBills);
@@ -250,14 +257,15 @@ export const App: React.FC = () => {
   const currentRoom = rooms.find(r => r.id === selectedRoomId) || rooms[0];
   const currentLocation = locations.find(l => l.id === currentBuilding?.locationId) || locations[0];
 
-  // Tenants in currently selected building & room
+  // Tenants in currently selected building & room for the selectedMonth
   const currentRoomTenants = useMemo(() => {
     if (!currentRoom) return [];
     return tenants.filter(t => 
       (t.roomId === currentRoom.id || (!t.roomId && t.buildingId === currentBuilding?.id)) &&
-      (t.status === 'Active' || t.status === 'Waiting for new tenant')
+      (t.status === 'Active' || t.status === 'Waiting for new tenant') &&
+      isTenantInMonth(t, selectedMonth)
     );
-  }, [tenants, currentRoom, currentBuilding]);
+  }, [tenants, currentRoom, currentBuilding, selectedMonth]);
 
   // Calculate next non-colliding serial number for new tenant
   const nextAvailableSno = useMemo(() => {
@@ -312,7 +320,7 @@ export const App: React.FC = () => {
   const availableMonths = useMemo(() => {
     const monthSet = new Set<string>(STANDARD_MONTHS);
     monthSet.add(selectedMonth);
-    monthSet.add(activeStayMonth);
+    monthSet.add(liveCalendarMonth);
     tenants.forEach(t => {
       if (t.stayMonth) monthSet.add(t.stayMonth);
       if (t.monthStatusHistory) {
@@ -328,7 +336,7 @@ export const App: React.FC = () => {
       if (idxA !== -1 && idxB !== -1) return idxA - idxB;
       return a.localeCompare(b);
     });
-  }, [tenants, utilityBills, selectedMonth, activeStayMonth]);
+  }, [tenants, utilityBills, selectedMonth, liveCalendarMonth]);
 
   // Derived current room bills for selectedMonth
   const currentRoomDewaBill = useMemo(() => {
@@ -472,6 +480,10 @@ export const App: React.FC = () => {
     const newTenant: Tenant = {
       ...newTenantData,
       id: newId,
+      stayMonth: newTenantData.stayMonth || selectedMonth,
+      monthStatusHistory: newTenantData.monthStatusHistory || {
+        [selectedMonth]: (newTenantData.currentMonthStatus as any) || 'Pending'
+      }
     };
     const combined = [...tenants, newTenant];
     const { normalized, updatedTenants } = normalizeTenantsOrder(combined);
@@ -632,7 +644,7 @@ export const App: React.FC = () => {
         const updated: Tenant = {
           ...t,
           monthStatusHistory: updatedHistory,
-          currentMonthStatus: targetMonth === (t.stayMonth || activeStayMonth) ? status : t.currentMonthStatus,
+          currentMonthStatus: targetMonth === (t.stayMonth || liveCalendarMonth) ? status : t.currentMonthStatus,
           remarks: remarks || t.remarks,
           lastPaidDate: date,
         };
@@ -811,28 +823,64 @@ export const App: React.FC = () => {
   };
 
   // --- Carry Forward Month Handler ---
-  const handleCarryForwardMonth = () => {
-    const nextMonth = getNextMonth(selectedMonth, availableMonths) || 'Oct-2026';
+  const handleCarryForwardMonth = (fromMonthOverride?: string, toMonthOverride?: string) => {
+    let fromMonth = fromMonthOverride;
+    let toMonth = toMonthOverride;
+
+    if (!fromMonth || !toMonth) {
+      const activeInSelected = tenants.filter(t => 
+        (t.status === 'Active' || t.status === 'Waiting for new tenant') &&
+        isTenantInMonth(t, selectedMonth)
+      );
+
+      if (activeInSelected.length > 0) {
+        fromMonth = selectedMonth;
+        toMonth = getNextMonth(selectedMonth, availableMonths) || 'Oct-2026';
+      } else {
+        const prev = getPreviousMonth(selectedMonth, availableMonths);
+        if (prev) {
+          fromMonth = prev;
+          toMonth = selectedMonth;
+        } else {
+          fromMonth = selectedMonth;
+          toMonth = getNextMonth(selectedMonth, availableMonths) || 'Oct-2026';
+        }
+      }
+    }
+
+    const sourceTenants = tenants.filter(t => 
+      (t.status === 'Active' || t.status === 'Waiting for new tenant') &&
+      isTenantInMonth(t, fromMonth!)
+    );
+
+    if (sourceTenants.length === 0) {
+      alert(`No active tenants found in ${fromMonth} to carry forward.`);
+      return;
+    }
 
     const confirmed = window.confirm(
-      `Carry forward all active tenants and their bed allocations from ${selectedMonth} to ${nextMonth}?\n\n` +
-      `• Current ${selectedMonth} collection data will remain safely saved in history.\n` +
-      `• For ${nextMonth}, payment statuses will start fresh as Due so you can track the new month's collections.`
+      `Carry forward ${sourceTenants.length} active tenants and their bed allocations from ${fromMonth} to ${toMonth}?\n\n` +
+      `• All existing ${fromMonth} collection records remain preserved in history.\n` +
+      `• For ${toMonth}, payment statuses will start fresh as Due so you can track the new month's collections.\n` +
+      `• The view will automatically switch to ${toMonth}.`
     );
     if (!confirmed) return;
 
     setTenants(prev =>
       prev.map(t => {
+        if (!isTenantInMonth(t, fromMonth!)) return t;
         if (t.status !== 'Active' && t.status !== 'Waiting for new tenant') return t;
-        const updatedHistory = {
+
+        const updatedHistory: Record<string, 'Paid' | 'Due' | 'Partial' | 'Pending'> = {
           ...(t.monthStatusHistory || {}),
-          [selectedMonth]: t.currentMonthStatus,
+          [fromMonth!]: (t.monthStatusHistory?.[fromMonth!] || t.currentMonthStatus || 'Paid') as 'Paid' | 'Due' | 'Partial' | 'Pending',
+          [toMonth!]: 'Due',
         };
-        const willBecomeActive = t.status === 'Waiting for new tenant' && !isFutureMonth(t.joiningDate, nextMonth);
+        const willBecomeActive = t.status === 'Waiting for new tenant' && !isFutureMonth(t.joiningDate, toMonth!);
         const updated: Tenant = {
           ...t,
           status: willBecomeActive ? 'Active' : t.status,
-          stayMonth: nextMonth,
+          stayMonth: toMonth!,
           monthStatusHistory: updatedHistory,
           currentMonthStatus: willBecomeActive ? 'Due' : (t.status === 'Active' ? 'Due' : t.currentMonthStatus),
         };
@@ -841,9 +889,8 @@ export const App: React.FC = () => {
       })
     );
 
-    setActiveStayMonth(nextMonth);
-    setSelectedMonth(nextMonth);
-    alert(`Successfully carried forward all active tenants to ${nextMonth}!`);
+    setSelectedMonth(toMonth!);
+    alert(`Successfully carried forward ${sourceTenants.length} active tenants to ${toMonth!}!`);
   };
 
   // --- Auto Re-sequence Tenant Numbers (1, 2, 3...) ---
@@ -1122,7 +1169,7 @@ export const App: React.FC = () => {
                 tenants={currentRoomTenants}
                 searchQuery={searchQuery}
                 selectedMonth={selectedMonth}
-                activeStayMonth={activeStayMonth}
+                activeStayMonth={liveCalendarMonth}
                 availableMonths={availableMonths}
                 selectedTenantId={selectedTenantId}
                 onSelectTenant={setSelectedTenantId}
@@ -1279,7 +1326,7 @@ export const App: React.FC = () => {
         tenants={tenants}
         rooms={rooms}
         utilityBills={utilityBills}
-        activeStayMonth={activeStayMonth}
+        activeStayMonth={liveCalendarMonth}
       />
 
       {/* Persistent Footer with Live Database Indicator */}
