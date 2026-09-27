@@ -143,7 +143,7 @@ export interface Tenant {
   depositNote?: string; // "No Advance", etc.
   joiningDate: string; // DD.MM.YYYY format
   leavingDate?: string | null;
-  status: 'Active' | 'Checked Out' | 'Vacated';
+  status: 'Active' | 'Checked Out' | 'Vacated' | 'Waiting for new tenant';
   section: string; // "HALL" or "ROOM"
   partition: string; // "p1", "p2", "p3", "p4", "p5", "p6", "p8" etc.
   spaceType: SpaceType; // 'Partition' | 'Without Partition' | 'Bed Space'

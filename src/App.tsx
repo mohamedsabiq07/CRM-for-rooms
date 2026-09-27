@@ -40,9 +40,10 @@ import {
   INITIAL_UTILITY_BILLS,
   INITIAL_INQUIRIES
 } from './data/initialData';
-import { calculateRentDueInfo, parseFlexibleDate, STANDARD_MONTHS, getNextMonth, getPreviousMonth } from './utils/dateUtils';
+import { calculateRentDueInfo, parseFlexibleDate, STANDARD_MONTHS, getNextMonth, getPreviousMonth, isFutureMonth } from './utils/dateUtils';
 import { exportFlatToExcel } from './utils/exportUtils';
 import { convertVacatedTenantToInquiry } from './utils/tenantConversion';
+import { normalizeTenantsOrder } from './utils/tenantSequencer';
 import { 
   fetchLocationsFromDb, 
   fetchBuildingsFromDb, 
@@ -185,8 +186,12 @@ export const App: React.FC = () => {
         if (cloudBlds.length > 0) setBuildings(cloudBlds);
         if (cloudRooms.length > 0) setRooms(cloudRooms);
         if (cloudTenants.length > 0) {
-          setTenants(cloudTenants);
-          const activeMonthFound = cloudTenants.find(t => t.stayMonth)?.stayMonth;
+          const { normalized, updatedTenants } = normalizeTenantsOrder(cloudTenants);
+          setTenants(normalized);
+          if (updatedTenants.length > 0) {
+            updatedTenants.forEach(t => upsertTenantToDb(t));
+          }
+          const activeMonthFound = normalized.find(t => t.stayMonth)?.stayMonth;
           if (activeMonthFound) {
             setActiveStayMonth(activeMonthFound);
             setSelectedMonth(activeMonthFound);
@@ -249,9 +254,23 @@ export const App: React.FC = () => {
     if (!currentRoom) return [];
     return tenants.filter(t => 
       (t.roomId === currentRoom.id || (!t.roomId && t.buildingId === currentBuilding?.id)) &&
-      t.status === 'Active'
+      (t.status === 'Active' || t.status === 'Waiting for new tenant')
     );
   }, [tenants, currentRoom, currentBuilding]);
+
+  // Calculate next non-colliding serial number for new tenant
+  const nextAvailableSno = useMemo(() => {
+    const existingSnos = new Set(
+      currentRoomTenants
+        .map(t => t.sno)
+        .filter((s): s is number => typeof s === 'number' && s > 0)
+    );
+    let sno = 1;
+    while (existingSnos.has(sno)) {
+      sno++;
+    }
+    return sno;
+  }, [currentRoomTenants]);
 
   // Past checked-out tenants archive across all rooms
   const pastTenants = useMemo(() => {
@@ -423,18 +442,32 @@ export const App: React.FC = () => {
       ...newTenantData,
       id: newId,
     };
-    setTenants(prev => [...prev, newTenant]);
-    upsertTenantToDb(newTenant);
+    const combined = [...tenants, newTenant];
+    const { normalized, updatedTenants } = normalizeTenantsOrder(combined);
+    setTenants(normalized);
+    const persistedNew = normalized.find(t => t.id === newId) || newTenant;
+    upsertTenantToDb(persistedNew);
+    updatedTenants.forEach(t => {
+      if (t.id !== newId) upsertTenantToDb(t);
+    });
   };
 
   const handleUpdateTenant = (updated: Tenant) => {
-    setTenants(prev => prev.map(t => (t.id === updated.id ? updated : t)));
+    const updatedList = tenants.map(t => (t.id === updated.id ? updated : t));
+    const { normalized, updatedTenants } = normalizeTenantsOrder(updatedList);
+    setTenants(normalized);
     upsertTenantToDb(updated);
+    updatedTenants.forEach(t => {
+      if (t.id !== updated.id) upsertTenantToDb(t);
+    });
   };
 
   const handleDeleteTenant = (id: string) => {
-    setTenants(prev => prev.filter(t => t.id !== id));
+    const remaining = tenants.filter(t => t.id !== id);
+    const { normalized, updatedTenants } = normalizeTenantsOrder(remaining);
+    setTenants(normalized);
     deleteTenantFromDb(id);
+    updatedTenants.forEach(t => upsertTenantToDb(t));
   };
 
   const handleConfirmCheckOut = (
@@ -461,8 +494,13 @@ export const App: React.FC = () => {
       checkOutRecord: checkoutRecord,
     };
 
-    setTenants(prev => prev.map(t => (t.id === tenantId ? updatedTenant : t)));
+    const remainingList = tenants.map(t => (t.id === tenantId ? updatedTenant : t));
+    const { normalized, updatedTenants } = normalizeTenantsOrder(remainingList);
+    setTenants(normalized);
     upsertTenantToDb(updatedTenant);
+    updatedTenants.forEach(t => {
+      if (t.id !== tenantId) upsertTenantToDb(t);
+    });
 
     // Automatically convert vacated tenant to Follow-Up Lead for month-end outreach
     const bld = buildings.find(b => b.id === updatedTenant.buildingId);
@@ -754,16 +792,18 @@ export const App: React.FC = () => {
 
     setTenants(prev =>
       prev.map(t => {
-        if (t.status !== 'Active') return t;
+        if (t.status !== 'Active' && t.status !== 'Waiting for new tenant') return t;
         const updatedHistory = {
           ...(t.monthStatusHistory || {}),
           [selectedMonth]: t.currentMonthStatus,
         };
+        const willBecomeActive = t.status === 'Waiting for new tenant' && !isFutureMonth(t.joiningDate, nextMonth);
         const updated: Tenant = {
           ...t,
+          status: willBecomeActive ? 'Active' : t.status,
           stayMonth: nextMonth,
           monthStatusHistory: updatedHistory,
-          currentMonthStatus: 'Due',
+          currentMonthStatus: willBecomeActive ? 'Due' : (t.status === 'Active' ? 'Due' : t.currentMonthStatus),
         };
         upsertTenantToDb(updated);
         return updated;
@@ -773,6 +813,21 @@ export const App: React.FC = () => {
     setActiveStayMonth(nextMonth);
     setSelectedMonth(nextMonth);
     alert(`Successfully carried forward all active tenants to ${nextMonth}!`);
+  };
+
+  // --- Auto Re-sequence Tenant Numbers (1, 2, 3...) ---
+  const handleResequenceSnos = () => {
+    if (!currentRoom || currentRoomTenants.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Do you want to auto re-number all ${currentRoomTenants.length} tenants in Room ${currentRoom.roomNumber} (1, 2, 3...)?\n\n` +
+      `This will sort them neatly by Section (HALL first, then ROOM...), Partition (P1, P2, P3...), and Bunker Bed (Lower Bed, then Upper Bed) and eliminate any duplicate numbers or gaps.`
+    );
+    if (!confirmed) return;
+
+    const { normalized, updatedTenants } = normalizeTenantsOrder(tenants);
+    setTenants(normalized);
+    updatedTenants.forEach(t => upsertTenantToDb(t));
   };
 
   // --- Customer Inquiry Handlers ---
@@ -854,8 +909,8 @@ export const App: React.FC = () => {
         isNotificationOpen={isNotificationOpen}
       />
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5">
+      {/* Main Content - Full Width Layout */}
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-5">
         
         {/* Urgent Deadlines Alert Banner */}
         {totalUrgentCount > 0 && (
@@ -1041,6 +1096,7 @@ export const App: React.FC = () => {
                 onMonthChange={setSelectedMonth}
                 onOpenMonthHistory={() => setIsMonthHistoryOpen(true)}
                 onCarryForwardMonth={handleCarryForwardMonth}
+                onResequenceSnos={handleResequenceSnos}
                 onEditTenant={setEditingTenant}
                 onDeleteTenant={handleDeleteTenant}
                 onCheckOutTenant={setCheckoutTenant}
@@ -1081,7 +1137,7 @@ export const App: React.FC = () => {
           onClose={() => setIsAddTenantOpen(false)}
           building={currentBuilding}
           room={currentRoom}
-          nextSno={currentRoomTenants.length + 1}
+          nextSno={nextAvailableSno}
           defaultSection={addTenantSection}
           onAddTenant={handleAddTenant}
         />
@@ -1194,8 +1250,8 @@ export const App: React.FC = () => {
       />
 
       {/* Persistent Footer with Live Database Indicator */}
-      <footer className="bg-white border-t border-slate-200 py-3 px-4 text-xs text-slate-500 flex items-center justify-between flex-wrap gap-2">
-        <p>RentPulse Dubai • Buildings, Room Units, Utilities & Financial Ledger</p>
+      <footer className="bg-white border-t border-slate-200 py-3 px-4 sm:px-6 lg:px-8 text-xs text-slate-500 flex items-center justify-between flex-wrap gap-2">
+        <p>Tenant Management Dubai • Buildings, Room Units, Utilities & Financial Ledger</p>
         <div className="flex items-center gap-2 text-slate-600 font-medium bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <Database className="w-3.5 h-3.5 text-slate-500" />

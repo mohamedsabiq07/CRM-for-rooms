@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Edit3, Calendar, Phone, Key, Trash2 } from 'lucide-react';
 import { Tenant, SpaceType, BedType } from '../types/crm';
+import { isFutureDate } from '../utils/dateUtils';
 
 interface EditTenantModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
 }) => {
   if (!isOpen || !tenant) return null;
 
+  const [sno, setSno] = useState(tenant.sno.toString());
   const [name, setName] = useState(tenant.name);
   const [place, setPlace] = useState(tenant.place);
   const [phone, setPhone] = useState(tenant.phone);
@@ -35,13 +37,33 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
   const [doorKey, setDoorKey] = useState(tenant.doorKey);
   const [partitionKey, setPartitionKey] = useState(tenant.partitionKey ?? true);
   const [remarks, setRemarks] = useState(tenant.remarks);
-  const [status, setStatus] = useState<'Active' | 'Vacated' | 'Checked Out'>(tenant.status);
+  const [status, setStatus] = useState<Tenant['status']>(tenant.status);
   const [currentMonthStatus, setCurrentMonthStatus] = useState(tenant.currentMonthStatus);
+
+  const handleStatusChange = (newStatus: Tenant['status']) => {
+    setStatus(newStatus);
+    if (newStatus === 'Waiting for new tenant') {
+      setCupboardKey(false);
+      setDoorKey(false);
+      setPartitionKey(false);
+    }
+  };
+
+  const handleJoiningDateChange = (val: string) => {
+    setJoiningDate(val);
+    if (isFutureDate(val)) {
+      setStatus('Waiting for new tenant');
+      setCupboardKey(false);
+      setDoorKey(false);
+      setPartitionKey(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onUpdateTenant({
       ...tenant,
+      sno: parseInt(sno, 10) || tenant.sno,
       name: name.trim(),
       place: place.trim(),
       phone: phone.trim(),
@@ -87,8 +109,21 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
         {/* Edit Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Serial Number & Tenant Info */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Serial # (Sno)
+              </label>
+              <input
+                type="number"
+                value={sno}
+                onChange={(e) => setSno(e.target.value)}
+                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-900 text-center bg-amber-50/50"
+              />
+            </div>
+
+            <div className="sm:col-span-3">
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Tenant Name *
               </label>
@@ -100,7 +135,9 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               />
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Place / Origin
@@ -112,9 +149,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Phone Number
@@ -129,82 +164,140 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 />
               </div>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Joining Date
-              </label>
-              <div className="relative">
-                <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={joiningDate}
-                  onChange={(e) => setJoiningDate(e.target.value)}
-                  className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900"
-                />
-              </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Joining Date
+            </label>
+            <div className="relative">
+              <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={joiningDate}
+                onChange={(e) => handleJoiningDateChange(e.target.value)}
+                className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900"
+              />
             </div>
           </div>
 
-          {/* Section & Partition */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Flat Section
-              </label>
-              <select
-                value={section}
-                onChange={(e) => setSection(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
-              >
-                <option value="HALL">HALL</option>
-                <option value="ROOM">ROOM</option>
-                <option value="MASTER ROOM">MASTER ROOM</option>
-                <option value="BALCONY">BALCONY</option>
-              </select>
+          {/* Section & Partition with Quick Bunker Switches */}
+          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Partition & Bunker Bed Allocation
+              </span>
+              <span className="text-[11px] text-slate-500 font-medium">Quick switch below</span>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Partition Code
-              </label>
-              <input
-                type="text"
-                value={partition}
-                onChange={(e) => setPartition(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 uppercase font-bold text-slate-900"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Flat Section
+                </label>
+                <select
+                  value={section}
+                  onChange={(e) => setSection(e.target.value)}
+                  className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 font-medium"
+                >
+                  <option value="HALL">HALL</option>
+                  <option value="ROOM">ROOM</option>
+                  <option value="MASTER ROOM">MASTER ROOM</option>
+                  <option value="BALCONY">BALCONY</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Partition Code
+                </label>
+                <input
+                  type="text"
+                  value={partition}
+                  onChange={(e) => setPartition(e.target.value)}
+                  placeholder="e.g. P1, P2, P3..."
+                  className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 uppercase font-bold text-slate-900 mb-1.5"
+                />
+                <div className="flex items-center gap-1 flex-wrap">
+                  {['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10'].map(pCode => (
+                    <button
+                      key={pCode}
+                      type="button"
+                      onClick={() => setPartition(pCode)}
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded border transition cursor-pointer ${
+                        partition.toUpperCase() === pCode
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {pCode}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Space Type
-              </label>
-              <select
-                value={spaceType}
-                onChange={(e) => setSpaceType(e.target.value as any)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
-              >
-                <option value="Partition">Partition</option>
-                <option value="Without Partition">Without Partition</option>
-                <option value="Bed Space">Bed Space</option>
-              </select>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/70">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Bunker Position (Upper / Lower)
+                </label>
+                <div className="grid grid-cols-2 gap-2 mb-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBedType('Lower Bed');
+                      if (spaceType === 'Without Partition') setSpaceType('Partition');
+                    }}
+                    className={`px-2.5 py-2 rounded-lg text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                      bedType === 'Lower Bed'
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>⬇️</span> Lower Bed
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBedType('Upper Bed');
+                      if (spaceType === 'Without Partition') setSpaceType('Partition');
+                    }}
+                    className={`px-2.5 py-2 rounded-lg text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                      bedType === 'Upper Bed'
+                        ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>⬆️</span> Upper Bed
+                  </button>
+                </div>
+                <select
+                  value={bedType}
+                  onChange={(e) => setBedType(e.target.value as any)}
+                  className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium text-slate-700"
+                >
+                  <option value="Lower Bed">Lower Bed</option>
+                  <option value="Upper Bed">Upper Bed</option>
+                  <option value="Private Partition">Private Partition</option>
+                  <option value="Single Bed">Single Bed</option>
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Bed Position / Type
-              </label>
-              <select
-                value={bedType}
-                onChange={(e) => setBedType(e.target.value as any)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
-              >
-                <option value="Upper Bed">Upper Bed</option>
-                <option value="Lower Bed">Lower Bed</option>
-                <option value="Single Bed">Single Bed</option>
-                <option value="Private Partition">Private Partition</option>
-              </select>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Space Type
+                </label>
+                <select
+                  value={spaceType}
+                  onChange={(e) => setSpaceType(e.target.value as any)}
+                  className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
+                >
+                  <option value="Partition">Partition</option>
+                  <option value="Without Partition">Without Partition</option>
+                  <option value="Bed Space">Bed Space</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -249,38 +342,45 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
           </div>
 
           {/* Keys Handover */}
-          <div className="flex items-center gap-6 py-2 px-3 bg-slate-50 rounded-xl border border-slate-200">
-            <span className="text-xs font-bold text-slate-800 flex items-center gap-1">
-              <Key className="w-4 h-4 text-slate-600" /> Keys:
-            </span>
-            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={cupboardKey}
-                onChange={(e) => setCupboardKey(e.target.checked)}
-                className="rounded text-slate-900 focus:ring-slate-900 w-4 h-4"
-              />
-              Cupboard Key (Cu/k)
-            </label>
-            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={doorKey}
-                onChange={(e) => setDoorKey(e.target.checked)}
-                className="rounded text-slate-900 focus:ring-slate-900 w-4 h-4"
-              />
-              Door Key (D/k)
-            </label>
-            {spaceType === 'Partition' && (
-              <label className="flex items-center gap-2 text-xs font-semibold text-purple-900 cursor-pointer bg-purple-100/70 px-2 py-0.5 rounded-md border border-purple-200">
+          <div className="space-y-1">
+            <div className="flex items-center gap-6 py-2 px-3 bg-slate-50 rounded-xl border border-slate-200">
+              <span className="text-xs font-bold text-slate-800 flex items-center gap-1">
+                <Key className="w-4 h-4 text-slate-600" /> Keys:
+              </span>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={partitionKey}
-                  onChange={(e) => setPartitionKey(e.target.checked)}
-                  className="rounded text-purple-900 focus:ring-purple-900 w-4 h-4"
+                  checked={cupboardKey}
+                  onChange={(e) => setCupboardKey(e.target.checked)}
+                  className="rounded text-slate-900 focus:ring-slate-900 w-4 h-4"
                 />
-                Partition Key (P/k)
+                Cupboard Key (Cu/k)
               </label>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={doorKey}
+                  onChange={(e) => setDoorKey(e.target.checked)}
+                  className="rounded text-slate-900 focus:ring-slate-900 w-4 h-4"
+                />
+                Door Key (D/k)
+              </label>
+              {spaceType === 'Partition' && (
+                <label className="flex items-center gap-2 text-xs font-semibold text-purple-900 cursor-pointer bg-purple-100/70 px-2 py-0.5 rounded-md border border-purple-200">
+                  <input
+                    type="checkbox"
+                    checked={partitionKey}
+                    onChange={(e) => setPartitionKey(e.target.checked)}
+                    className="rounded text-purple-900 focus:ring-purple-900 w-4 h-4"
+                  />
+                  Partition Key (P/k)
+                </label>
+              )}
+            </div>
+            {status === 'Waiting for new tenant' && (
+              <p className="text-[11px] text-amber-700 bg-amber-50 px-3 py-1 rounded-lg border border-amber-200/70 font-medium">
+                ℹ️ Keys unticked automatically (Waiting for new tenant).
+              </p>
             )}
           </div>
 
@@ -308,10 +408,11 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               </label>
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as any)}
+                onChange={(e) => handleStatusChange(e.target.value as any)}
                 className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               >
                 <option value="Active">Active</option>
+                <option value="Waiting for new tenant">Waiting for new tenant</option>
                 <option value="Vacated">Vacated (Moved Out)</option>
                 <option value="Checked Out">Checked Out</option>
               </select>

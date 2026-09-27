@@ -11,6 +11,7 @@ interface StatsCardsProps {
 
 export const StatsCards: React.FC<StatsCardsProps> = ({ tenants, flatName, selectedMonth = 'Sep-2026' }) => {
   const activeTenants = tenants.filter(t => t.status === 'Active');
+  const waitingTenants = tenants.filter(t => t.status === 'Waiting for new tenant');
   const totalDeposit = activeTenants.reduce((sum, t) => sum + (Number(t.deposit) || 0), 0);
   const totalRent = activeTenants.reduce((sum, t) => sum + (Number(t.rentAmount) || 0), 0);
   
@@ -34,6 +35,11 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ tenants, flatName, selec
             <span className="text-lg font-bold text-slate-900">{activeTenants.length}</span>
             <span className="text-xs text-slate-400">in {flatName.split('-')[0].trim()}</span>
           </div>
+          {waitingTenants.length > 0 && (
+            <p className="text-[10px] font-semibold text-amber-600 mt-0.5">
+              ⏳ {waitingTenants.length} waiting for new tenant
+            </p>
+          )}
         </div>
       </div>
 

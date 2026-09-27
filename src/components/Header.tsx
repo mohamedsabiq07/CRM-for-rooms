@@ -100,7 +100,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-[#181824] text-white sticky top-0 z-30 shadow-sm border-b border-[#262638]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-2.5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           
           {/* Brand & Main View Navigation */}
@@ -111,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <div>
                 <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
-                  RentPulse <span className="text-[10px] bg-[#38CE3C]/15 text-[#38CE3C] font-semibold px-2 py-0.5 rounded border border-[#38CE3C]/30">Dubai</span>
+                  Tenant Management <span className="text-[10px] bg-[#38CE3C]/15 text-[#38CE3C] font-semibold px-2 py-0.5 rounded border border-[#38CE3C]/30">Dubai</span>
                 </h1>
                 <p className="text-[11px] text-slate-400 font-normal">Property & Tenant Management</p>
               </div>

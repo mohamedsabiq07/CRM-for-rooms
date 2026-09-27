@@ -17,7 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
-  FolderArchive
+  FolderArchive,
+  Hash
 } from 'lucide-react';
 import { Tenant, Building, RoomUnit } from '../types/crm';
 import { 
@@ -30,6 +31,7 @@ import {
   STANDARD_MONTHS
 } from '../utils/dateUtils';
 import { isTenantInPartition } from '../utils/tenantConversion';
+import { compareSections, compareTenantsForSequence } from '../utils/tenantSequencer';
 
 interface TenantSheetProps {
   building: Building;
@@ -42,6 +44,7 @@ interface TenantSheetProps {
   onMonthChange?: (month: string) => void;
   onOpenMonthHistory?: () => void;
   onCarryForwardMonth?: () => void;
+  onResequenceSnos?: () => void;
   onEditTenant: (tenant: Tenant) => void;
   onDeleteTenant: (tenantId: string) => void;
   onCheckOutTenant: (tenant: Tenant) => void;
@@ -61,6 +64,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
   onMonthChange,
   onOpenMonthHistory,
   onCarryForwardMonth,
+  onResequenceSnos,
   onEditTenant,
   onDeleteTenant,
   onCheckOutTenant,
@@ -82,13 +86,14 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
     );
   });
 
-  // Only display sections that actually contain tenants in this filtered list (or fallback to ['MAIN'] if empty)
+  // Only display sections that actually contain tenants in this filtered list (or fallback to ['MAIN'] if empty), sorted in architectural priority order
   const rawSections = Array.from(new Set(filteredTenants.map(t => (t.section || '').trim()).filter(Boolean))) as string[];
-  const sections = rawSections.length > 0 ? rawSections : ['MAIN'];
+  const sections = (rawSections.length > 0 ? rawSections : ['MAIN']).sort(compareSections);
 
   const capacity = room?.capacity || 10;
   const activeCount = filteredTenants.filter(t => t.status === 'Active').length;
-  const vacancyCount = Math.max(0, capacity - activeCount);
+  const waitingCount = filteredTenants.filter(t => t.status === 'Waiting for new tenant').length;
+  const vacancyCount = Math.max(0, capacity - activeCount - waitingCount);
 
   const rawRoomNum = room?.roomNumber || '';
   const isUnitOrNamed = /unit|hall/i.test(rawRoomNum);
@@ -122,13 +127,21 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
             <span className="font-semibold text-white">{capacity} Beds</span>
             <span className="text-slate-600">•</span>
             <span className="text-slate-300">{activeCount} Occupied</span>
+            {waitingCount > 0 && (
+              <>
+                <span className="text-slate-600">•</span>
+                <span className="text-amber-400 font-semibold">⏳ {waitingCount} Waiting for new tenant</span>
+              </>
+            )}
           </div>
           <div className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
             vacancyCount > 0 
               ? 'bg-[#FFDE73]/15 text-[#FFDE73] border-[#FFDE73]/40' 
               : 'bg-[#38CE3C]/15 text-[#38CE3C] border-[#38CE3C]/40'
           }`}>
-            {vacancyCount > 0 ? `⚠️ ${vacancyCount} Vacant Bed${vacancyCount > 1 ? 's' : ''}` : '✓ Fully Occupied'}
+            {vacancyCount > 0 
+              ? `⚠️ ${vacancyCount} Vacant Bed${vacancyCount > 1 ? 's' : ''}${waitingCount > 0 ? ` (${waitingCount} booked)` : ''}` 
+              : (waitingCount > 0 ? '✓ Fully Allocated (With Incoming)' : '✓ Fully Occupied')}
           </div>
         </div>
       </div>
@@ -223,8 +236,19 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
           </span>
         </div>
 
-        {onCarryForwardMonth && (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          {onResequenceSnos && (
+            <button
+              onClick={onResequenceSnos}
+              title="Auto re-sequence tenant numbers (1, 2, 3...) sorted cleanly by Partition & Bunker Bed"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition cursor-pointer border border-slate-300"
+            >
+              <Hash className="w-3.5 h-3.5 text-slate-500" />
+              <span>Re-number (1, 2, 3...)</span>
+            </button>
+          )}
+
+          {onCarryForwardMonth && (
             <button
               onClick={onCarryForwardMonth}
               title="Carry forward all active tenants and their room/bed allocations to next month"
@@ -233,8 +257,8 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
               <FastForward className="w-3.5 h-3.5" />
               <span>Carry Forward to Next Month</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Spreadsheet Table Container */}
@@ -242,25 +266,27 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
         <table className="w-full text-left text-xs sm:text-sm border-collapse select-none">
           <thead>
             <tr className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 text-xs">
-              <th className="py-2.5 px-3 border-r border-slate-200/60 text-center w-12 font-medium">#</th>
-              <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[170px] font-semibold">Tenant</th>
-              <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[110px] font-medium">Place</th>
-              <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[100px] font-medium">Deposit</th>
-              <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[110px] font-medium">Joining Date</th>
-              <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[110px] font-medium">Duration</th>
-              <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[120px] font-semibold">{selectedMonth} Rent</th>
-              <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Cupboard Key">Cu/k</th>
-              <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Door Key">D/k</th>
-              <th className="py-2.5 px-2 border-r border-slate-200/60 text-center w-14 font-medium" title="Partition Key (only for Partition tenants)">P/k</th>
-              <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[120px] font-medium">Partition</th>
-              <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[140px] font-medium">Remarks</th>
-              <th className="py-2.5 px-3 text-center min-w-[140px] font-semibold">Actions</th>
+              <th className="py-2.5 px-1 border-r border-slate-200/60 text-center w-8 font-medium">#</th>
+              <th className="py-2.5 px-2.5 border-r border-slate-200/60 min-w-[110px] font-semibold">Tenant</th>
+              <th className="py-2.5 px-1.5 border-r border-slate-200/60 min-w-[65px] font-medium">Place</th>
+              <th className="py-2.5 px-1.5 border-r border-slate-200/60 text-center min-w-[65px] font-medium">Deposit</th>
+              <th className="py-2.5 px-1.5 border-r border-slate-200/60 text-center min-w-[78px] font-medium">Joining</th>
+              <th className="py-2.5 px-1.5 border-r border-slate-200/60 text-center min-w-[65px] font-medium">Duration</th>
+              <th className="py-2.5 px-1.5 border-r border-slate-200/60 text-center min-w-[80px] font-semibold">{selectedMonth} Rent</th>
+              <th className="py-2.5 px-0.5 border-r border-slate-200/60 text-center w-8 font-medium" title="Cupboard Key">Cu/k</th>
+              <th className="py-2.5 px-0.5 border-r border-slate-200/60 text-center w-8 font-medium" title="Door Key">D/k</th>
+              <th className="py-2.5 px-0.5 border-r border-slate-200/60 text-center w-8 font-medium" title="Partition Key (only for Partition tenants)">P/k</th>
+              <th className="py-2.5 px-1.5 border-r border-slate-200/60 min-w-[95px] text-center font-semibold">Partition & Bed</th>
+              <th className="py-2.5 px-2 border-r border-slate-200/60 min-w-[90px] font-medium">Remarks</th>
+              <th className="py-2.5 px-1 text-center min-w-[105px] font-semibold">Actions</th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-slate-200/70">
             {sections.map((sectionName) => {
-              const sectionTenants = filteredTenants.filter(t => (t.section || 'HALL') === sectionName);
+              const sectionTenants = filteredTenants
+                .filter(t => (t.section || 'HALL') === sectionName)
+                .sort(compareTenantsForSequence);
 
               return (
                 <React.Fragment key={sectionName}>
@@ -274,7 +300,11 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                         </span>
                         <div className="flex items-center gap-3">
                           <span className="text-[11px] font-medium text-slate-500">
-                            {sectionTenants.length} tenants • AED {sectionTenants.filter(t => getTenantStatusForMonth(t, selectedMonth) === 'Paid').reduce((s, t) => s + (t.rentAmount || 0), 0).toLocaleString()} Paid / AED {sectionTenants.reduce((s, t) => s + (t.rentAmount || 0), 0).toLocaleString()} Total
+                            {sectionTenants.filter(t => t.status === 'Active').length} active
+                            {sectionTenants.filter(t => t.status === 'Waiting for new tenant').length > 0 && (
+                              <span className="text-amber-600 font-semibold"> • {sectionTenants.filter(t => t.status === 'Waiting for new tenant').length} waiting</span>
+                            )}
+                            {' '}• AED {sectionTenants.filter(t => getTenantStatusForMonth(t, selectedMonth) === 'Paid').reduce((s, t) => s + (t.rentAmount || 0), 0).toLocaleString()} Paid / AED {sectionTenants.reduce((s, t) => s + (t.rentAmount || 0), 0).toLocaleString()} Total
                           </span>
                           {onAddTenantToSection && (
                             <button
@@ -318,12 +348,12 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           }`}
                         >
                           {/* Sno */}
-                          <td className="py-2.5 px-3 text-center border-r border-slate-200/60 font-medium text-slate-500 text-xs">
+                          <td className="py-2 px-1 text-center border-r border-slate-200/60 font-medium text-slate-500 text-xs">
                             {t.sno}
                           </td>
 
                           {/* Tenant Name & Bed/Space Badges */}
-                          <td className="py-2.5 px-3 border-r border-slate-200/60 font-semibold text-slate-900">
+                          <td className="py-2 px-2.5 border-r border-slate-200/60 font-semibold text-slate-900">
                             <div>
                               <div className="flex items-center justify-between gap-1">
                                 <span>{t.name}</span>
@@ -335,6 +365,11 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                               </div>
                               {/* Space & Bed Type Tag with Tasteful Colors */}
                               <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                                {t.status === 'Waiting for new tenant' && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                                    ⏳ Waiting for new tenant
+                                  </span>
+                                )}
                                 {t.bedType === 'Upper Bed' && (
                                   <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-[#FFF9E6] text-[#8C6B00] border border-[#FFDE73]">
                                     Upper Bed
@@ -360,12 +395,12 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           </td>
 
                           {/* Place / Origin */}
-                          <td className="py-2.5 px-3 border-r border-slate-200/60 font-medium text-slate-700 text-xs">
+                          <td className="py-2 px-1.5 border-r border-slate-200/60 font-medium text-slate-700 text-xs">
                             {t.place || '-'}
                           </td>
 
                           {/* Deposit */}
-                          <td className="py-2.5 px-3 text-center border-r border-slate-200/60 text-xs">
+                          <td className="py-2 px-1.5 text-center border-r border-slate-200/60 text-xs">
                             {t.depositNote ? (
                               <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold bg-[#FFF0F3] text-[#D1183E] border border-[#FF4D6B]/40">
                                 {t.depositNote}
@@ -378,14 +413,16 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           </td>
 
                           {/* Joining Date */}
-                          <td className="py-2.5 px-3 text-center border-r border-slate-200/60 font-medium text-slate-600 text-xs font-mono">
+                          <td className="py-2 px-1.5 text-center border-r border-slate-200/60 font-medium text-slate-600 text-xs font-mono whitespace-nowrap">
                             {t.joiningDate || '-'}
                           </td>
 
                           {/* Stay Duration */}
-                          <td className="py-2.5 px-3 text-center border-r border-slate-200/60 font-medium text-slate-600 text-xs">
-                            <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-medium border border-slate-200">
-                              {calculateStayDuration(t.joiningDate, t.leavingDate)}
+                          <td className="py-2 px-1.5 text-center border-r border-slate-200/60 font-medium text-slate-600 text-xs whitespace-nowrap">
+                            <span className="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-medium border border-slate-200">
+                              {t.status === 'Waiting for new tenant' 
+                                ? `Starts ${t.joiningDate}` 
+                                : calculateStayDuration(t.joiningDate, t.leavingDate)}
                             </span>
                           </td>
 
@@ -393,21 +430,27 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           <td 
                             onClick={() => onStatusClick(t)}
                             title={`Click to update payment status for ${selectedMonth}`}
-                            className="py-2 px-2 text-center border-r border-slate-200/60 cursor-pointer transition hover:bg-slate-100/80"
+                            className="py-2 px-1.5 text-center border-r border-slate-200/60 cursor-pointer transition hover:bg-slate-100/80"
                           >
                             <div className="flex flex-col items-center">
                               <span className="text-xs font-bold text-slate-900">
                                 AED {t.rentAmount || '0'}
                               </span>
-                              <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 ${
-                                monthStatus === 'Paid' 
-                                  ? 'bg-[#EAFBF0] text-[#1B8020] border-[#38CE3C]/60' 
-                                  : dueInfo.status === 'overdue'
-                                    ? 'bg-[#FFF0F3] text-[#D1183E] border-[#FF4D6B]/40'
-                                    : 'bg-[#FFF9E6] text-[#8C6B00] border border-[#FFDE73]/60'
-                              }`}>
-                                {monthStatus || 'Due'}
-                              </span>
+                              {t.status === 'Waiting for new tenant' ? (
+                                <span className="text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 bg-amber-50 text-amber-800 border-amber-300">
+                                  ⏳ Waiting for Tenant
+                                </span>
+                              ) : (
+                                <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 ${
+                                  monthStatus === 'Paid' 
+                                    ? 'bg-[#EAFBF0] text-[#1B8020] border-[#38CE3C]/60' 
+                                    : dueInfo.status === 'overdue'
+                                      ? 'bg-[#FFF0F3] text-[#D1183E] border-[#FF4D6B]/40'
+                                      : 'bg-[#FFF9E6] text-[#8C6B00] border border-[#FFDE73]/60'
+                                }`}>
+                                  {monthStatus || 'Due'}
+                                </span>
+                              )}
                             </div>
                           </td>
 
@@ -415,7 +458,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           <td 
                             onClick={() => onToggleKey(t.id, 'cupboard')}
                             title="Click to toggle Cupboard Key status"
-                            className="py-2.5 px-1 text-center border-r border-slate-200/60 cursor-pointer hover:bg-slate-100"
+                            className="py-2 px-0.5 text-center border-r border-slate-200/60 cursor-pointer hover:bg-slate-100"
                           >
                             <button className={`w-4 h-4 mx-auto rounded flex items-center justify-center border transition ${
                               t.cupboardKey 
@@ -430,7 +473,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           <td 
                             onClick={() => onToggleKey(t.id, 'door')}
                             title="Click to toggle Door Key status"
-                            className="py-2.5 px-1 text-center border-r border-slate-200/60 cursor-pointer hover:bg-slate-100"
+                            className="py-2 px-0.5 text-center border-r border-slate-200/60 cursor-pointer hover:bg-slate-100"
                           >
                             <button className={`w-4 h-4 mx-auto rounded flex items-center justify-center border transition ${
                               t.doorKey 
@@ -448,7 +491,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                               <td 
                                 onClick={() => inPartition && onToggleKey(t.id, 'partition')}
                                 title={inPartition ? "Click to toggle Partition Key status" : "Not applicable for Bed Space"}
-                                className={`py-2.5 px-1 text-center border-r border-slate-200/60 ${
+                                className={`py-2 px-0.5 text-center border-r border-slate-200/60 ${
                                   inPartition ? 'cursor-pointer hover:bg-slate-100' : 'bg-slate-50/40 select-none'
                                 }`}
                               >
@@ -467,21 +510,41 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                             );
                           })()}
 
-                          {/* Partition */}
-                          <td className="py-2.5 px-2 text-center border-r border-slate-200/60">
-                            <span className="inline-block font-bold text-slate-900 text-xs uppercase px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
-                              {t.partition || '-'}
-                            </span>
+                          {/* Partition & Bunker Bed (Upper / Lower) */}
+                          <td className="py-2 px-1.5 text-center border-r border-slate-200/60">
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              {t.partition ? (
+                                <span className="inline-block font-extrabold text-slate-900 text-xs uppercase px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 shadow-2xs">
+                                  {t.partition.toUpperCase().startsWith('PARTITION') || t.partition.toUpperCase().startsWith('P') || t.partition.toUpperCase().startsWith('LOFT') || t.partition.toUpperCase().startsWith('BED')
+                                    ? t.partition.toUpperCase()
+                                    : `P${t.partition.toUpperCase()}`}
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 text-xs font-mono">-</span>
+                              )}
+
+                              {t.bedType && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap border flex items-center gap-1 ${
+                                  t.bedType === 'Upper Bed'
+                                    ? 'bg-[#FFF9E6] text-[#8C6B00] border-[#FFDE73]'
+                                    : t.bedType === 'Lower Bed'
+                                      ? 'bg-[#F0F2FD] text-[#2F3E76] border-[#BAC3F1]'
+                                      : 'bg-slate-50 text-slate-700 border-slate-200'
+                                }`}>
+                                  {t.bedType === 'Upper Bed' ? '⬆️ Upper' : t.bedType === 'Lower Bed' ? '⬇️ Lower' : t.bedType}
+                                </span>
+                              )}
+                            </div>
                           </td>
 
                           {/* Remarks */}
-                          <td className="py-2.5 px-3 border-r border-slate-200/60 text-xs text-slate-600 font-normal">
+                          <td className="py-2 px-2 border-r border-slate-200/60 text-xs text-slate-600 font-normal break-words max-w-[180px]">
                             {t.remarks || '-'}
                           </td>
 
                           {/* Actions: Call, WhatsApp, Tenant Out (Check-Out), Edit */}
-                          <td className="py-2.5 px-2 text-center">
-                            <div className="flex items-center justify-center gap-1">
+                          <td className="py-2 px-1.5 text-center">
+                            <div className="flex items-center justify-center gap-1 shrink-0">
                               {/* Direct Phone Call */}
                               <a
                                 href={`tel:${t.phone.replace(/\s+/g, '')}`}

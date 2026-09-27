@@ -254,3 +254,42 @@ export function getNextMonth(currentMonth: string, list: string[] = STANDARD_MON
   if (idx >= 0 && idx < list.length - 1) return list[idx + 1];
   return null;
 }
+
+/**
+ * Checks if a date string is in the future (after today)
+ */
+export function isFutureDate(dateStr: string | undefined): boolean {
+  if (!dateStr || dateStr.trim() === '') return false;
+  const parsed = parseFlexibleDate(dateStr);
+  if (!parsed) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return parsed.getTime() > today.getTime();
+}
+
+/**
+ * Checks if a joining date falls in a future month compared to reference month or today
+ */
+export function isFutureMonth(dateStr: string | undefined, referenceMonth?: string): boolean {
+  if (!dateStr) return false;
+  const parsed = parseFlexibleDate(dateStr);
+  if (!parsed) return false;
+
+  if (referenceMonth) {
+    const parts = referenceMonth.split('-');
+    if (parts.length === 2) {
+      const monthIdx = STANDARD_MONTHS.findIndex(m => m.startsWith(parts[0]));
+      const year = parseInt(parts[1], 10);
+      if (monthIdx !== -1 && !isNaN(year)) {
+        if (parsed.getFullYear() > year) return true;
+        if (parsed.getFullYear() === year && parsed.getMonth() > (monthIdx % 12)) return true;
+        return false;
+      }
+    }
+  }
+
+  const today = new Date();
+  if (parsed.getFullYear() > today.getFullYear()) return true;
+  if (parsed.getFullYear() === today.getFullYear() && parsed.getMonth() > today.getMonth()) return true;
+  return false;
+}

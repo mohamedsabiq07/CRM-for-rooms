@@ -271,6 +271,10 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                     <div className="space-y-3">
                       {buildingRooms.map((room) => {
                         const roomTenants = tenants.filter(t => t.roomId === room.id && t.status === 'Active');
+                        const waitingTenants = tenants.filter(t => t.roomId === room.id && t.status === 'Waiting for new tenant');
+                        const totalAllocated = roomTenants.length + waitingTenants.length;
+                        const roomCapacity = room.capacity || 10;
+                        const vacantCount = Math.max(0, roomCapacity - totalAllocated);
                         const roomIncome = roomTenants.reduce((sum, t) => sum + (Number(t.rentAmount) || 0), 0);
                         const isNamed = /unit|hall/i.test(room.roomNumber);
                         const cleanNum = room.roomNumber.replace(/^(room|flat)\s*/i, '').replace(/\s*\(.*\)$/, '').trim();
@@ -292,13 +296,13 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                                     {room.roomType || 'Partition Flat'}
                                   </span>
                                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
-                                    Math.max(0, (room.capacity || 10) - roomTenants.length) > 0 
+                                    vacantCount > 0 
                                       ? 'bg-slate-100 text-slate-700 border-slate-200' 
                                       : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                   }`}>
-                                    {Math.max(0, (room.capacity || 10) - roomTenants.length) > 0 
-                                      ? `${Math.max(0, (room.capacity || 10) - roomTenants.length)} Vacant (${roomTenants.length}/${room.capacity || 10} Beds)` 
-                                      : `Full (${room.capacity || 10} Beds)`}
+                                    {vacantCount > 0 
+                                      ? `${vacantCount} Vacant (${roomTenants.length}/${roomCapacity} Active${waitingTenants.length > 0 ? `, ${waitingTenants.length} Waiting` : ''})` 
+                                      : `Full (${roomTenants.length} Active${waitingTenants.length > 0 ? `, ${waitingTenants.length} Waiting` : ''})`}
                                   </span>
                                 </div>
                                 <p className="text-[11px] text-slate-500 mt-0.5">
@@ -410,7 +414,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                 
                 <button
                   onClick={() => {
-                    if (confirm(`Are you sure you want to remove "${building.name}" from RentPulse?\n\nThis will vacate and remove the building, its rooms, and utilities from your active dashboard.`)) {
+                    if (confirm(`Are you sure you want to remove "${building.name}" from Tenant Management?\n\nThis will vacate and remove the building, its rooms, and utilities from your active dashboard.`)) {
                       onDeleteBuilding(building.id);
                     }
                   }}
