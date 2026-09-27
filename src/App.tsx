@@ -163,6 +163,7 @@ export const App: React.FC = () => {
   const [roomModalTargetRoom, setRoomModalTargetRoom] = useState<RoomUnit | null>(null);
 
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [paymentTenant, setPaymentTenant] = useState<Tenant | null>(null);
   const [checkoutTenant, setCheckoutTenant] = useState<Tenant | null>(null);
   const [isRentCalculatorOpen, setIsRentCalculatorOpen] = useState(false);
@@ -271,6 +272,36 @@ export const App: React.FC = () => {
     }
     return sno;
   }, [currentRoomTenants]);
+
+  // Global Keyboard Shortcut: Ctrl + E or Cmd + E to Edit Selected Customer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
+        const target = e.target as HTMLElement | null;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+          return;
+        }
+
+        e.preventDefault();
+
+        // 1. Check if a customer is explicitly selected
+        let targetTenant = tenants.find(t => t.id === selectedTenantId);
+
+        // 2. If not selected, fallback to the first active customer in the current room
+        if (!targetTenant && currentRoomTenants.length > 0) {
+          targetTenant = currentRoomTenants[0];
+          setSelectedTenantId(targetTenant.id);
+        }
+
+        if (targetTenant) {
+          setEditingTenant(targetTenant);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedTenantId, tenants, currentRoomTenants]);
 
   // Past checked-out tenants archive across all rooms
   const pastTenants = useMemo(() => {
@@ -1093,6 +1124,8 @@ export const App: React.FC = () => {
                 selectedMonth={selectedMonth}
                 activeStayMonth={activeStayMonth}
                 availableMonths={availableMonths}
+                selectedTenantId={selectedTenantId}
+                onSelectTenant={setSelectedTenantId}
                 onMonthChange={setSelectedMonth}
                 onOpenMonthHistory={() => setIsMonthHistoryOpen(true)}
                 onCarryForwardMonth={handleCarryForwardMonth}

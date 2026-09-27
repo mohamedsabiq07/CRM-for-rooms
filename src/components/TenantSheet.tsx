@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Phone, 
   MessageSquare, 
@@ -7,17 +7,17 @@ import {
   Key, 
   Check, 
   AlertCircle, 
-  Clock,
-  ExternalLink,
-  Plus,
-  LogOut,
-  Bed,
-  Calendar,
-  FastForward,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  FolderArchive,
+  Clock, 
+  ExternalLink, 
+  Plus, 
+  LogOut, 
+  Bed, 
+  Calendar, 
+  FastForward, 
+  ChevronLeft, 
+  ChevronRight, 
+  Search, 
+  FolderArchive, 
   Hash
 } from 'lucide-react';
 import { Tenant, Building, RoomUnit } from '../types/crm';
@@ -41,6 +41,8 @@ interface TenantSheetProps {
   selectedMonth?: string;
   activeStayMonth?: string;
   availableMonths?: string[];
+  selectedTenantId?: string | null;
+  onSelectTenant?: (tenantId: string | null) => void;
   onMonthChange?: (month: string) => void;
   onOpenMonthHistory?: () => void;
   onCarryForwardMonth?: () => void;
@@ -61,6 +63,8 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
   selectedMonth = 'Sep-2026',
   activeStayMonth = 'Sep-2026',
   availableMonths = STANDARD_MONTHS,
+  selectedTenantId,
+  onSelectTenant,
   onMonthChange,
   onOpenMonthHistory,
   onCarryForwardMonth,
@@ -72,6 +76,15 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
   onStatusClick,
   onAddTenantToSection,
 }) => {
+  const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null);
+  const [hoveredTenantId, setHoveredTenantId] = useState<string | null>(null);
+  const activeSelectedId = selectedTenantId !== undefined ? selectedTenantId : internalSelectedId;
+
+  const handleSelectTenant = (id: string | null) => {
+    setInternalSelectedId(id);
+    onSelectTenant?.(id);
+  };
+
   const filteredTenants = tenants.filter(t => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -85,6 +98,31 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
       (t.spaceType && t.spaceType.toLowerCase().includes(q))
     );
   });
+
+  // Keyboard shortcut listener: Ctrl + E or Cmd + E to edit selected customer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
+        const target = e.target as HTMLElement | null;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+          return;
+        }
+
+        e.preventDefault();
+
+        const targetId = activeSelectedId || hoveredTenantId;
+        const targetTenant = filteredTenants.find(t => t.id === targetId) || (filteredTenants.length > 0 ? filteredTenants[0] : null);
+
+        if (targetTenant) {
+          handleSelectTenant(targetTenant.id);
+          onEditTenant(targetTenant);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeSelectedId, hoveredTenantId, filteredTenants, onEditTenant]);
 
   // Only display sections that actually contain tenants in this filtered list (or fallback to ['MAIN'] if empty), sorted in architectural priority order
   const rawSections = Array.from(new Set(filteredTenants.map(t => (t.section || '').trim()).filter(Boolean))) as string[];
@@ -234,6 +272,9 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
           <span className="text-[11px] text-slate-400 hidden lg:inline">
             • Displaying tenant occupancy & collections for {selectedMonth}
           </span>
+          <span className="text-[11px] text-slate-500 hidden xl:inline">
+            • Click any customer & press <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 text-slate-800 rounded text-[10px] font-mono font-bold shadow-2xs">Ctrl + E</kbd> to edit
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -340,12 +381,22 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                         dueInfo.status === 'overdue' ? `${Math.abs(dueInfo.daysDiff)} days overdue` : `${selectedMonth} Rent`
                       );
 
+                      const isSelected = activeSelectedId === t.id;
+
                       return (
                         <tr 
                           key={t.id}
-                          className={`transition-colors hover:bg-slate-50 ${
-                            isEven ? 'bg-white' : 'bg-slate-50/40'
+                          onClick={() => handleSelectTenant(t.id)}
+                          onDoubleClick={() => onEditTenant(t)}
+                          onMouseEnter={() => setHoveredTenantId(t.id)}
+                          className={`transition-all cursor-pointer ${
+                            isSelected 
+                              ? 'bg-emerald-50/80 border-l-4 border-l-[#38CE3C] ring-1 ring-[#38CE3C]/40 ring-inset shadow-2xs' 
+                              : isEven 
+                                ? 'bg-white hover:bg-slate-50' 
+                                : 'bg-slate-50/40 hover:bg-slate-100/60'
                           }`}
+                          title="Click anywhere to select • Press Ctrl+E or double-click to edit"
                         >
                           {/* Sno */}
                           <td className="py-2 px-1 text-center border-r border-slate-200/60 font-medium text-slate-500 text-xs">
@@ -356,7 +407,17 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           <td className="py-2 px-2.5 border-r border-slate-200/60 font-semibold text-slate-900">
                             <div>
                               <div className="flex items-center justify-between gap-1">
-                                <span>{t.name}</span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span>{t.name}</span>
+                                  {isSelected && (
+                                    <span 
+                                      className="text-[9px] font-mono font-bold bg-[#181824] text-[#38CE3C] px-1.5 py-0.5 rounded shadow-2xs inline-flex items-center gap-0.5 border border-[#38CE3C]/30"
+                                      title="Press Ctrl + E to edit this customer"
+                                    >
+                                      Ctrl+E
+                                    </span>
+                                  )}
+                                </div>
                                 {t.phone && (
                                   <span className="text-[10px] font-mono text-slate-400 font-normal hidden xl:inline">
                                     {t.phone}
@@ -548,6 +609,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                               {/* Direct Phone Call */}
                               <a
                                 href={`tel:${t.phone.replace(/\s+/g, '')}`}
+                                onClick={(e) => e.stopPropagation()}
                                 title={`Call ${t.name}`}
                                 className="p-1.5 rounded-md bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition shadow-sm"
                               >
@@ -557,6 +619,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                               {/* WhatsApp Reminder */}
                               <a
                                 href={waUrl}
+                                onClick={(e) => e.stopPropagation()}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 title={`Send WhatsApp message to ${t.name}`}
@@ -567,18 +630,29 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
 
                               {/* TENANT OUT (CHECK-OUT & GIVE BACK REFUND) */}
                               <button
-                                onClick={() => onCheckOutTenant(t)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onCheckOutTenant(t);
+                                }}
                                 title="Tenant Out: Check-out, return keys & give back deposit refund"
                                 className="p-1.5 rounded-md bg-white text-slate-600 hover:text-rose-700 hover:bg-rose-50 border border-slate-200 transition shadow-sm"
                               >
                                 <LogOut className="w-3.5 h-3.5" />
                               </button>
 
-                              {/* Edit Modal */}
+                              {/* Edit Modal (or press Ctrl + E) */}
                               <button
-                                onClick={() => onEditTenant(t)}
-                                title="Edit Tenant Details"
-                                className="p-1.5 rounded-md bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition shadow-sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectTenant(t.id);
+                                  onEditTenant(t);
+                                }}
+                                title="Edit Tenant Details (or press Ctrl + E)"
+                                className={`p-1.5 rounded-md border transition shadow-sm ${
+                                  isSelected 
+                                    ? 'bg-[#181824] text-[#38CE3C] border-[#181824] ring-1 ring-[#38CE3C]/40' 
+                                    : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-slate-200'
+                                }`}
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
@@ -616,8 +690,13 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
           </span>
         </div>
 
-        <div className="text-[11px] text-slate-400 font-normal">
-          Click <strong>Tenant Out</strong> to process checkout, verify keys, and settle deposit give-back.
+        <div className="flex items-center gap-3 text-[11px] text-slate-500 font-normal flex-wrap">
+          <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded border border-slate-200">
+            <kbd className="px-1.5 py-0.2 bg-slate-100 border border-slate-300 text-slate-800 rounded text-[10px] font-mono font-bold shadow-2xs">Ctrl + E</kbd>
+            <span>Click any customer anywhere and press shortcut (or double-click) to edit</span>
+          </div>
+          <span>•</span>
+          <span>Click <strong>Tenant Out</strong> to process checkout & refund.</span>
         </div>
       </div>
     </div>
