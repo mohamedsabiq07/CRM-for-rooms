@@ -67,7 +67,7 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
   // Bulk Broadcast State
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [broadcastTemplate, setBroadcastTemplate] = useState(
-    `Hi {name}, hope you are doing well! Are you still looking for a {lookingFor} in Dubai for ${selectedMonth}? We have clean, fully furnished spaces available starting from AED 650/month with DEWA, high-speed Wi-Fi, and cleaning included. Please let me know if you would like to view or reserve today! - Mohamed Room Management`
+    `Hi {name}, hope you're doing well! 😊\n\nWe have availability for a {lookingFor} in Dubai. Our rooms are clean, fully furnished with DEWA, high-speed Wi-Fi, weekly cleaning, and a secure environment included.\n\nIf you're still looking for accommodation, we'd love to have you! Feel free to reach out and we can arrange a viewing at your convenience. 🏠\n\n– Mohamed | Tenant Management`
   );
   const [broadcastFeedback, setBroadcastFeedback] = useState('');
 
@@ -594,7 +594,9 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                 <div>
                   <label className="font-semibold text-slate-700 block">WhatsApp / Phone *</label>
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     required
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
@@ -743,14 +745,14 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => setBroadcastTemplate(`Hi {name}, hope you are doing well! Are you still looking for a {lookingFor} in Dubai for ${selectedMonth}? We have clean, fully furnished spaces available starting from AED 650/month with DEWA, high-speed Wi-Fi, and cleaning included. Please let me know if you would like to view or reserve today! - Mohamed Room Management`)}
+                    onClick={() => setBroadcastTemplate(`Hi {name}, hope you're doing well! 😊\n\nWe have availability for a {lookingFor} in Dubai. Our rooms are clean, fully furnished with DEWA, high-speed Wi-Fi, weekly cleaning, and a secure environment included.\n\nIf you're still looking for accommodation, we'd love to have you! Feel free to reach out and we can arrange a viewing at your convenience. 🏠\n\n– Mohamed | Tenant Management`)}
                     className="px-2.5 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md border border-slate-300 transition cursor-pointer"
                   >
                     Standard Lead Template
                   </button>
                   <button
                     type="button"
-                    onClick={() => setBroadcastTemplate(`Hi {name}, hope you are doing well! As our former resident, we would love to welcome you back. Are you looking for a {lookingFor} in Dubai for ${selectedMonth}? We have premium clean spaces ready with DEWA and high-speed Wi-Fi included. Priority viewing and reservation available for returning tenants! - Mohamed Room Management`)}
+                    onClick={() => setBroadcastTemplate(`Hi {name}, hope you're doing well! 😊\n\nAs our former resident, we'd love to welcome you back! We currently have a {lookingFor} available in Dubai with all our facilities – DEWA, high-speed Wi-Fi, weekly cleaning, and a safe, friendly environment.\n\nIf you're looking for a place, priority viewing is available for returning tenants. Just reach out and we'll arrange it! 🏠\n\n– Mohamed | Tenant Management`)}
                     className="px-2.5 py-1 text-[11px] font-bold bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-md border border-purple-300 transition cursor-pointer flex items-center gap-1"
                   >
                     <span>🏠 Former Resident (Left Room) Template</span>

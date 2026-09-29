@@ -25,7 +25,6 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
   const [place, setPlace] = useState(tenant.place);
   const [phone, setPhone] = useState(tenant.phone);
   const [deposit, setDeposit] = useState(tenant.deposit.toString());
-  const [depositNote, setDepositNote] = useState(tenant.depositNote || '');
   const [rentAmount, setRentAmount] = useState(tenant.rentAmount.toString());
   const [joiningDate, setJoiningDate] = useState(tenant.joiningDate);
   const [leavingDate, setLeavingDate] = useState(tenant.leavingDate || '');
@@ -68,7 +67,6 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
       place: place.trim(),
       phone: phone.trim(),
       deposit: Number(deposit) || 0,
-      depositNote: depositNote.trim(),
       rentAmount: Number(rentAmount) || 0,
       joiningDate: joiningDate.trim(),
       leavingDate: leavingDate.trim() || null,
@@ -107,7 +105,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
         </div>
 
         {/* Edit Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[82vh] overflow-y-auto">
           
           {/* Serial Number & Tenant Info */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -157,10 +155,12 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               <div className="relative">
                 <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
-                  type="text"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full text-sm pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900"
+                  className="w-full text-sm pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900"
                 />
               </div>
             </div>
@@ -301,8 +301,8 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
             </div>
           </div>
 
-          {/* Rent, Deposit & Note */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Rent & Deposit */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Rent (AED)
@@ -311,7 +311,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 type="number"
                 value={rentAmount}
                 onChange={(e) => setRentAmount(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
+                className="w-full text-sm px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               />
             </div>
 
@@ -323,20 +323,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
                 type="number"
                 value={deposit}
                 onChange={(e) => setDeposit(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Deposit Note
-              </label>
-              <input
-                type="text"
-                value={depositNote}
-                onChange={(e) => setDepositNote(e.target.value)}
-                placeholder="No Advance, etc."
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
+                className="w-full text-sm px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               />
             </div>
           </div>
