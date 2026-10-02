@@ -18,7 +18,7 @@ export function exportFlatToExcel(
     'Partition': t.partition.toUpperCase(),
     'Tenants': t.name,
     'Place': t.place,
-    'Deposit': t.depositNote || (t.deposit > 0 ? t.deposit : 'No Advance'),
+    'Deposit (AED)': Number(t.deposit) || 0,
     'Joining date': t.joiningDate,
     'Rent (AED)': t.rentAmount,
     'Stay Duration': calculateStayDuration(t.joiningDate, t.leavingDate),

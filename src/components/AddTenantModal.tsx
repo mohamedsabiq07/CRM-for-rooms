@@ -11,6 +11,7 @@ interface AddTenantModalProps {
   room: RoomUnit;
   nextSno: number;
   defaultSection?: string;
+  selectedMonth?: string;
   onAddTenant: (newTenant: Omit<Tenant, 'id'>) => void;
 }
 
@@ -21,6 +22,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
   room,
   nextSno,
   defaultSection = 'HALL',
+  selectedMonth,
   onAddTenant,
 }) => {
   // Format today's date in DD.MM.YYYY
@@ -37,8 +39,8 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
   const [place, setPlace] = useState('');
   const [phone, setPhone] = useState('+971 5');
   const [deposit, setDeposit] = useState('200');
-  const [isNoAdvance, setIsNoAdvance] = useState(false);
   const [rentAmount, setRentAmount] = useState('800');
+  const [initialPaid, setInitialPaid] = useState<boolean>(true);
   const [joiningDate, setJoiningDate] = useState(todayFormatted);
   const [status, setStatus] = useState<Tenant['status']>(initialIsFuture ? 'Waiting for new tenant' : 'Active');
   const [section, setSection] = useState(defaultSection);
@@ -84,6 +86,11 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
     e.preventDefault();
     if (!name.trim()) return;
 
+    const targetMonth = selectedMonth || 'Sep-2026';
+    const numRent = Math.max(0, Number(rentAmount) || 0);
+    const numDeposit = Math.max(0, Number(deposit) || 0);
+    const initialStatus = initialPaid ? 'Paid' : 'Due';
+
     onAddTenant({
       sno: parseInt(sno, 10) || nextSno,
       buildingId: building.id,
@@ -92,21 +99,28 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
       name: name.trim(),
       place: place.trim(),
       phone: phone.trim(),
-      deposit: isNoAdvance ? 0 : Number(deposit) || 0,
-      depositNote: isNoAdvance ? 'No Advance' : '',
+      deposit: numDeposit,
+      depositNote: '',
       joiningDate: joiningDate.trim(),
       status: status,
       section: section || 'HALL',
       partition: partition.trim().toLowerCase(),
       spaceType,
       bedType,
-      rentAmount: Number(rentAmount) || 800,
+      rentAmount: numRent,
       cupboardKey,
       doorKey,
       partitionKey: spaceType === 'Partition' ? partitionKey : false,
-      currentMonthStatus: 'Pending',
+      currentMonthStatus: initialStatus,
+      stayMonth: targetMonth,
+      monthStatusHistory: {
+        [targetMonth]: initialStatus,
+      },
+      monthPaymentAmounts: {
+        [targetMonth]: initialPaid ? numRent : 0,
+      },
       remarks: remarks.trim(),
-      lastPaidDate: joiningDate.trim()
+      lastPaidDate: initialPaid ? joiningDate.trim() : ''
     });
 
     onClose();
@@ -327,44 +341,87 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
           {/* Rent & Advance Deposit */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Monthly Rent (AED)
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Monthly Rent (AED) *
               </label>
               <input
                 type="number"
+                min="0"
+                required
                 value={rentAmount}
                 onChange={(e) => setRentAmount(e.target.value)}
                 placeholder="800"
-                className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 font-semibold"
+                className="w-full text-sm px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-900"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-semibold text-slate-700">
-                  Advance Deposit (AED)
+                <label className="text-xs font-bold text-slate-700">
+                  Deposit (AED)
                 </label>
-                <label className="text-[11px] text-slate-500 font-medium flex items-center gap-1 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isNoAdvance}
-                    onChange={(e) => setIsNoAdvance(e.target.checked)}
-                    className="rounded text-slate-700 focus:ring-slate-400"
-                  />
-                  No Advance
-                </label>
+                <div className="flex items-center gap-1">
+                  {['0', '100', '150', '200'].map(dVal => (
+                    <button
+                      key={dVal}
+                      type="button"
+                      onClick={() => setDeposit(dVal)}
+                      className={`text-[10px] font-bold px-1.5 py-0.2 rounded border transition cursor-pointer ${
+                        deposit === dVal
+                          ? 'bg-slate-900 text-white border-slate-900'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {dVal}
+                    </button>
+                  ))}
+                </div>
               </div>
               <input
                 type="number"
-                disabled={isNoAdvance}
-                value={isNoAdvance ? '0' : deposit}
+                min="0"
+                value={deposit}
                 onChange={(e) => setDeposit(e.target.value)}
                 placeholder="200"
-                className={`w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 font-semibold ${
-                  isNoAdvance ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''
-                }`}
+                className="w-full text-sm px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold text-slate-900"
               />
             </div>
+          </div>
+
+          {/* Check-In Rent Payment Status */}
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <label className="block text-xs font-bold text-slate-800 mb-1.5">
+              Rent Payment upon Check-In
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setInitialPaid(true)}
+                className={`py-2 px-3 rounded-lg text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  initialPaid
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                <span>✓</span> Rent Paid (AED {rentAmount || 0})
+              </button>
+              <button
+                type="button"
+                onClick={() => setInitialPaid(false)}
+                className={`py-2 px-3 rounded-lg text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  !initialPaid
+                    ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                <span>⏳</span> Rent Due / Pending
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">
+              {initialPaid 
+                ? '✓ Customer paid their rent upon arrival — will show Paid in green.' 
+                : '⏳ Rent is still pending — will show Due.'}
+            </p>
           </div>
 
           {/* MID-MONTH PRO-RATA RENT CALLOUT */}

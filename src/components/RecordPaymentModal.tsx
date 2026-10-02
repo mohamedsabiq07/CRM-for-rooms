@@ -159,7 +159,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               <div className="text-right">
                 <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Deposit Advance</p>
                 <p className="text-sm font-bold text-slate-800">
-                  {tenant.depositNote || `AED ${tenant.deposit}`}
+                  AED {Number(tenant.deposit || 0).toLocaleString()}
                 </p>
                 <p className="text-[10px] text-slate-400">Held security</p>
               </div>

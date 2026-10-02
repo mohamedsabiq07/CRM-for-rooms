@@ -96,7 +96,7 @@ export const App: React.FC = () => {
   const [isMonthHistoryOpen, setIsMonthHistoryOpen] = useState<boolean>(false);
 
   // Cache buster to ensure 7 rooms (including Al Shaiba 210 Rooms 1, 2, 3), utilities, and inquiries load fresh
-  const CRM_DATA_VERSION = 'v7_paid_pending_carryforward_fresh';
+  const CRM_DATA_VERSION = 'v8_clean_deposit_rent_fix';
   if (typeof window !== 'undefined' && localStorage.getItem('room_crm_version') !== CRM_DATA_VERSION) {
     localStorage.removeItem('room_crm_locations');
     localStorage.removeItem('room_crm_buildings');
@@ -1231,6 +1231,7 @@ export const App: React.FC = () => {
           room={currentRoom}
           nextSno={nextAvailableSno}
           defaultSection={addTenantSection}
+          selectedMonth={selectedMonth}
           onAddTenant={handleAddTenant}
         />
       )}
@@ -1261,6 +1262,7 @@ export const App: React.FC = () => {
         isOpen={!!editingTenant}
         onClose={() => setEditingTenant(null)}
         tenant={editingTenant}
+        selectedMonth={selectedMonth}
         onUpdateTenant={handleUpdateTenant}
         onDeleteTenant={handleDeleteTenant}
       />

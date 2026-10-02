@@ -399,7 +399,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
               <th className="py-2.5 px-1.5 border-r border-slate-200/60 text-center min-w-[65px] font-medium">Deposit</th>
               <th className="py-2.5 px-1.5 border-r border-slate-200/60 text-center min-w-[78px] font-medium">Joining</th>
               <th className="py-2.5 px-1.5 border-r border-slate-200/60 text-center min-w-[65px] font-medium">Duration</th>
-              <th className="py-2.5 px-1.5 border-r border-slate-200/60 text-center min-w-[95px] font-semibold">{selectedMonth} Paid / Rent</th>
+              <th className="py-2.5 px-1.5 border-r border-slate-200/60 text-center min-w-[85px] font-semibold">{selectedMonth} Rent</th>
               <th className="py-2.5 px-0.5 border-r border-slate-200/60 text-center w-8 font-medium" title="Cupboard Key">Cu/k</th>
               <th className="py-2.5 px-0.5 border-r border-slate-200/60 text-center w-8 font-medium" title="Door Key">D/k</th>
               <th className="py-2.5 px-0.5 border-r border-slate-200/60 text-center w-8 font-medium" title="Partition Key (only for Partition tenants)">P/k</th>
@@ -559,15 +559,11 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           </td>
 
                           {/* Deposit */}
-                          <td className="py-2 px-1.5 text-center border-r border-slate-200/60 text-xs">
-                            {t.depositNote ? (
-                              <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold bg-[#FFF0F3] text-[#D1183E] border border-[#FF4D6B]/40">
-                                {t.depositNote}
-                              </span>
-                            ) : t.deposit > 0 ? (
-                              <span className="text-slate-900 font-semibold">AED {t.deposit}</span>
+                          <td className="py-2 px-1.5 text-center border-r border-slate-200/60 text-xs font-semibold text-slate-800">
+                            {Number(t.deposit) > 0 ? (
+                              <span>AED {Number(t.deposit).toLocaleString()}</span>
                             ) : (
-                              <span className="text-slate-400 font-normal italic">-</span>
+                              <span className="text-slate-400 font-normal">AED 0</span>
                             )}
                           </td>
 
@@ -588,61 +584,50 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                           {/* Rent / Monthly Status */}
                           <td 
                             onClick={() => onStatusClick(t)}
-                            title={`Click to update payment status for ${selectedMonth}`}
+                            title={`Click to record payment for ${selectedMonth}`}
                             className="py-2 px-1.5 text-center border-r border-slate-200/60 cursor-pointer transition hover:bg-slate-100/80"
                           >
                             {(() => {
                               const rent = Number(t.rentAmount) || 0;
-                              const hasExplicit = t.monthPaymentAmounts?.[selectedMonth] !== undefined;
-                              const amountPaid = hasExplicit
-                                ? Math.max(0, Number(t.monthPaymentAmounts![selectedMonth]) || 0)
-                                : (monthStatus === 'Paid' ? rent : 0);
+                              const isPaid = monthStatus === 'Paid';
+                              const isPartial = monthStatus === 'Partial';
+                              const amountPaid = t.monthPaymentAmounts?.[selectedMonth] !== undefined
+                                ? Math.max(0, Number(t.monthPaymentAmounts[selectedMonth]) || 0)
+                                : (isPaid ? rent : 0);
                               const balance = Math.max(0, rent - amountPaid);
-                              const isFull = monthStatus === 'Paid' || (rent > 0 && amountPaid >= rent);
-                              const isPart = monthStatus === 'Partial' || (amountPaid > 0 && amountPaid < rent);
 
                               if (t.status === 'Waiting for new tenant') {
                                 return (
                                   <div className="flex flex-col items-center">
-                                    <span className="text-xs font-bold text-slate-900 font-mono">AED 0 / {rent.toLocaleString()}</span>
-                                    <span className="text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 bg-amber-50 text-amber-800 border-amber-300">
-                                      ⏳ Waiting for Tenant
+                                    <span className="text-xs font-semibold text-slate-700">AED {rent.toLocaleString()}</span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold border mt-0.5 bg-amber-50 text-amber-800 border-amber-300">
+                                      Vacant
                                     </span>
                                   </div>
                                 );
                               }
 
-                              if (isFull) {
+                              if (isPaid) {
                                 return (
                                   <div className="flex flex-col items-center">
-                                    <span className="text-xs font-extrabold text-emerald-800 font-mono">
-                                      AED {amountPaid.toLocaleString()} / {rent.toLocaleString()}
+                                    <span className="text-xs font-bold text-slate-900">
+                                      AED {rent.toLocaleString()}
                                     </span>
-                                    <span className="text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 bg-[#EAFBF0] text-[#1B8020] border-[#38CE3C]/60 flex items-center gap-0.5">
+                                    <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold border mt-0.5 bg-[#EAFBF0] text-[#1B8020] border-[#38CE3C]/60 flex items-center gap-1">
                                       <Check className="w-3 h-3 stroke-[3]" /> Paid
                                     </span>
                                   </div>
                                 );
                               }
 
-                              if (isPart) {
+                              if (isPartial) {
                                 return (
                                   <div className="flex flex-col items-center gap-0.5">
-                                    <span className="text-xs font-extrabold text-amber-900 font-mono">
+                                    <span className="text-xs font-bold text-amber-900">
                                       AED {amountPaid.toLocaleString()} / {rent.toLocaleString()}
                                     </span>
-                                    {/* Compact progress bar */}
-                                    <div className="w-full max-w-[76px] h-1.5 bg-rose-200 rounded-full overflow-hidden">
-                                      <div
-                                        className="h-full bg-amber-500 rounded-full"
-                                        style={{ width: `${Math.min(100, (amountPaid / rent) * 100)}%` }}
-                                      />
-                                    </div>
-                                    <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold border bg-amber-50 text-amber-800 border-amber-300">
-                                      ⚡ Partial ({Math.round((amountPaid / rent) * 100)}%)
-                                    </span>
-                                    <span className="text-[10px] font-bold text-rose-600 leading-tight">
-                                      AED {balance.toLocaleString()} Pending
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold border bg-amber-50 text-amber-800 border-amber-300">
+                                      Partial (Bal: AED {balance.toLocaleString()})
                                     </span>
                                   </div>
                                 );
@@ -650,18 +635,11 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
 
                               return (
                                 <div className="flex flex-col items-center">
-                                  <span className="text-xs font-bold text-slate-800 font-mono">
-                                    AED 0 / {rent.toLocaleString()}
+                                  <span className="text-xs font-bold text-slate-900">
+                                    AED {rent.toLocaleString()}
                                   </span>
-                                  <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 ${
-                                    dueInfo.status === 'overdue'
-                                      ? 'bg-[#FFF0F3] text-[#D1183E] border-[#FF4D6B]/40'
-                                      : 'bg-[#FFF9E6] text-[#8C6B00] border border-[#FFDE73]/60'
-                                  }`}>
-                                    {dueInfo.status === 'overdue' ? 'Overdue' : 'Due / Pending'}
-                                  </span>
-                                  <span className="text-[9px] font-semibold text-rose-600 mt-0.5">
-                                    AED {rent.toLocaleString()} Pending
+                                  <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold border mt-0.5 bg-[#FFF0F3] text-[#D1183E] border-[#FF4D6B]/40">
+                                    Due
                                   </span>
                                 </div>
                               );
