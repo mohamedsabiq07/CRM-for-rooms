@@ -95,8 +95,8 @@ export const App: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(() => getLiveCalendarMonth());
   const [isMonthHistoryOpen, setIsMonthHistoryOpen] = useState<boolean>(false);
 
-  // Cache buster to ensure 7 rooms (including Al Shaiba 210), utilities, and inquiries load fresh
-  const CRM_DATA_VERSION = 'v5_alshaiba_210_stellar';
+  // Cache buster to ensure 7 rooms (including Al Shaiba 210 Rooms 1, 2, 3), utilities, and inquiries load fresh
+  const CRM_DATA_VERSION = 'v6_alshaiba_sharjah_rooms123';
   if (typeof window !== 'undefined' && localStorage.getItem('room_crm_version') !== CRM_DATA_VERSION) {
     localStorage.removeItem('room_crm_locations');
     localStorage.removeItem('room_crm_buildings');
@@ -641,9 +641,15 @@ export const App: React.FC = () => {
           ...(t.monthStatusHistory || {}),
           [targetMonth]: status,
         };
+        // Store the actual amount paid for this month (so we can show balance)
+        const updatedPaymentAmounts = {
+          ...(t.monthPaymentAmounts || {}),
+          [targetMonth]: status === 'Paid' ? t.rentAmount : (status === 'Due' ? 0 : amount),
+        };
         const updated: Tenant = {
           ...t,
           monthStatusHistory: updatedHistory,
+          monthPaymentAmounts: updatedPaymentAmounts,
           currentMonthStatus: targetMonth === (t.stayMonth || liveCalendarMonth) ? status : t.currentMonthStatus,
           remarks: remarks || t.remarks,
           lastPaidDate: date,

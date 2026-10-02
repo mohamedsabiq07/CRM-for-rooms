@@ -387,7 +387,12 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                             {sectionTenants.filter(t => t.status === 'Waiting for new tenant').length > 0 && (
                               <span className="text-amber-600 font-semibold"> • {sectionTenants.filter(t => t.status === 'Waiting for new tenant').length} waiting</span>
                             )}
-                            {' '}• AED {sectionTenants.filter(t => getTenantStatusForMonth(t, selectedMonth) === 'Paid').reduce((s, t) => s + (t.rentAmount || 0), 0).toLocaleString()} Paid / AED {sectionTenants.reduce((s, t) => s + (t.rentAmount || 0), 0).toLocaleString()} Total
+                            {' '}• AED {sectionTenants.reduce((s, t) => {
+                              const status = getTenantStatusForMonth(t, selectedMonth);
+                              if (status === 'Paid') return s + (t.rentAmount || 0);
+                              if (status === 'Partial') return s + (t.monthPaymentAmounts?.[selectedMonth] ?? 0);
+                              return s;
+                            }, 0).toLocaleString()} Collected / AED {sectionTenants.reduce((s, t) => s + (t.rentAmount || 0), 0).toLocaleString()} Total
                           </span>
                           {onAddTenantToSection && (
                             <button
@@ -535,26 +540,58 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                             title={`Click to update payment status for ${selectedMonth}`}
                             className="py-2 px-1.5 text-center border-r border-slate-200/60 cursor-pointer transition hover:bg-slate-100/80"
                           >
-                            <div className="flex flex-col items-center">
-                              <span className="text-xs font-bold text-slate-900">
-                                AED {t.rentAmount || '0'}
-                              </span>
-                              {t.status === 'Waiting for new tenant' ? (
-                                <span className="text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 bg-amber-50 text-amber-800 border-amber-300">
-                                  ⏳ Waiting for Tenant
-                                </span>
-                              ) : (
-                                <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 ${
-                                  monthStatus === 'Paid' 
-                                    ? 'bg-[#EAFBF0] text-[#1B8020] border-[#38CE3C]/60' 
-                                    : dueInfo.status === 'overdue'
-                                      ? 'bg-[#FFF0F3] text-[#D1183E] border-[#FF4D6B]/40'
-                                      : 'bg-[#FFF9E6] text-[#8C6B00] border border-[#FFDE73]/60'
-                                }`}>
-                                  {monthStatus || 'Due'}
-                                </span>
-                              )}
-                            </div>
+                            {(() => {
+                              const amountPaid = t.monthPaymentAmounts?.[selectedMonth] ?? (monthStatus === 'Paid' ? t.rentAmount : 0);
+                              const balance = t.rentAmount - amountPaid;
+
+                              if (t.status === 'Waiting for new tenant') {
+                                return (
+                                  <div className="flex flex-col items-center">
+                                    <span className="text-xs font-bold text-slate-900">AED {t.rentAmount || '0'}</span>
+                                    <span className="text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 bg-amber-50 text-amber-800 border-amber-300">
+                                      ⏳ Waiting for Tenant
+                                    </span>
+                                  </div>
+                                );
+                              }
+
+                              if (monthStatus === 'Partial') {
+                                return (
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    {/* Compact progress bar */}
+                                    <div className="w-full max-w-[72px] h-1.5 bg-rose-200 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full bg-amber-500 rounded-full"
+                                        style={{ width: `${Math.min(100, (amountPaid / t.rentAmount) * 100)}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-amber-700">
+                                      ⚡ AED {amountPaid.toLocaleString()} paid
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-rose-600 leading-tight">
+                                      AED {balance.toLocaleString()} balance
+                                    </span>
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <div className="flex flex-col items-center">
+                                  <span className="text-xs font-bold text-slate-900">
+                                    AED {t.rentAmount || '0'}
+                                  </span>
+                                  <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold border mt-0.5 ${
+                                    monthStatus === 'Paid'
+                                      ? 'bg-[#EAFBF0] text-[#1B8020] border-[#38CE3C]/60'
+                                      : dueInfo.status === 'overdue'
+                                        ? 'bg-[#FFF0F3] text-[#D1183E] border-[#FF4D6B]/40'
+                                        : 'bg-[#FFF9E6] text-[#8C6B00] border border-[#FFDE73]/60'
+                                  }`}>
+                                    {monthStatus || 'Due'}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </td>
 
                           {/* Cupboard Key (Cu/k) */}

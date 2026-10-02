@@ -155,6 +155,8 @@ export interface Tenant {
   currentMonthStatus: 'Paid' | 'Pending' | 'Due' | 'Partial'; // e.g. Sep-26
   stayMonth?: string; // e.g. 'Sep-2026'
   monthStatusHistory?: Record<string, 'Paid' | 'Pending' | 'Due' | 'Partial'>;
+  /** Tracks the actual AED amount paid per month (for partial payment balance display) */
+  monthPaymentAmounts?: Record<string, number>;
   remarks: string; // "she has money", "she will do it before 10th", "she came at night", "500 balance"
   lastPaidDate?: string;
   checkOutRecord?: CheckOutRecord;
@@ -178,7 +180,8 @@ export interface MonthlyUtilityBill {
 export interface CustomerInquiry {
   id: string;
   name: string;
-  phone: string;
+  phone: string;           // Calling / main phone number
+  whatsappPhone?: string;  // WhatsApp number (if different from calling number)
   inquiryDate: string; // DD.MM.YYYY
   lookingFor: 'Bed Space (Upper)' | 'Bed Space (Lower)' | 'Partition' | 'Private Room' | 'Any';
   preferredLocation?: string;

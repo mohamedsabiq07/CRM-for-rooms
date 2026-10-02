@@ -1,6 +1,12 @@
 import { Tenant } from '../types/crm';
 
 export const SECTION_DISPLAY_PRIORITY = [
+  'ROOM NUMBER 1',
+  'ROOM NUMBER 2',
+  'ROOM NUMBER 3',
+  'ROOM 1',
+  'ROOM 2',
+  'ROOM 3',
   'HALL',
   'ROOM',
   'MASTER ROOM',
@@ -22,7 +28,7 @@ export const compareSections = (secA: string, secB: string): number => {
   if (idxA !== -1 && idxB !== -1) return idxA - idxB;
   if (idxA !== -1) return -1;
   if (idxB !== -1) return 1;
-  return aUpper.localeCompare(bUpper);
+  return aUpper.localeCompare(bUpper, undefined, { numeric: true });
 };
 
 /**
