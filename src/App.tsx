@@ -96,7 +96,7 @@ export const App: React.FC = () => {
   const [isMonthHistoryOpen, setIsMonthHistoryOpen] = useState<boolean>(false);
 
   // Cache buster to ensure 7 rooms (including Al Shaiba 210 Rooms 1, 2, 3), utilities, and inquiries load fresh
-  const CRM_DATA_VERSION = 'v6_alshaiba_sharjah_rooms123';
+  const CRM_DATA_VERSION = 'v7_paid_pending_carryforward_fresh';
   if (typeof window !== 'undefined' && localStorage.getItem('room_crm_version') !== CRM_DATA_VERSION) {
     localStorage.removeItem('room_crm_locations');
     localStorage.removeItem('room_crm_buildings');
@@ -882,12 +882,18 @@ export const App: React.FC = () => {
           [fromMonth!]: (t.monthStatusHistory?.[fromMonth!] || t.currentMonthStatus || 'Paid') as 'Paid' | 'Due' | 'Partial' | 'Pending',
           [toMonth!]: 'Due',
         };
+        // Reset amount paid to ZERO for the new month so payments start completely fresh
+        const updatedPaymentAmounts: Record<string, number> = {
+          ...(t.monthPaymentAmounts || {}),
+          [toMonth!]: 0,
+        };
         const willBecomeActive = t.status === 'Waiting for new tenant' && !isFutureMonth(t.joiningDate, toMonth!);
         const updated: Tenant = {
           ...t,
           status: willBecomeActive ? 'Active' : t.status,
           stayMonth: toMonth!,
           monthStatusHistory: updatedHistory,
+          monthPaymentAmounts: updatedPaymentAmounts,
           currentMonthStatus: willBecomeActive ? 'Due' : (t.status === 'Active' ? 'Due' : t.currentMonthStatus),
         };
         upsertTenantToDb(updated);
