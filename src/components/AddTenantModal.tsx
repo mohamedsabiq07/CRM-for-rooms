@@ -294,45 +294,108 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-1 border-t border-amber-200/60">
+            <div className="pt-1 border-t border-amber-200/60 space-y-2.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Section</label>
-                <select
-                  value={section}
-                  onChange={(e) => setSection(e.target.value)}
-                  className="w-full text-xs font-semibold px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
-                >
-                  <option value="HALL">HALL</option>
-                  <option value="ROOM">ROOM</option>
-                  <option value="MASTER ROOM">MASTER ROOM</option>
-                  <option value="BALCONY">BALCONY</option>
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700">Room Number / Section</label>
+                  <span className="text-[10px] text-amber-800 font-bold">1-click to select</span>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                  {[
+                    { label: 'Room 1', value: 'Room Number 1' },
+                    { label: 'Room 2', value: 'Room Number 2' },
+                    { label: 'Room 3', value: 'Room Number 3' },
+                    { label: 'HALL', value: 'HALL' },
+                    { label: 'ROOM', value: 'ROOM' },
+                    { label: 'MASTER ROOM', value: 'MASTER ROOM' },
+                    { label: 'BALCONY', value: 'BALCONY' },
+                  ].map(opt => {
+                    const cur = (section || '').trim().toLowerCase();
+                    const active = cur === opt.value.toLowerCase() || cur === opt.label.toLowerCase() ||
+                      (opt.label === 'Room 1' && (cur === 'room 1' || cur === 'room number 1')) ||
+                      (opt.label === 'Room 2' && (cur === 'room 2' || cur === 'room number 2')) ||
+                      (opt.label === 'Room 3' && (cur === 'room 3' || cur === 'room number 3'));
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setSection(opt.value)}
+                        className={`text-xs font-bold px-2 py-1 rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                          active
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                            : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                        }`}
+                      >
+                        {active && <span className="text-[10px]">✓</span>}
+                        <span>{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Partition / Bed Code</label>
-                <input
-                  type="text"
-                  value={partition}
-                  onChange={(e) => setPartition(e.target.value)}
-                  placeholder="p1, p2, p3... p8"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 uppercase font-bold text-slate-900 mb-1.5"
-                />
-                <div className="flex items-center gap-1 flex-wrap">
-                  {['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10'].map(pCode => (
-                    <button
-                      key={pCode}
-                      type="button"
-                      onClick={() => setPartition(pCode)}
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded border transition cursor-pointer ${
-                        partition.toUpperCase() === pCode
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {pCode}
-                    </button>
-                  ))}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Section Dropdown</label>
+                  <select
+                    value={section}
+                    onChange={(e) => setSection(e.target.value)}
+                    className="w-full text-xs font-semibold px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  >
+                    <option value="Room Number 1">Room Number 1 (Room 1)</option>
+                    <option value="Room Number 2">Room Number 2 (Room 2)</option>
+                    <option value="Room Number 3">Room Number 3 (Room 3)</option>
+                    <option value="HALL">HALL</option>
+                    <option value="ROOM">ROOM</option>
+                    <option value="MASTER ROOM">MASTER ROOM</option>
+                    <option value="BALCONY">BALCONY</option>
+                    {!['Room Number 1', 'Room Number 2', 'Room Number 3', 'HALL', 'ROOM', 'MASTER ROOM', 'BALCONY'].includes(section) && (
+                      <option value={section}>{section}</option>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Partition / Bed Code</label>
+                  <input
+                    type="text"
+                    value={partition}
+                    onChange={(e) => setPartition(e.target.value)}
+                    placeholder="e.g. Bed 1, P1..."
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 uppercase font-bold text-slate-900 mb-1.5"
+                  />
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {spaceType === 'Bed Space' || (partition || '').toLowerCase().startsWith('bed')
+                      ? ['Bed 1', 'Bed 2', 'Bed 3', 'Bed 4', 'Bed 5', 'Bed 6', 'Bed 7', 'Bed 8', 'Bed 9', 'Bed 10', 'Bed 11', 'Bed 12'].map(bCode => (
+                          <button
+                            key={bCode}
+                            type="button"
+                            onClick={() => setPartition(bCode)}
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded border transition cursor-pointer ${
+                              (partition || '').toUpperCase() === bCode.toUpperCase()
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            {bCode}
+                          </button>
+                        ))
+                      : ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10'].map(pCode => (
+                          <button
+                            key={pCode}
+                            type="button"
+                            onClick={() => setPartition(pCode)}
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded border transition cursor-pointer ${
+                              (partition || '').toUpperCase() === pCode
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            {pCode}
+                          </button>
+                        ))
+                    }
+                  </div>
                 </div>
               </div>
             </div>

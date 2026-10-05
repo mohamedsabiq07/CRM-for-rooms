@@ -778,7 +778,7 @@ export const TenantSheet: React.FC<TenantSheetProps> = ({
                                   handleSelectTenant(t.id);
                                   onEditTenant(t);
                                 }}
-                                title="Edit Tenant Details (or press Ctrl + E)"
+                                title="Edit Tenant, Room Number & Location (or press Ctrl + E)"
                                 className={`p-1.5 rounded-md border transition shadow-sm ${
                                   isSelected 
                                     ? 'bg-[#181824] text-[#38CE3C] border-[#181824] ring-1 ring-[#38CE3C]/40' 
