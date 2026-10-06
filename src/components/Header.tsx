@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Building2, 
   MapPin, 
@@ -98,8 +98,84 @@ export const Header: React.FC<HeaderProps> = ({
     chequeNotifications.length +
     utilityNotifications.filter(u => u.status === 'overdue' || u.status === 'due_today').length;
 
+  // ── Smart Auto-Hiding Header on Mobile Scroll ────────────────────────────────
+  const [isVisible, setIsVisible]   = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const isSearchFocusedRef           = useRef(false);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (ticking) return;
+
+      window.requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+
+        // If at or near the very top of the page, always show header
+        if (currentScrollY <= 25) {
+          setIsVisible(true);
+          setIsScrolled(false);
+          lastScrollY = currentScrollY;
+          ticking = false;
+          return;
+        }
+
+        setIsScrolled(true);
+
+        // Keep header visible if search input is focused or notifications drawer is open
+        if (isSearchFocusedRef.current || isNotificationOpen) {
+          setIsVisible(true);
+          lastScrollY = currentScrollY;
+          ticking = false;
+          return;
+        }
+
+        // Prevent false triggers on iOS elastic bounce at page bottom
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        if (currentScrollY >= maxScroll - 10) {
+          ticking = false;
+          return;
+        }
+
+        const diff = currentScrollY - lastScrollY;
+
+        // Threshold of 8px to filter out minor finger micro-movements
+        if (Math.abs(diff) > 8) {
+          if (diff > 0 && currentScrollY > 70) {
+            // User scrolled DOWN -> hide header
+            setIsVisible(false);
+          } else if (diff < 0) {
+            // User scrolled UP -> reveal header
+            setIsVisible(true);
+          }
+          lastScrollY = currentScrollY;
+        }
+
+        ticking = false;
+      });
+
+      ticking = true;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isNotificationOpen]);
+
+  // Ensure header is visible whenever user switches views, buildings, rooms or months
+  useEffect(() => {
+    setIsVisible(true);
+  }, [currentView, selectedBuildingId, selectedRoomId, selectedMonth]);
+
   return (
-    <header className="bg-[#181824] text-white sticky top-0 z-30 shadow-sm border-b border-[#262638]">
+    <header
+      className={`bg-[#181824] text-white sticky top-0 z-30 border-b border-[#262638] transition-transform duration-300 ease-in-out will-change-transform ${
+        isScrolled ? 'shadow-lg' : 'shadow-sm'
+      } ${
+        isVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
+    >
       <div className="w-full px-4 sm:px-6 lg:px-8 py-2.5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           
@@ -250,6 +326,13 @@ export const Header: React.FC<HeaderProps> = ({
               <input
                 type="text"
                 value={searchQuery}
+                onFocus={() => {
+                  isSearchFocusedRef.current = true;
+                  setIsVisible(true);
+                }}
+                onBlur={() => {
+                  isSearchFocusedRef.current = false;
+                }}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder="Search tenant, partition..."
                 className="w-full bg-slate-900 text-xs text-white placeholder-slate-500 pl-8 pr-3 py-1.5 rounded-md border border-slate-800 focus:outline-none focus:border-slate-600 transition"
