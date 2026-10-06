@@ -161,6 +161,71 @@ export function calculateRentDueInfo(
   };
 }
 
+/**
+ * Normalizes any phone number into an international format valid for WhatsApp wa.me links.
+ * Handles local UAE numbers like 050..., 50..., +97150..., 0097150...
+ */
+export function formatWhatsAppNumber(phone: string): string {
+  if (!phone) return '';
+  let digits = phone.replace(/[^0-9]/g, '');
+
+  if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  }
+
+  // UAE local number starting with 05 (e.g. 050, 052, 054, 055, 056, 058)
+  if (digits.startsWith('05') && digits.length === 10) {
+    digits = '971' + digits.slice(1);
+  }
+  // UAE local number entered without leading 0 (e.g. 501234567, 9 digits)
+  else if (
+    (digits.startsWith('50') || digits.startsWith('52') || digits.startsWith('54') ||
+     digits.startsWith('55') || digits.startsWith('56') || digits.startsWith('58')) &&
+    digits.length === 9
+  ) {
+    digits = '971' + digits;
+  }
+  // UAE number entered with 97105... (13 digits)
+  else if (digits.startsWith('97105') && digits.length === 13) {
+    digits = '971' + digits.slice(4);
+  }
+
+  return digits;
+}
+
+/**
+ * Formats entered phone numbers into a standard UAE format (+971 5X XXX XXXX)
+ * or preserves international numbers cleanly.
+ * Handles inputs like '0501234567', '501234567', '050 123 4567', '+971501234567', etc.
+ */
+export function normalizePhoneForStorage(phone: string): string {
+  if (!phone) return '';
+  const trimmed = phone.trim();
+  const digits = trimmed.replace(/[^0-9]/g, '');
+
+  // 10 digits starting with 05 (e.g. 0501234567)
+  if (digits.startsWith('05') && digits.length === 10) {
+    return `+971 ${digits.slice(1, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  }
+
+  // 9 digits starting with 5 (e.g. 501234567)
+  if (digits.length === 9 && digits.startsWith('5')) {
+    return `+971 ${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5)}`;
+  }
+
+  // 12 digits starting with 9715...
+  if (digits.length === 12 && digits.startsWith('9715')) {
+    return `+971 ${digits.slice(3, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`;
+  }
+
+  // 13 digits starting with 97105...
+  if (digits.length === 13 && digits.startsWith('97105')) {
+    return `+971 ${digits.slice(4, 6)} ${digits.slice(6, 9)} ${digits.slice(9)}`;
+  }
+
+  return trimmed;
+}
+
 // Generate pre-filled polite WhatsApp rent reminder
 export function generateWhatsAppLink(
   phone: string,
@@ -170,7 +235,7 @@ export function generateWhatsAppLink(
   rentAmount: number,
   dueText: string
 ): string {
-  const cleanPhone = phone.replace(/[^0-9+]/g, '');
+  const cleanPhone = formatWhatsAppNumber(phone);
   const message = `Hello ${tenantName},\n\nThis is a gentle reminder regarding the room rent for ${flatName} (${partition.toUpperCase()}).\n\n💰 Amount: AED ${rentAmount || 'Rent'}\n📅 Due Status: ${dueText}\n\nKindly arrange the payment at your earliest convenience. Thank you! 🙏`;
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }

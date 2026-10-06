@@ -32,6 +32,21 @@ export function convertVacatedTenantToInquiry(
   const bldLabel = buildingName || 'Property';
   const unitLabel = cleanRoomNum ? 'Flat ' + cleanRoomNum : tenant.partition;
 
+  // Map property strictly to one of the 4 areas: Al Barsha 1, Deira, Sharjah, Khor Al Anz
+  let area = 'Al Barsha 1';
+  if (buildingName) {
+    const bLower = buildingName.toLowerCase();
+    if (bLower.includes('shaiba') || bLower.includes('sharjah')) {
+      area = 'Sharjah';
+    } else if (bLower.includes('avari') || bLower.includes('deira')) {
+      area = 'Deira';
+    } else if (bLower.includes('khor') || bLower.includes('hor al anz')) {
+      area = 'Khor Al Anz';
+    } else {
+      area = 'Al Barsha 1';
+    }
+  }
+
   return {
     id: 'inq-former-' + tenant.id,
     tenantId: tenant.id,
@@ -39,7 +54,7 @@ export function convertVacatedTenantToInquiry(
     phone: tenant.phone || '',
     inquiryDate: checkoutDate,
     lookingFor,
-    preferredLocation: buildingName ? buildingName + ' (Former Tenant)' : 'Al Barsha 1',
+    preferredLocation: area,
     budget: tenant.rentAmount || 700,
     status: 'New', // Placed into 'New' so they immediately appear in follow-up pipeline
     leadSource: 'Former Tenant',

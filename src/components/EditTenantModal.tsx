@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Edit3, Calendar, Phone, Key, Trash2, Building2, DoorOpen, Bed } from 'lucide-react';
 import { Tenant, SpaceType, BedType, Building, RoomUnit, LocationItem } from '../types/crm';
-import { isFutureDate } from '../utils/dateUtils';
+import { isFutureDate, normalizePhoneForStorage } from '../utils/dateUtils';
 
 interface EditTenantModalProps {
   isOpen: boolean;
@@ -163,7 +163,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
       roomId: selectedRoomId,
       name: name.trim(),
       place: place.trim(),
-      phone: phone.trim(),
+      phone: normalizePhoneForStorage(phone),
       deposit: numDeposit,
       depositNote: '', // Always clear legacy deposit notes
       rentAmount: numRent,
@@ -186,11 +186,11 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-xl w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
         
         {/* Modal Header */}
-        <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+        <div className="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-slate-800 text-white rounded-lg border border-slate-700">
               <Edit3 className="w-5 h-5 text-[#38CE3C]" />
@@ -202,13 +202,17 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Edit Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[82vh] overflow-y-auto">
+        <form id="edit-tenant-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs">
           
           {/* Property & Flat Location Card (Building & Room Unit Transfer) */}
           <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
@@ -520,17 +524,21 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Phone Number
               </label>
-              <div className="relative">
-                <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <div className="flex rounded-xl border border-slate-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-slate-900">
+                <span className="inline-flex items-center px-2.5 bg-slate-100 text-slate-700 text-xs font-semibold border-r border-slate-200 select-none">
+                  🇦🇪 +971
+                </span>
                 <input
                   type="tel"
                   inputMode="tel"
                   autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full text-sm pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono text-slate-900"
+                  placeholder="50 123 4567 or 050..."
+                  className="w-full text-sm px-3 py-2 text-slate-900 focus:outline-none font-mono"
                 />
               </div>
+              <p className="text-[10px] text-slate-400 mt-1">Accepts 050..., 50..., or international number</p>
             </div>
           </div>
 
@@ -686,40 +694,41 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
               className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 italic"
             />
           </div>
+        </form>
 
-          {/* Footer & Delete */}
-          <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
+        {/* Sticky Footer & Delete */}
+        <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm(`Are you sure you want to delete ${tenant.name}?`)) {
+                onDeleteTenant(tenant.id);
+                onClose();
+              }
+            }}
+            className="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition flex items-center gap-1 cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Delete</span>
+          </button>
+
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => {
-                if (confirm(`Are you sure you want to delete ${tenant.name}?`)) {
-                  onDeleteTenant(tenant.id);
-                  onClose();
-                }
-              }}
-              className="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition flex items-center gap-1 cursor-pointer"
+              onClick={onClose}
+              className="px-4 py-2.5 sm:py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
             >
-              <Trash2 className="w-4 h-4" />
-              <span>Delete Tenant</span>
+              Cancel
             </button>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm transition cursor-pointer"
-              >
-                Save Changes
-              </button>
-            </div>
+            <button
+              type="submit"
+              form="edit-tenant-form"
+              className="px-5 py-2.5 sm:py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-sm transition cursor-pointer"
+            >
+              Save Changes
+            </button>
           </div>
-        </form>
+        </div>
 
       </div>
     </div>

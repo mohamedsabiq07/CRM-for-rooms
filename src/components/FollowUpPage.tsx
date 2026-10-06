@@ -17,41 +17,30 @@ import {
   Smartphone,
 } from 'lucide-react';
 import { CustomerInquiry } from '../types/crm';
+import { formatWhatsAppNumber, normalizePhoneForStorage } from '../utils/dateUtils';
 
-// ─── Known area slugs so the dropdown has consistent entries ───────────────────
+// ─── Known areas strictly restricted to where rooms are operated ─────────────
 const AREA_OPTIONS = [
   'Al Barsha 1',
-  'Al Barsha South',
-  'Al Barsha North',
   'Deira',
-  'Bur Dubai',
-  'Karama',
-  'Jumeirah Village Circle (JVC)',
-  'International City',
-  'Al Quoz',
-  'Mirdif',
-  'Other',
-];
+  'Sharjah',
+  'Khor Al Anz',
+] as const;
 
 // ─── Colour palette per area ───────────────────────────────────────────────────
 const AREA_COLORS: Record<string, string> = {
-  'Al Barsha 1':                   'bg-indigo-50  border-indigo-200  text-indigo-800',
-  'Al Barsha South':               'bg-violet-50  border-violet-200  text-violet-800',
-  'Al Barsha North':               'bg-purple-50  border-purple-200  text-purple-800',
-  'Deira':                         'bg-amber-50   border-amber-200   text-amber-800',
-  'Bur Dubai':                     'bg-orange-50  border-orange-200  text-orange-800',
-  'Karama':                        'bg-rose-50    border-rose-200    text-rose-800',
-  'Jumeirah Village Circle (JVC)': 'bg-sky-50     border-sky-200     text-sky-800',
-  'International City':            'bg-teal-50    border-teal-200    text-teal-800',
-  'Al Quoz':                       'bg-lime-50    border-lime-200    text-lime-800',
-  'Mirdif':                        'bg-emerald-50 border-emerald-200 text-emerald-800',
-  'Other':                         'bg-slate-100  border-slate-300   text-slate-700',
+  'Al Barsha 1': 'bg-indigo-50 border-indigo-200 text-indigo-800',
+  'Deira':       'bg-amber-50  border-amber-200  text-amber-800',
+  'Sharjah':     'bg-emerald-50 border-emerald-200 text-emerald-800',
+  'Khor Al Anz': 'bg-sky-50    border-sky-200    text-sky-800',
+  'Other':       'bg-slate-100 border-slate-300  text-slate-700',
 };
 const AREA_DOT: Record<string, string> = {
-  'Al Barsha 1': 'bg-indigo-500', 'Al Barsha South': 'bg-violet-500', 'Al Barsha North': 'bg-purple-500',
-  'Deira': 'bg-amber-500', 'Bur Dubai': 'bg-orange-500', 'Karama': 'bg-rose-500',
-  'Jumeirah Village Circle (JVC)': 'bg-sky-500', 'International City': 'bg-teal-500',
-  'Al Quoz': 'bg-lime-500', 'Mirdif': 'bg-emerald-500', 'Other': 'bg-slate-500',
+  'Al Barsha 1': 'bg-indigo-500',
+  'Deira':       'bg-amber-500',
+  'Sharjah':     'bg-emerald-500',
+  'Khor Al Anz': 'bg-sky-500',
+  'Other':       'bg-slate-500',
 };
 const areaColor  = (a?: string) => AREA_COLORS[a ?? 'Other']  ?? AREA_COLORS['Other'];
 const areaDot    = (a?: string) => AREA_DOT[a ?? 'Other']     ?? AREA_DOT['Other'];
@@ -68,7 +57,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 // ─── Helper: effective WhatsApp number (prefer whatsappPhone, fall back to phone) ─
 const waPhone = (inq: CustomerInquiry) =>
-  (inq.whatsappPhone?.trim() || inq.phone).replace(/[^0-9]/g, '');
+  formatWhatsAppNumber(inq.whatsappPhone?.trim() || inq.phone);
 
 // ─── Component ──────────────────────────────────────────────────────────────────
 interface FollowUpPageProps {
@@ -109,7 +98,7 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
 
   // ── Form fields ───────────────────────────────────────────────────────────────
   const [formName, setFormName]             = useState('');
-  const [formPhone, setFormPhone]           = useState('+971 ');
+  const [formPhone, setFormPhone]           = useState('');
   const [formWaPhone, setFormWaPhone]       = useState('');
   const [formDate, setFormDate]             = useState(todayStr());
   const [formLookingFor, setFormLookingFor] = useState<CustomerInquiry['lookingFor']>('Bed Space (Lower)');
@@ -186,14 +175,14 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
   // ── Open Add modal ─────────────────────────────────────────────────────────────
   const handleOpenAddModal = () => {
     setEditingInquiry(null);
-    setFormName(''); setFormPhone('+971 '); setFormWaPhone('');
+    setFormName(''); setFormPhone(''); setFormWaPhone('');
     setFormDate(todayStr()); setFormLookingFor('Bed Space (Lower)');
     setFormLocation('Al Barsha 1'); setFormBudget(750);
     setFormStatus('New'); setFormNotes('');
     setIsAddModalOpen(true);
   };
 
-  // ── Open Edit modal ────────────────────────────────────────────────────────────
+  // ── Open Edit modal ────────────────────────────────────────────────────
   const handleOpenEditModal = (item: CustomerInquiry) => {
     setEditingInquiry(item);
     setFormName(item.name); setFormPhone(item.phone);
@@ -209,12 +198,18 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
   const handleSaveForm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formPhone.trim()) return;
+    const cleanPhone = normalizePhoneForStorage(formPhone);
+    const cleanWaPhone = formWaPhone.trim() ? normalizePhoneForStorage(formWaPhone) : undefined;
     const base = {
-      name: formName.trim(), phone: formPhone.trim(),
-      whatsappPhone: formWaPhone.trim() || undefined,
-      inquiryDate: formDate, lookingFor: formLookingFor,
-      preferredLocation: formLocation, budget: Number(formBudget) || 0,
-      status: formStatus, notes: formNotes.trim(),
+      name: formName.trim(),
+      phone: cleanPhone,
+      whatsappPhone: cleanWaPhone,
+      inquiryDate: formDate,
+      lookingFor: formLookingFor,
+      preferredLocation: formLocation,
+      budget: Number(formBudget) || 0,
+      status: formStatus,
+      notes: formNotes.trim(),
     };
     if (editingInquiry) {
       onUpdateInquiry({ ...editingInquiry, ...base });
@@ -380,6 +375,105 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
           </div>
         </td>
       </tr>
+    );
+  };
+
+  // ── Mobile card renderer ───────────────────────────────────────────────────────
+  const renderMobileCard = (item: CustomerInquiry) => {
+    const hasSeperateWa = !!(item.whatsappPhone?.trim() && item.whatsappPhone.trim() !== item.phone.trim());
+    return (
+      <div key={item.id} className="p-3.5 bg-white hover:bg-slate-50 transition border-b border-slate-200/80 last:border-b-0 space-y-2.5">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h4 className="font-bold text-slate-900 text-sm">{item.name}</h4>
+              {(item.leadSource === 'Former Tenant' || !!item.tenantId) && (
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 border border-purple-200">
+                  🏠 Former
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              {item.preferredLocation && (
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${areaColor(item.preferredLocation)}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${areaDot(item.preferredLocation)}`} />
+                  {item.preferredLocation}
+                </span>
+              )}
+              <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-800 font-semibold border border-indigo-200">
+                {item.lookingFor}
+              </span>
+              {item.budget ? (
+                <span className="text-[10px] font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                  AED {item.budget}
+                </span>
+              ) : null}
+            </div>
+          </div>
+          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${STATUS_COLORS[item.status] || 'bg-slate-100 text-slate-700'}`}>
+            {item.status}
+          </span>
+        </div>
+
+        {/* Contact info */}
+        <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+          <div className="space-y-0.5 font-mono text-xs">
+            <div className="flex items-center gap-1.5 text-slate-800">
+              <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="font-semibold">{item.phone}</span>
+            </div>
+            {hasSeperateWa && (
+              <div className="flex items-center gap-1.5 text-emerald-700 font-semibold text-[11px]">
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <span>WA: {item.whatsappPhone}</span>
+              </div>
+            )}
+          </div>
+          <div className="text-right text-[10px] text-slate-500">
+            <div>Added: {item.inquiryDate}</div>
+            {item.lastContactedDate && <div className="text-slate-400">Contacted: {item.lastContactedDate}</div>}
+          </div>
+        </div>
+
+        {item.notes && (
+          <p className="text-[11px] text-slate-600 bg-amber-50/60 p-2 rounded-lg border border-amber-200/60 leading-relaxed">
+            {item.notes}
+          </p>
+        )}
+
+        {/* Action buttons */}
+        <div className="grid grid-cols-5 gap-1.5 pt-0.5">
+          <button
+            onClick={() => handleSingleWhatsApp(item)}
+            className="col-span-2 flex items-center justify-center gap-1.5 py-2 px-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>WhatsApp</span>
+          </button>
+          <a
+            href={`tel:${item.phone.replace(/[^0-9+]/g, '')}`}
+            className="col-span-1 flex items-center justify-center gap-1 py-2 px-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold border border-slate-200 transition text-center"
+          >
+            <Phone className="w-3.5 h-3.5 text-slate-600" />
+            <span>Call</span>
+          </a>
+          <button
+            onClick={() => handleOpenEditModal(item)}
+            title="Edit Inquiry"
+            className="col-span-1 flex items-center justify-center gap-1 py-2 px-2 text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium transition cursor-pointer"
+          >
+            <Edit3 className="w-3.5 h-3.5 text-slate-600" />
+            <span>Edit</span>
+          </button>
+          <button
+            onClick={() => onDeleteInquiry(item.id)}
+            title="Delete Inquiry"
+            className="col-span-1 flex items-center justify-center py-2 px-2 text-rose-500 hover:bg-rose-50 border border-slate-200 rounded-lg transition cursor-pointer"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
     );
   };
 
@@ -598,12 +692,19 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                     </div>
                   </div>
                   {!isCollapsed && (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        {tableHead}
-                        <tbody className="divide-y divide-slate-200/70">{leads.map(renderRow)}</tbody>
-                      </table>
-                    </div>
+                    <>
+                      {/* Mobile Cards (Phones / small screens) */}
+                      <div className="md:hidden divide-y divide-slate-100">
+                        {leads.map(renderMobileCard)}
+                      </div>
+                      {/* Desktop Table (Tablets & desktops) */}
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          {tableHead}
+                          <tbody className="divide-y divide-slate-200/70">{leads.map(renderRow)}</tbody>
+                        </table>
+                      </div>
+                    </>
                   )}
                 </div>
               );
@@ -611,77 +712,138 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
           </div>
         ) : (
           /* ── FLAT VIEW ────────────────────────────────────────────────────── */
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              {tableHead}
-              <tbody className="divide-y divide-slate-200/70">{filtered.map(renderRow)}</tbody>
-            </table>
-          </div>
+          <>
+            {/* Mobile Cards (Phones / small screens) */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filtered.map(renderMobileCard)}
+            </div>
+            {/* Desktop Table (Tablets & desktops) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                {tableHead}
+                <tbody className="divide-y divide-slate-200/70">{filtered.map(renderRow)}</tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
       {/* ══ ADD / EDIT MODAL ═══════════════════════════════════════════════════════ */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-            <div className="bg-slate-900 text-white p-4 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="bg-slate-900 text-white p-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-indigo-400" />
-                <h3 className="text-sm font-bold">{editingInquiry ? 'Edit Inquiry' : 'Add New Inquiry'}</h3>
+                <h3 className="text-sm font-bold">{editingInquiry ? 'Edit Customer Inquiry' : 'Add New Customer Inquiry'}</h3>
               </div>
-              <button onClick={() => setIsAddModalOpen(false)} className="p-1 text-slate-400 hover:text-white rounded">
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveForm} className="p-5 space-y-4 text-xs">
+            {/* Scrollable Form Body */}
+            <form id="inquiry-form" onSubmit={handleSaveForm} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-sm sm:text-xs">
 
-              {/* Name */}
+              {/* Customer Name */}
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">Customer Name *</label>
-                <input type="text" required value={formName} onChange={e => setFormName(e.target.value)}
+                <label className="font-bold text-slate-700 block mb-1">Customer Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={formName}
+                  onChange={e => setFormName(e.target.value)}
                   placeholder="e.g. John Doe"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500" />
+                  className="w-full px-3 py-2.5 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
               </div>
 
               {/* Phone numbers */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Calling Number */}
                 <div>
-                  <label className="font-semibold text-slate-700 block mb-1 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <label className="font-bold text-slate-700 block mb-1 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-slate-500" />
                     Calling Number *
                   </label>
-                  <input type="tel" required value={formPhone} onChange={e => setFormPhone(e.target.value)}
-                    placeholder="+971 50 123 4567"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500" />
+                  <div className="flex rounded-xl border border-slate-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500">
+                    <span className="inline-flex items-center px-2.5 bg-slate-100 text-slate-700 text-xs font-semibold border-r border-slate-200 select-none">
+                      🇦🇪 +971
+                    </span>
+                    <input
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      required
+                      value={formPhone}
+                      onChange={e => setFormPhone(e.target.value)}
+                      placeholder="50 123 4567 or 050..."
+                      className="w-full px-3 py-2.5 sm:py-2 text-sm text-slate-900 focus:outline-none font-mono"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">Accepts 050..., 50..., or full international number</p>
                 </div>
+
+                {/* WhatsApp Number */}
                 <div>
-                  <label className="font-semibold text-slate-700 block mb-1 flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
-                    WhatsApp Number
-                    <span className="text-[10px] font-normal text-slate-400">(if different)</span>
-                  </label>
-                  <input type="tel" value={formWaPhone} onChange={e => setFormWaPhone(e.target.value)}
-                    placeholder="Leave blank if same as above"
-                    className="w-full px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500" />
-                  {!formWaPhone && (
-                    <p className="text-[10px] text-slate-400 mt-0.5">WhatsApp messages will go to calling number</p>
-                  )}
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-slate-700 flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+                      WhatsApp Number
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setFormWaPhone(formPhone)}
+                      className="text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition cursor-pointer"
+                      title="Copy calling number to WhatsApp field"
+                    >
+                      Same as Calling
+                    </button>
+                  </div>
+                  <div className="flex rounded-xl border border-slate-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500">
+                    <span className="inline-flex items-center px-2.5 bg-emerald-50 text-emerald-800 text-xs font-semibold border-r border-emerald-200 select-none">
+                      WA
+                    </span>
+                    <input
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      value={formWaPhone}
+                      onChange={e => setFormWaPhone(e.target.value)}
+                      placeholder="Leave blank if same as calling"
+                      className="w-full px-3 py-2.5 sm:py-2 text-sm text-slate-900 focus:outline-none font-mono"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {formWaPhone ? 'WhatsApp messages will be sent to this number' : 'Leave empty to automatically use calling number'}
+                  </p>
                 </div>
               </div>
 
-              {/* Date + Looking For */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Inquiry Date + Room Requirement */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Inquiry Date</label>
-                  <input type="text" value={formDate} onChange={e => setFormDate(e.target.value)}
+                  <label className="font-bold text-slate-700 block mb-1">Inquiry Date</label>
+                  <input
+                    type="text"
+                    value={formDate}
+                    onChange={e => setFormDate(e.target.value)}
                     placeholder="DD.MM.YYYY"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500" />
+                    className="w-full px-3 py-2.5 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                  />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Looking For</label>
-                  <select value={formLookingFor} onChange={e => setFormLookingFor(e.target.value as any)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500">
+                  <label className="font-bold text-slate-700 block mb-1">Looking For (Room Type)</label>
+                  <select
+                    value={formLookingFor}
+                    onChange={e => setFormLookingFor(e.target.value as any)}
+                    className="w-full px-3 py-2.5 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                  >
                     <option value="Bed Space (Lower)">Bed Space (Lower)</option>
                     <option value="Bed Space (Upper)">Bed Space (Upper)</option>
                     <option value="Partition">Partition</option>
@@ -691,73 +853,109 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                 </div>
               </div>
 
-              {/* Area + Budget */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-slate-700 block mb-1 flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-indigo-500" />
-                    Preferred Area *
+              {/* Preferred Area: Restricted strictly to the 4 operational areas */}
+              <div className="bg-slate-50/80 p-3 sm:p-3.5 rounded-xl border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
+                    <MapPin className="w-3.5 h-3.5 text-indigo-600" />
+                    Preferred Area * (Select One)
                   </label>
-                  <select value={formLocation} onChange={e => setFormLocation(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500">
-                    {AREA_OPTIONS.map(a => <option key={a} value={a}>{a}</option>)}
-                  </select>
-                  {/* Also allow typing a custom area */}
-                  {!AREA_OPTIONS.includes(formLocation) && (
-                    <input type="text" value={formLocation} onChange={e => setFormLocation(e.target.value)}
-                      placeholder="Custom area name"
-                      className="w-full mt-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500" />
-                  )}
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${areaColor(formLocation)}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${areaDot(formLocation)}`} />
+                    {formLocation}
+                  </span>
+                </div>
+                {/* 1-tap Area Selection Chips */}
+                <div className="grid grid-cols-2 gap-2">
+                  {AREA_OPTIONS.map(a => {
+                    const isSelected = formLocation === a;
+                    return (
+                      <button
+                        key={a}
+                        type="button"
+                        onClick={() => setFormLocation(a)}
+                        className={`px-3 py-2.5 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs ring-2 ring-indigo-200'
+                            : `${AREA_COLORS[a] || 'bg-white text-slate-700 border-slate-200'} hover:opacity-90`
+                        }`}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white' : AREA_DOT[a] || 'bg-slate-400'}`} />
+                        <span>{a}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Budget & Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Budget (AED / month)</label>
+                  <input
+                    type="number"
+                    value={formBudget || ''}
+                    onChange={e => setFormBudget(Number(e.target.value))}
+                    placeholder="e.g. 750"
+                    className="w-full px-3 py-2.5 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                  />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Budget (AED/month)</label>
-                  <input type="number" value={formBudget || ''} onChange={e => setFormBudget(Number(e.target.value))}
-                    placeholder="e.g. 700"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500" />
+                  <label className="font-bold text-slate-700 block mb-1">Lead Status</label>
+                  <select
+                    value={formStatus}
+                    onChange={e => setFormStatus(e.target.value as any)}
+                    className="w-full px-3 py-2.5 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                  >
+                    <option value="New">New Inquiry</option>
+                    <option value="Followed Up">Followed Up</option>
+                    <option value="Interested">Interested (Viewing)</option>
+                    <option value="Converted">Converted (Moved In)</option>
+                    <option value="Not Interested">Not Interested</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Status */}
+              {/* Notes & Requirements */}
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">Status</label>
-                <select value={formStatus} onChange={e => setFormStatus(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500">
-                  <option value="New">New Inquiry</option>
-                  <option value="Followed Up">Followed Up</option>
-                  <option value="Interested">Interested (Visiting)</option>
-                  <option value="Converted">Converted (Moved In)</option>
-                  <option value="Not Interested">Not Interested</option>
-                </select>
+                <label className="font-bold text-slate-700 block mb-1">Notes &amp; Requirements</label>
+                <textarea
+                  rows={2}
+                  value={formNotes}
+                  onChange={e => setFormNotes(e.target.value)}
+                  placeholder="e.g. Looking for room next month, works in Barsha, wants lower bed..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"
+                />
               </div>
 
-              {/* Notes */}
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">Notes &amp; Requirements</label>
-                <textarea rows={2} value={formNotes} onChange={e => setFormNotes(e.target.value)}
-                  placeholder="e.g. needs move-in by next week, works near Media City…"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500" />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
-                <button type="button" onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition">
-                  Cancel
-                </button>
-                <button type="submit"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-sm transition">
-                  {editingInquiry ? 'Save Changes' : 'Create Inquiry'}
-                </button>
-              </div>
             </form>
+
+            {/* Sticky Action Footer */}
+            <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="px-4 py-2.5 sm:py-2 border border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 transition text-sm sm:text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="inquiry-form"
+                className="px-5 py-2.5 sm:py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-sm transition text-sm sm:text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                {editingInquiry ? 'Save Changes' : 'Create Inquiry'}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* ══ BROADCAST MODAL ════════════════════════════════════════════════════════ */}
       {isBroadcastModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-            <div className="bg-slate-900 text-white p-5 flex items-center justify-between border-b border-slate-800">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden">
+            <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                   <Send className="w-5 h-5" />
@@ -779,12 +977,16 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                   </p>
                 </div>
               </div>
-              <button onClick={() => setIsBroadcastModalOpen(false)} className="p-1.5 text-slate-400 hover:text-white rounded">
+              <button
+                type="button"
+                onClick={() => setIsBroadcastModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-5 space-y-4 text-xs">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs">
               {broadcastFeedback && (
                 <div className="bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-lg text-emerald-800 font-semibold flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -797,13 +999,14 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                 <MapPin className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                 <span className="font-semibold text-slate-700 shrink-0">Target Area:</span>
                 <button
+                  type="button"
                   onClick={() => { setBroadcastAreaFilter('all'); setSelectedIds(filtered.filter(i => i.status !== 'Converted' && i.status !== 'Not Interested').map(i => i.id)); }}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer border ${broadcastAreaFilter === 'all' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
                 >
                   All Areas
                 </button>
-                {allAreas.map(area => (
-                  <button key={area} onClick={() => {
+                {AREA_OPTIONS.map(area => (
+                  <button key={area} type="button" onClick={() => {
                     setBroadcastAreaFilter(area);
                     const areaLeads = inquiries.filter(i => (i.preferredLocation?.trim() || 'Unspecified') === area);
                     setSelectedIds(areaLeads.filter(i => i.status !== 'Converted' && i.status !== 'Not Interested').map(i => i.id));
