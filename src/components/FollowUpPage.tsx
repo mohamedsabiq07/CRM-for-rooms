@@ -108,10 +108,10 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
   const [formNotes, setFormNotes]           = useState('');
 
   // ── Broadcast state ───────────────────────────────────────────────────────────
+  const DEFAULT_WHATSAPP_MESSAGE = `Hi! 👋\n\nWe have bed spaces and partition rooms available for rent. If you or anyone you know is looking for accommodation, please feel free to contact us.\n\nKindly let us know your requirements, including the preferred location, budget, and type of accommodation needed. We will be happy to arrange a visit to the apartment so you can check the facilities and choose a suitable option.\n\nPlease feel free to message us anytime. We will do our best to assist you. Thank you! 😊`;
+
   const [selectedIds, setSelectedIds]         = useState<string[]>([]);
-  const [broadcastTemplate, setBroadcastTemplate] = useState(
-    `Hi {name}, hope you're doing well! 😊\n\nWe have availability for a {lookingFor} in {area}. Our rooms are clean, fully furnished with DEWA, high-speed Wi-Fi, weekly cleaning, and a secure environment.\n\nIf you're still looking for accommodation, feel free to reach out and we can arrange a viewing! 🏠\n\n– Mohamed | Tenant Management`
-  );
+  const [broadcastTemplate, setBroadcastTemplate] = useState(DEFAULT_WHATSAPP_MESSAGE);
   const [broadcastFeedback, setBroadcastFeedback] = useState('');
 
   // ── KPIs ──────────────────────────────────────────────────────────────────────
@@ -1024,20 +1024,20 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                   <span className="text-[10px] text-slate-400">Variables: {'{name}'}, {'{lookingFor}'}, {'{area}'}, {'{month}'}</span>
                 </div>
                 <div className="flex gap-2 mb-2 flex-wrap">
-                  <button type="button" onClick={() => setBroadcastTemplate(`Hi {name}, hope you're doing well! 😊\n\nWe have availability for a {lookingFor} in {area}. Our rooms are fully furnished with DEWA, Wi-Fi, weekly cleaning included.\n\nInterested? Reach out and we'll arrange a viewing! 🏠\n\n– Mohamed | Tenant Management`)}
-                    className="px-2.5 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md border border-slate-300 transition cursor-pointer">
-                    Standard
+                  <button type="button" onClick={() => setBroadcastTemplate(DEFAULT_WHATSAPP_MESSAGE)}
+                    className="px-2.5 py-1 text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-md border border-emerald-200 transition cursor-pointer">
+                    Standard (Default)
                   </button>
-                  <button type="button" onClick={() => setBroadcastTemplate(`Hi {name}! 😊 We have a {lookingFor} available in {area} – perfect for your requirement!\n\nFurnished, DEWA + Wi-Fi included, safe environment. Available immediately.\n\nShall we arrange a viewing? – Mohamed | Tenant Management`)}
+                  <button type="button" onClick={() => setBroadcastTemplate(`Hi {name}! 😊 We have a {lookingFor} available in {area} – perfect for your requirement!\n\nFurnished, DEWA + Wi-Fi included, safe environment. Available immediately.\n\nShall we arrange a viewing?`)}
                     className="px-2.5 py-1 text-[11px] font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-md border border-indigo-200 transition cursor-pointer">
                     Short &amp; Direct
                   </button>
-                  <button type="button" onClick={() => setBroadcastTemplate(`Hi {name}, as our former resident, we'd love to welcome you back! 🏠\n\nWe have a {lookingFor} available in {area} with all facilities – DEWA, Wi-Fi, weekly cleaning, and a friendly environment.\n\nPriority viewing for returning tenants. Just reach out! – Mohamed | Tenant Management`)}
+                  <button type="button" onClick={() => setBroadcastTemplate(`Hi {name}, as our former resident, we'd love to welcome you back! 🏠\n\nWe have bed spaces and partition rooms available for rent in {area}. Please feel free to message us anytime to arrange a visit. Thank you! 😊`)}
                     className="px-2.5 py-1 text-[11px] font-bold bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-md border border-purple-200 transition cursor-pointer">
                     🏠 Former Tenant
                   </button>
                 </div>
-                <textarea rows={4} value={broadcastTemplate} onChange={e => setBroadcastTemplate(e.target.value)}
+                <textarea rows={5} value={broadcastTemplate} onChange={e => setBroadcastTemplate(e.target.value)}
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-sans focus:bg-white focus:outline-none focus:border-emerald-500" />
               </div>
 
