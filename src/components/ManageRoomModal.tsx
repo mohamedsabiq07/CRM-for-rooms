@@ -82,8 +82,6 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
         status: wifiStatus,
       }
     }, room?.id);
-
-    onClose();
   };
 
   return (
@@ -386,13 +384,8 @@ export const ManageRoomModal: React.FC<ManageRoomModalProps> = ({
             {isEditing && onDeleteRoom ? (
               <button
                 type="button"
-                onClick={() => {
-                  if (confirm(`Delete Room ${room.roomNumber}?`)) {
-                    onDeleteRoom(room.id);
-                    onClose();
-                  }
-                }}
-                className="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition flex items-center gap-1"
+                onClick={() => onDeleteRoom(room.id)}
+                className="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition flex items-center gap-1 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />
                 <span>Delete Room</span>

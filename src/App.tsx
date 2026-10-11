@@ -18,6 +18,7 @@ import { AddExpenseModal } from './components/AddExpenseModal';
 import { MonthlyBillsModal } from './components/MonthlyBillsModal';
 import { FollowUpPage } from './components/FollowUpPage';
 import { MonthHistoryModal } from './components/MonthHistoryModal';
+import { PasswordConfirmModal } from './components/PasswordConfirmModal';
 import { 
   LocationItem, 
   Building, 
@@ -180,6 +181,39 @@ export const App: React.FC = () => {
   const [checkoutTenant, setCheckoutTenant] = useState<Tenant | null>(null);
   const [isRentCalculatorOpen, setIsRentCalculatorOpen] = useState(false);
   const [isPastTenantsOpen, setIsPastTenantsOpen] = useState(false);
+
+  // 4-Digit Password Protection State (PIN: 1234)
+  const [passwordPrompt, setPasswordPrompt] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    actionLabel: string;
+    isDanger: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    actionLabel: 'Confirm Action',
+    isDanger: true,
+    onConfirm: () => {},
+  });
+
+  const requestPassword = (
+    title: string,
+    description: string,
+    onConfirm: () => void,
+    options?: { actionLabel?: string; isDanger?: boolean }
+  ) => {
+    setPasswordPrompt({
+      isOpen: true,
+      title,
+      description,
+      actionLabel: options?.actionLabel || 'Confirm & Proceed',
+      isDanger: options?.isDanger ?? true,
+      onConfirm,
+    });
+  };
 
   // --- INITIAL LOAD FROM SUPABASE CLOUD DATABASE ---
   useEffect(() => {
@@ -495,7 +529,7 @@ export const App: React.FC = () => {
     });
   };
 
-  const handleUpdateTenant = (updated: Tenant) => {
+  const executeUpdateTenant = (updated: Tenant) => {
     const updatedList = tenants.map(t => (t.id === updated.id ? updated : t));
     const { normalized, updatedTenants } = normalizeTenantsOrder(updatedList);
     setTenants(normalized);
@@ -511,14 +545,57 @@ export const App: React.FC = () => {
     if (updated.roomId && updated.roomId !== selectedRoomId) {
       setSelectedRoomId(updated.roomId);
     }
+    setEditingTenant(null);
+  };
+
+  const handleUpdateTenant = (updated: Tenant) => {
+    const existing = tenants.find(t => t.id === updated.id);
+    if (!existing) {
+      executeUpdateTenant(updated);
+      return;
+    }
+
+    const isMovedBuildingOrRoom =
+      existing.buildingId !== updated.buildingId ||
+      Boolean(existing.roomId && updated.roomId && existing.roomId !== updated.roomId);
+    const isRentOrDepositChanged =
+      Number(existing.rentAmount) !== Number(updated.rentAmount) ||
+      Number(existing.deposit) !== Number(updated.deposit);
+    const isVacatedStatusChange =
+      existing.status !== updated.status &&
+      (updated.status === 'Vacated' || updated.status === 'Checked Out');
+    const isPaidDowngraded =
+      existing.currentMonthStatus === 'Paid' && updated.currentMonthStatus !== 'Paid';
+
+    if (isMovedBuildingOrRoom || isRentOrDepositChanged || isVacatedStatusChange || isPaidDowngraded) {
+      requestPassword(
+        `Confirm Critical Changes for ${updated.name}`,
+        `You are modifying critical tenant management data (room transfer, rent/deposit amount, occupancy status, or payment status). Enter the 4-digit password to save these changes.`,
+        () => executeUpdateTenant(updated),
+        { actionLabel: 'Save Critical Changes', isDanger: false }
+      );
+      return;
+    }
+
+    executeUpdateTenant(updated);
   };
 
   const handleDeleteTenant = (id: string) => {
-    const remaining = tenants.filter(t => t.id !== id);
-    const { normalized, updatedTenants } = normalizeTenantsOrder(remaining);
-    setTenants(normalized);
-    deleteTenantFromDb(id);
-    updatedTenants.forEach(t => upsertTenantToDb(t));
+    const target = tenants.find(t => t.id === id);
+    const tenantName = target?.name || 'this tenant';
+    requestPassword(
+      `Delete Tenant: ${tenantName}`,
+      `Are you sure you want to permanently delete "${tenantName}" from the room sheet? Enter the 4-digit password to confirm deletion.`,
+      () => {
+        const remaining = tenants.filter(t => t.id !== id);
+        const { normalized, updatedTenants } = normalizeTenantsOrder(remaining);
+        setTenants(normalized);
+        deleteTenantFromDb(id);
+        updatedTenants.forEach(t => upsertTenantToDb(t));
+        setEditingTenant(null);
+      },
+      { actionLabel: 'Delete Tenant', isDanger: true }
+    );
   };
 
   const handleConfirmCheckOut = (
@@ -529,40 +606,48 @@ export const App: React.FC = () => {
     const currentT = tenants.find(t => t.id === tenantId);
     if (!currentT) return;
 
-    const updatedTenant: Tenant = {
-      ...currentT,
-      phone: updatedPhone && updatedPhone.trim() ? updatedPhone.trim() : currentT.phone,
-      status: 'Checked Out',
-      leavingDate: checkoutRecord.checkOutDate,
-      doorKey: checkoutRecord.keyReturnedDoor,
-      cupboardKey: checkoutRecord.keyReturnedCupboard,
-      partitionKey: checkoutRecord.keyReturnedPartition !== undefined 
-        ? checkoutRecord.keyReturnedPartition 
-        : currentT.partitionKey,
-      remarks: checkoutRecord.giveBackAmount >= 0
-        ? `Give-back refund: AED ${checkoutRecord.giveBackAmount}${checkoutRecord.notes ? ` (${checkoutRecord.notes})` : ''}`
-        : `Deduction settled${checkoutRecord.notes ? ` (${checkoutRecord.notes})` : ''}`,
-      checkOutRecord: checkoutRecord,
-    };
+    requestPassword(
+      `Confirm Check-Out: ${currentT.name}`,
+      `Checking out "${currentT.name}" will vacate their space, finalize deposit refund settlement (AED ${checkoutRecord.giveBackAmount}), and move them to Follow-Up leads. Enter the 4-digit password to confirm.`,
+      () => {
+        const updatedTenant: Tenant = {
+          ...currentT,
+          phone: updatedPhone && updatedPhone.trim() ? updatedPhone.trim() : currentT.phone,
+          status: 'Checked Out',
+          leavingDate: checkoutRecord.checkOutDate,
+          doorKey: checkoutRecord.keyReturnedDoor,
+          cupboardKey: checkoutRecord.keyReturnedCupboard,
+          partitionKey: checkoutRecord.keyReturnedPartition !== undefined 
+            ? checkoutRecord.keyReturnedPartition 
+            : currentT.partitionKey,
+          remarks: checkoutRecord.giveBackAmount >= 0
+            ? `Give-back refund: AED ${checkoutRecord.giveBackAmount}${checkoutRecord.notes ? ` (${checkoutRecord.notes})` : ''}`
+            : `Deduction settled${checkoutRecord.notes ? ` (${checkoutRecord.notes})` : ''}`,
+          checkOutRecord: checkoutRecord,
+        };
 
-    const remainingList = tenants.map(t => (t.id === tenantId ? updatedTenant : t));
-    const { normalized, updatedTenants } = normalizeTenantsOrder(remainingList);
-    setTenants(normalized);
-    upsertTenantToDb(updatedTenant);
-    updatedTenants.forEach(t => {
-      if (t.id !== tenantId) upsertTenantToDb(t);
-    });
+        const remainingList = tenants.map(t => (t.id === tenantId ? updatedTenant : t));
+        const { normalized, updatedTenants } = normalizeTenantsOrder(remainingList);
+        setTenants(normalized);
+        upsertTenantToDb(updatedTenant);
+        updatedTenants.forEach(t => {
+          if (t.id !== tenantId) upsertTenantToDb(t);
+        });
 
-    // Automatically convert vacated tenant to Follow-Up Lead for month-end outreach
-    const bld = buildings.find(b => b.id === updatedTenant.buildingId);
-    const rm = rooms.find(r => r.id === updatedTenant.roomId);
-    const convertedLead = convertVacatedTenantToInquiry(updatedTenant, checkoutRecord, bld?.name, rm?.roomNumber);
+        // Automatically convert vacated tenant to Follow-Up Lead for month-end outreach
+        const bld = buildings.find(b => b.id === updatedTenant.buildingId);
+        const rm = rooms.find(r => r.id === updatedTenant.roomId);
+        const convertedLead = convertVacatedTenantToInquiry(updatedTenant, checkoutRecord, bld?.name, rm?.roomNumber);
 
-    setInquiries(prev => {
-      const filtered = prev.filter(i => i.id !== convertedLead.id && i.tenantId !== updatedTenant.id);
-      return [convertedLead, ...filtered];
-    });
-    upsertInquiryToDb(convertedLead);
+        setInquiries(prev => {
+          const filtered = prev.filter(i => i.id !== convertedLead.id && i.tenantId !== updatedTenant.id);
+          return [convertedLead, ...filtered];
+        });
+        upsertInquiryToDb(convertedLead);
+        setCheckoutTenant(null);
+      },
+      { actionLabel: 'Confirm Check-Out', isDanger: false }
+    );
   };
 
   const handleSyncTenantToFollowup = (tenant: Tenant) => {
@@ -611,8 +696,17 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteExpense = (expenseId: string) => {
-    setExpenses(prev => prev.filter(e => e.id !== expenseId));
-    deleteExpenseFromDb(expenseId);
+    const targetExp = expenses.find(e => e.id === expenseId);
+    const expLabel = targetExp ? `${targetExp.title} (AED ${targetExp.amount})` : 'this expense';
+    requestPassword(
+      'Delete Expense Record',
+      `Are you sure you want to delete "${expLabel}" from the Profit & Loss ledger? Enter the 4-digit password to confirm.`,
+      () => {
+        setExpenses(prev => prev.filter(e => e.id !== expenseId));
+        deleteExpenseFromDb(expenseId);
+      },
+      { actionLabel: 'Delete Expense', isDanger: true }
+    );
   };
 
   const handleToggleKey = (tenantId: string, keyType: 'cupboard' | 'door' | 'partition') => {
@@ -691,7 +785,7 @@ export const App: React.FC = () => {
     );
   };
 
-  const handleQuickToggleBillStatus = (roomId: string, billType: 'dewa' | 'wifi') => {
+  const executeToggleBillStatus = (roomId: string, billType: 'dewa' | 'wifi') => {
     setRooms(prev =>
       prev.map(r => {
         if (r.id !== roomId) return r;
@@ -702,6 +796,22 @@ export const App: React.FC = () => {
         return updated;
       })
     );
+  };
+
+  const handleQuickToggleBillStatus = (roomId: string, billType: 'dewa' | 'wifi') => {
+    const targetRoom = rooms.find(r => r.id === roomId);
+    const currentStatus = billType === 'dewa' ? targetRoom?.dewaBill?.status : targetRoom?.wifiBill?.status;
+    if (currentStatus === 'Paid') {
+      const billName = billType === 'dewa' ? 'DEWA / SEWA' : 'Wi-Fi';
+      requestPassword(
+        `Change ${billName} Bill to Pending/Due`,
+        `Room ${targetRoom?.roomNumber || ''} ${billName} bill is currently marked as Paid. Enter the 4-digit password to revert it to Pending/Due.`,
+        () => executeToggleBillStatus(roomId, billType),
+        { actionLabel: 'Revert to Pending', isDanger: false }
+      );
+      return;
+    }
+    executeToggleBillStatus(roomId, billType);
   };
 
   const handleAddBuilding = (
@@ -756,22 +866,64 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteBuilding = (buildingId: string) => {
-    setBuildings(prev => prev.filter(b => b.id !== buildingId));
-    setRooms(prev => prev.filter(r => r.buildingId !== buildingId));
-    setTenants(prev => prev.filter(t => t.buildingId !== buildingId));
-    deleteBuildingFromDb(buildingId);
+    const targetBld = buildings.find(b => b.id === buildingId);
+    const bldName = targetBld?.name || 'this building';
+    requestPassword(
+      `Remove Building: ${bldName}`,
+      `Removing "${bldName}" will permanently delete the building along with all its rooms and tenant records. Enter the 4-digit password to confirm.`,
+      () => {
+        setBuildings(prev => prev.filter(b => b.id !== buildingId));
+        setRooms(prev => prev.filter(r => r.buildingId !== buildingId));
+        setTenants(prev => prev.filter(t => t.buildingId !== buildingId));
+        deleteBuildingFromDb(buildingId);
 
-    const remaining = buildings.filter(b => b.id !== buildingId);
-    if (remaining.length > 0) {
-      setSelectedBuildingId(remaining[0].id);
-    }
+        const remaining = buildings.filter(b => b.id !== buildingId);
+        if (remaining.length > 0) {
+          setSelectedBuildingId(remaining[0].id);
+        }
+      },
+      { actionLabel: 'Remove Building', isDanger: true }
+    );
+  };
+
+  const closeManageRoomModal = () => {
+    setIsManageRoomOpen(false);
+    setRoomModalBuilding(null);
+    setRoomModalTargetRoom(null);
   };
 
   const handleSaveRoom = (roomData: Omit<RoomUnit, 'id'>, roomId?: string) => {
     if (roomId) {
+      const existingRoom = rooms.find(r => r.id === roomId);
+      const isCriticalChange =
+        existingRoom &&
+        (existingRoom.roomNumber !== roomData.roomNumber ||
+          Number(existingRoom.capacity) !== Number(roomData.capacity) ||
+          Number(existingRoom.actualRentAnnual) !== Number(roomData.actualRentAnnual) ||
+          existingRoom.paymentTerms !== roomData.paymentTerms ||
+          Number(existingRoom.securityDepositToOwner) !== Number(roomData.securityDepositToOwner) ||
+          (existingRoom.dewaBill?.status === 'Paid' && roomData.dewaBill?.status !== 'Paid') ||
+          (existingRoom.wifiBill?.status === 'Paid' && roomData.wifiBill?.status !== 'Paid'));
+
+      if (isCriticalChange) {
+        requestPassword(
+          `Confirm Critical Room Changes (Room ${roomData.roomNumber})`,
+          `You are modifying critical room configuration (capacity, annual master rent, payment terms, or reverting a Paid utility bill). Enter the 4-digit password to save.`,
+          () => {
+            const updated: RoomUnit = { ...roomData, id: roomId };
+            setRooms(prev => prev.map(r => (r.id === roomId ? updated : r)));
+            upsertRoomToDb(updated);
+            closeManageRoomModal();
+          },
+          { actionLabel: 'Save Room Changes', isDanger: false }
+        );
+        return;
+      }
+
       const updated: RoomUnit = { ...roomData, id: roomId };
       setRooms(prev => prev.map(r => (r.id === roomId ? updated : r)));
       upsertRoomToDb(updated);
+      closeManageRoomModal();
     } else {
       const newRoom: RoomUnit = {
         ...roomData,
@@ -780,12 +932,24 @@ export const App: React.FC = () => {
       setRooms(prev => [...prev, newRoom]);
       setSelectedRoomId(newRoom.id);
       upsertRoomToDb(newRoom);
+      closeManageRoomModal();
     }
   };
 
   const handleDeleteRoom = (roomId: string) => {
-    setRooms(prev => prev.filter(r => r.id !== roomId));
-    deleteRoomFromDb(roomId);
+    const targetRoom = rooms.find(r => r.id === roomId);
+    const targetBld = buildings.find(b => b.id === targetRoom?.buildingId);
+    const roomLabel = targetRoom ? `Room ${targetRoom.roomNumber}${targetBld ? ` (${targetBld.name})` : ''}` : 'this room';
+    requestPassword(
+      `Remove ${roomLabel}`,
+      `Are you sure you want to remove ${roomLabel} from the management system? Enter the 4-digit password to confirm deletion.`,
+      () => {
+        setRooms(prev => prev.filter(r => r.id !== roomId));
+        deleteRoomFromDb(roomId);
+        closeManageRoomModal();
+      },
+      { actionLabel: 'Remove Room', isDanger: true }
+    );
   };
 
   // --- Monthly Utility Bill Handler ---
@@ -872,60 +1036,59 @@ export const App: React.FC = () => {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Carry forward ${sourceTenants.length} active tenants and their bed allocations from ${fromMonth} to ${toMonth}?\n\n` +
-      `• All existing ${fromMonth} collection records remain preserved in history.\n` +
-      `• For ${toMonth}, payment statuses will start fresh as Due so you can track the new month's collections.\n` +
-      `• The view will automatically switch to ${toMonth}.`
+    requestPassword(
+      `Carry Forward Month (${fromMonth} ➔ ${toMonth})`,
+      `Carry forward ${sourceTenants.length} active tenants from ${fromMonth} to ${toMonth}? All existing ${fromMonth} records remain preserved, and ${toMonth} payment statuses will start fresh as Due. Enter the 4-digit password to confirm.`,
+      () => {
+        setTenants(prev =>
+          prev.map(t => {
+            if (!isTenantInMonth(t, fromMonth!)) return t;
+            if (t.status !== 'Active' && t.status !== 'Waiting for new tenant') return t;
+
+            const updatedHistory: Record<string, 'Paid' | 'Due' | 'Partial' | 'Pending'> = {
+              ...(t.monthStatusHistory || {}),
+              [fromMonth!]: (t.monthStatusHistory?.[fromMonth!] || t.currentMonthStatus || 'Paid') as 'Paid' | 'Due' | 'Partial' | 'Pending',
+              [toMonth!]: 'Due',
+            };
+            // Reset amount paid to ZERO for the new month so payments start completely fresh
+            const updatedPaymentAmounts: Record<string, number> = {
+              ...(t.monthPaymentAmounts || {}),
+              [toMonth!]: 0,
+            };
+            const willBecomeActive = t.status === 'Waiting for new tenant' && !isFutureMonth(t.joiningDate, toMonth!);
+            const updated: Tenant = {
+              ...t,
+              status: willBecomeActive ? 'Active' : t.status,
+              stayMonth: toMonth!,
+              monthStatusHistory: updatedHistory,
+              monthPaymentAmounts: updatedPaymentAmounts,
+              currentMonthStatus: willBecomeActive ? 'Due' : (t.status === 'Active' ? 'Due' : t.currentMonthStatus),
+            };
+            upsertTenantToDb(updated);
+            return updated;
+          })
+        );
+
+        setSelectedMonth(toMonth!);
+      },
+      { actionLabel: `Carry Forward to ${toMonth}`, isDanger: false }
     );
-    if (!confirmed) return;
-
-    setTenants(prev =>
-      prev.map(t => {
-        if (!isTenantInMonth(t, fromMonth!)) return t;
-        if (t.status !== 'Active' && t.status !== 'Waiting for new tenant') return t;
-
-        const updatedHistory: Record<string, 'Paid' | 'Due' | 'Partial' | 'Pending'> = {
-          ...(t.monthStatusHistory || {}),
-          [fromMonth!]: (t.monthStatusHistory?.[fromMonth!] || t.currentMonthStatus || 'Paid') as 'Paid' | 'Due' | 'Partial' | 'Pending',
-          [toMonth!]: 'Due',
-        };
-        // Reset amount paid to ZERO for the new month so payments start completely fresh
-        const updatedPaymentAmounts: Record<string, number> = {
-          ...(t.monthPaymentAmounts || {}),
-          [toMonth!]: 0,
-        };
-        const willBecomeActive = t.status === 'Waiting for new tenant' && !isFutureMonth(t.joiningDate, toMonth!);
-        const updated: Tenant = {
-          ...t,
-          status: willBecomeActive ? 'Active' : t.status,
-          stayMonth: toMonth!,
-          monthStatusHistory: updatedHistory,
-          monthPaymentAmounts: updatedPaymentAmounts,
-          currentMonthStatus: willBecomeActive ? 'Due' : (t.status === 'Active' ? 'Due' : t.currentMonthStatus),
-        };
-        upsertTenantToDb(updated);
-        return updated;
-      })
-    );
-
-    setSelectedMonth(toMonth!);
-    alert(`Successfully carried forward ${sourceTenants.length} active tenants to ${toMonth!}!`);
   };
 
   // --- Auto Re-sequence Tenant Numbers (1, 2, 3...) ---
   const handleResequenceSnos = () => {
     if (!currentRoom || currentRoomTenants.length === 0) return;
 
-    const confirmed = window.confirm(
-      `Do you want to auto re-number all ${currentRoomTenants.length} tenants in Room ${currentRoom.roomNumber} (1, 2, 3...)?\n\n` +
-      `This will sort them neatly by Section (HALL first, then ROOM...), Partition (P1, P2, P3...), and Bunker Bed (Lower Bed, then Upper Bed) and eliminate any duplicate numbers or gaps.`
+    requestPassword(
+      `Re-Number Tenants in Room ${currentRoom.roomNumber}`,
+      `Auto re-number all ${currentRoomTenants.length} tenants in Room ${currentRoom.roomNumber} (1, 2, 3...) sorted by Section, Partition, and Bunker Bed? Enter the 4-digit password to confirm.`,
+      () => {
+        const { normalized, updatedTenants } = normalizeTenantsOrder(tenants);
+        setTenants(normalized);
+        updatedTenants.forEach(t => upsertTenantToDb(t));
+      },
+      { actionLabel: 'Re-Sequence Numbers', isDanger: false }
     );
-    if (!confirmed) return;
-
-    const { normalized, updatedTenants } = normalizeTenantsOrder(tenants);
-    setTenants(normalized);
-    updatedTenants.forEach(t => upsertTenantToDb(t));
   };
 
   // --- Customer Inquiry Handlers ---
@@ -940,8 +1103,17 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteInquiry = (inquiryId: string) => {
-    setInquiries(prev => prev.filter(i => i.id !== inquiryId));
-    deleteInquiryFromDb(inquiryId);
+    const targetInq = inquiries.find(i => i.id === inquiryId);
+    const inqName = targetInq?.name || 'this customer lead';
+    requestPassword(
+      `Delete Lead: ${inqName}`,
+      `Are you sure you want to delete "${inqName}" from Follow-Up & Leads? Enter the 4-digit password to confirm deletion.`,
+      () => {
+        setInquiries(prev => prev.filter(i => i.id !== inquiryId));
+        deleteInquiryFromDb(inquiryId);
+      },
+      { actionLabel: 'Delete Lead', isDanger: true }
+    );
   };
 
   const handleBatchUpdateInquiryStatus = (ids: string[], status: string, date: string) => {
@@ -1056,6 +1228,7 @@ export const App: React.FC = () => {
               setRoomModalTargetRoom(room);
               setIsManageRoomOpen(true);
             }}
+            onDeleteRoom={handleDeleteRoom}
             onSelectRoomInSheet={(bldId, roomId) => {
               setSelectedBuildingId(bldId);
               setSelectedRoomId(roomId);
@@ -1352,6 +1525,20 @@ export const App: React.FC = () => {
         rooms={rooms}
         utilityBills={utilityBills}
         activeStayMonth={liveCalendarMonth}
+      />
+
+      {/* 4-Digit Password Confirmation Modal (PIN: 1234) */}
+      <PasswordConfirmModal
+        isOpen={passwordPrompt.isOpen}
+        title={passwordPrompt.title}
+        description={passwordPrompt.description}
+        actionLabel={passwordPrompt.actionLabel}
+        isDanger={passwordPrompt.isDanger}
+        onCancel={() => setPasswordPrompt(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={() => {
+          passwordPrompt.onConfirm();
+          setPasswordPrompt(prev => ({ ...prev, isOpen: false }));
+        }}
       />
 
       {/* Persistent Footer with Live Database Indicator */}

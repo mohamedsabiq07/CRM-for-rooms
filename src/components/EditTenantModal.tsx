@@ -182,7 +182,6 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
       monthStatusHistory: updatedHistory,
       monthPaymentAmounts: updatedPaymentAmounts,
     });
-    onClose();
   };
 
   return (
@@ -700,12 +699,7 @@ export const EditTenantModal: React.FC<EditTenantModalProps> = ({
         <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`Are you sure you want to delete ${tenant.name}?`)) {
-                onDeleteTenant(tenant.id);
-                onClose();
-              }
-            }}
+            onClick={() => onDeleteTenant(tenant.id)}
             className="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition flex items-center gap-1 cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />

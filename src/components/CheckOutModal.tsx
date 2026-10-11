@@ -72,7 +72,6 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
     };
 
     onConfirmCheckOut(tenant.id, record, phone.trim());
-    onClose();
   };
 
   return (

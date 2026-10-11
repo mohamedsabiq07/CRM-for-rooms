@@ -534,13 +534,9 @@ export const ProfitAndLossPage: React.FC<ProfitAndLossPageProps> = ({
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         <button
-                          onClick={() => {
-                            if (confirm(`Delete expense "${exp.title}" (AED ${exp.amount})?`)) {
-                              onDeleteExpense(exp.id);
-                            }
-                          }}
-                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition"
-                          title="Delete Expense"
+                          onClick={() => onDeleteExpense(exp.id)}
+                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                          title="Delete Expense (Password Protected)"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

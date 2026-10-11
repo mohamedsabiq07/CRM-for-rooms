@@ -29,6 +29,7 @@ interface BuildingsPageProps {
   onDeleteBuilding: (buildingId: string) => void;
   onOpenAddRoom: (building: Building) => void;
   onEditRoom: (building: Building, room: RoomUnit) => void;
+  onDeleteRoom?: (roomId: string) => void;
   onSelectRoomInSheet: (buildingId: string, roomId: string) => void;
   onQuickToggleBillStatus: (roomId: string, billType: 'dewa' | 'wifi') => void;
 }
@@ -42,6 +43,7 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
   onDeleteBuilding,
   onOpenAddRoom,
   onEditRoom,
+  onDeleteRoom,
   onSelectRoomInSheet,
   onQuickToggleBillStatus,
 }) => {
@@ -283,13 +285,9 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                     </button>
 
                     <button
-                      onClick={() => {
-                        if (confirm(`Are you sure you want to remove "${building.name}" from Tenant Management?`)) {
-                          onDeleteBuilding(building.id);
-                        }
-                      }}
+                      onClick={() => onDeleteBuilding(building.id)}
                       className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg border border-slate-800 transition cursor-pointer"
-                      title="Remove Building"
+                      title="Remove Building (Password Protected)"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -422,6 +420,16 @@ export const BuildingsPage: React.FC<BuildingsPageProps> = ({
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
+
+                          {onDeleteRoom && (
+                            <button
+                              onClick={() => onDeleteRoom(room.id)}
+                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl border border-slate-200 transition cursor-pointer"
+                              title="Remove Room (Password Protected)"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     );

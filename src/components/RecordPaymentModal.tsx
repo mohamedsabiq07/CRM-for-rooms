@@ -59,6 +59,8 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   const [remarks, setRemarks] = useState(tenant.remarks || '');
   const [paymentDate, setPaymentDate] = useState(todayStr);
   const [isConfirmingDowngrade, setIsConfirmingDowngrade] = useState(false);
+  const [downgradePin, setDowngradePin] = useState('');
+  const [downgradePinError, setDowngradePinError] = useState(false);
 
   const amount = Math.max(0, Number(amountStr) || 0);
   const balance = Math.max(0, rent - amount);
@@ -73,10 +75,19 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
     (prevStatus === 'Partial' && newStatus === 'Due');
 
   const handleSave = () => {
-    // If downgrading payment status and not yet confirmed, ask user for confirmation
+    // If downgrading payment status and not yet confirmed, ask user for 4-digit password confirmation
     if (isDowngrade && !isConfirmingDowngrade) {
       setIsConfirmingDowngrade(true);
+      setDowngradePin('');
+      setDowngradePinError(false);
       return;
+    }
+
+    if (isDowngrade && isConfirmingDowngrade) {
+      if (downgradePin.trim() !== '1234') {
+        setDowngradePinError(true);
+        return;
+      }
     }
 
     onSavePayment(tenant.id, amount, newStatus, remarks, paymentDate, selectedMonth);
@@ -112,7 +123,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
           </button>
         </div>
 
-        {/* Downgrade Safeguard Warning Modal State */}
+        {/* Downgrade Safeguard Warning Modal State with 4-Digit Password */}
         {isConfirmingDowngrade ? (
           <div className="p-6 space-y-4">
             <div className="flex items-start gap-3 bg-rose-50 border-2 border-rose-300 rounded-xl p-4 text-xs text-rose-900">
@@ -124,25 +135,60 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                   You are now setting it to <strong>{newStatus}</strong> (AED {amount} paid).
                 </p>
                 <p className="mt-2 font-semibold text-rose-800">
-                  Are you sure this is not a mistake?
+                  Enter the 4-digit security password to confirm this change:
                 </p>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 text-center">
+                Enter 4-Digit Password
+              </label>
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                autoFocus
+                value={downgradePin}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setDowngradePin(val);
+                  if (downgradePinError) setDowngradePinError(false);
+                }}
+                placeholder="••••"
+                className={`w-full text-center text-2xl font-extrabold tracking-[0.5em] py-2.5 px-4 rounded-xl border-2 focus:outline-none transition font-mono ${
+                  downgradePinError
+                    ? 'border-rose-500 bg-rose-50 text-rose-900 focus:border-rose-600'
+                    : 'border-slate-300 bg-slate-50 text-slate-900 focus:bg-white focus:border-slate-900'
+                }`}
+              />
+              {downgradePinError && (
+                <p className="text-xs font-bold text-rose-600 text-center mt-1.5">
+                  Incorrect 4-digit password. Please try again.
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setIsConfirmingDowngrade(false)}
+                onClick={() => {
+                  setIsConfirmingDowngrade(false);
+                  setDowngradePin('');
+                  setDowngradePinError(false);
+                }}
                 className="flex-1 py-2.5 px-4 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition cursor-pointer"
               >
-                ← Cancel & Keep Previous
+                ← Cancel &amp; Keep Previous
               </button>
               <button
                 type="button"
+                disabled={downgradePin.length < 4}
                 onClick={handleSave}
-                className="flex-1 py-2.5 px-4 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition shadow-sm cursor-pointer"
+                className="flex-1 py-2.5 px-4 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-40 rounded-lg transition shadow-sm cursor-pointer"
               >
-                Yes, Change to {newStatus}
+                Unlock &amp; Change to {newStatus}
               </button>
             </div>
           </div>
