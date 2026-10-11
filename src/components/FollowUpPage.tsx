@@ -107,12 +107,58 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
   const [formStatus, setFormStatus]         = useState<CustomerInquiry['status']>('New');
   const [formNotes, setFormNotes]           = useState('');
 
-  // ── Broadcast state ───────────────────────────────────────────────────────────
+  // ── Saved & Editable WhatsApp Message State (Persisted so user can edit day-by-day) ──
   const DEFAULT_WHATSAPP_MESSAGE = `Hi! 👋\n\nWe have bed spaces and partition rooms available for rent. If you or anyone you know is looking for accommodation, please feel free to contact us.\n\nKindly let us know your requirements, including the preferred location, budget, and type of accommodation needed. We will be happy to arrange a visit to the apartment so you can check the facilities and choose a suitable option.\n\nPlease feel free to message us anytime. We will do our best to assist you. Thank you! 😊`;
+  const WHATSAPP_MSG_STORAGE_KEY = 'room_crm_followup_whatsapp_msg';
 
-  const [selectedIds, setSelectedIds]         = useState<string[]>([]);
-  const [broadcastTemplate, setBroadcastTemplate] = useState(DEFAULT_WHATSAPP_MESSAGE);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [broadcastTemplate, setBroadcastTemplate] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const savedMsg = localStorage.getItem(WHATSAPP_MSG_STORAGE_KEY);
+      if (savedMsg && savedMsg.trim()) return savedMsg;
+    }
+    return DEFAULT_WHATSAPP_MESSAGE;
+  });
+  const [draftMessage, setDraftMessage] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const savedMsg = localStorage.getItem(WHATSAPP_MSG_STORAGE_KEY);
+      if (savedMsg && savedMsg.trim()) return savedMsg;
+    }
+    return DEFAULT_WHATSAPP_MESSAGE;
+  });
+  const [isMessageBoxExpanded, setIsMessageBoxExpanded] = useState<boolean>(true);
+  const [messageSavedToast, setMessageSavedToast] = useState<string>('');
   const [broadcastFeedback, setBroadcastFeedback] = useState('');
+
+  const handleSaveCustomWhatsAppMessage = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = draftMessage.trim();
+    if (!trimmed) return;
+    setBroadcastTemplate(trimmed);
+    setDraftMessage(trimmed);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(WHATSAPP_MSG_STORAGE_KEY, trimmed);
+    }
+    setMessageSavedToast('✓ Saved! All Follow-Up & Lead WhatsApp buttons now send this message.');
+    setTimeout(() => setMessageSavedToast(''), 4000);
+  };
+
+  const handleCopyActiveMessage = () => {
+    const textToCopy = draftMessage.trim() || broadcastTemplate;
+    navigator.clipboard.writeText(textToCopy);
+    setMessageSavedToast('✓ Copied message to clipboard!');
+    setTimeout(() => setMessageSavedToast(''), 3000);
+  };
+
+  const handleApplyPresetMessage = (presetText: string) => {
+    setDraftMessage(presetText);
+    setBroadcastTemplate(presetText);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(WHATSAPP_MSG_STORAGE_KEY, presetText);
+    }
+    setMessageSavedToast('✓ Template applied & set as active WhatsApp message!');
+    setTimeout(() => setMessageSavedToast(''), 3500);
+  };
 
   // ── KPIs ──────────────────────────────────────────────────────────────────────
   const totalLeads       = inquiries.length;
@@ -547,6 +593,156 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── CUSTOM WHATSAPP MESSAGE BOX (PASTE / TYPE & SUBMIT DIRECTLY ON PAGE) ── */}
+      <div className="bg-white rounded-2xl border-2 border-emerald-500/40 shadow-sm overflow-hidden">
+        <div className="bg-emerald-950 text-white px-4 sm:px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-[#38CE3C] shrink-0">
+              <MessageSquare className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-xs sm:text-sm font-bold text-white">
+                  WhatsApp Message for Follow-Ups &amp; Leads
+                </h3>
+                {draftMessage.trim() !== broadcastTemplate.trim() ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-slate-950">
+                    Unsaved Edits — Click Submit
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-[#38CE3C] border border-emerald-400/30">
+                    ✓ Active on All WhatsApp Buttons
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-emerald-200/80">
+                Type or copy-paste your message from ChatGPT below and click <strong>Submit Message</strong> — every WhatsApp button on this page will immediately send it.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopyActiveMessage}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-900 hover:bg-emerald-800 text-emerald-100 rounded-lg text-xs font-semibold border border-emerald-700 transition cursor-pointer"
+              title="Copy current message text"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>Copy Text</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsMessageBoxExpanded(prev => !prev)}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 rounded-lg text-xs font-semibold border border-emerald-800 transition cursor-pointer"
+            >
+              <span>{isMessageBoxExpanded ? 'Hide Box' : 'Edit Message'}</span>
+              {isMessageBoxExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {isMessageBoxExpanded && (
+          <form onSubmit={handleSaveCustomWhatsAppMessage} className="p-4 sm:p-5 space-y-3 bg-emerald-50/20">
+            {/* Quick Ready-to-Use Templates if needed */}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">
+                  Quick Presets:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleApplyPresetMessage(DEFAULT_WHATSAPP_MESSAGE)}
+                  className="px-2.5 py-1 text-[11px] font-semibold bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 rounded-lg border border-slate-200 transition cursor-pointer"
+                >
+                  Standard Accommodation Message
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleApplyPresetMessage(
+                      `Hi! 👋\n\nWe have a clean, fully furnished bed space and partition room available right now in {area} (DEWA & high-speed Wi-Fi included).\n\nIf you are still looking for accommodation, please reply to this message and we can arrange a viewing today. Thank you! 😊`
+                    )
+                  }
+                  className="px-2.5 py-1 text-[11px] font-semibold bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-800 rounded-lg border border-slate-200 transition cursor-pointer"
+                >
+                  Immediate Vacancy Alert
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleApplyPresetMessage(
+                      `Hi! 👋\n\nNew month bed spaces & partition rooms are now open for booking! Clean, quiet flat near the metro with all bills included.\n\nLet us know your preferred location and budget so we can reserve a spot or schedule a viewing for you. Thank you! 😊`
+                    )
+                  }
+                  className="px-2.5 py-1 text-[11px] font-semibold bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 rounded-lg border border-slate-200 transition cursor-pointer"
+                >
+                  New Month Booking Open
+                </button>
+              </div>
+
+              <span className="text-[10px] text-slate-400">
+                Optional tags: <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-600">{'{name}'}</code>{' '}
+                <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-600">{'{area}'}</code>{' '}
+                <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-600">{'{lookingFor}'}</code>
+              </span>
+            </div>
+
+            {/* Textbox where user can paste from ChatGPT or type their own message */}
+            <div>
+              <textarea
+                rows={4}
+                value={draftMessage}
+                onChange={(e) => setDraftMessage(e.target.value)}
+                placeholder="Paste your WhatsApp message from ChatGPT or type your custom message here..."
+                className="w-full p-3.5 bg-white border-2 border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 leading-relaxed focus:outline-none focus:border-emerald-600 shadow-2xs"
+              />
+            </div>
+
+            {/* Submit / Copy Footer Bar */}
+            <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
+              <div className="text-xs">
+                {messageSavedToast ? (
+                  <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 bg-emerald-100/80 px-3 py-1.5 rounded-lg border border-emerald-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    {messageSavedToast}
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-slate-500">
+                    Clicking any green <strong>WhatsApp</strong> button below will automatically send this message.
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  type="button"
+                  onClick={() => setDraftMessage('')}
+                  className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl border border-slate-200 transition cursor-pointer"
+                >
+                  Clear Box
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyActiveMessage}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 font-bold rounded-xl text-xs border border-slate-300 transition cursor-pointer shadow-2xs"
+                >
+                  <Copy className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Copy Message</span>
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-sm transition cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Submit &amp; Set WhatsApp Message</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* ── AREA SUMMARY CARDS ──────────────────────────────────────────────────── */}
@@ -1024,21 +1220,31 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                   <span className="text-[10px] text-slate-400">Variables: {'{name}'}, {'{lookingFor}'}, {'{area}'}, {'{month}'}</span>
                 </div>
                 <div className="flex gap-2 mb-2 flex-wrap">
-                  <button type="button" onClick={() => setBroadcastTemplate(DEFAULT_WHATSAPP_MESSAGE)}
+                  <button type="button" onClick={() => handleApplyPresetMessage(DEFAULT_WHATSAPP_MESSAGE)}
                     className="px-2.5 py-1 text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-md border border-emerald-200 transition cursor-pointer">
                     Standard (Default)
                   </button>
-                  <button type="button" onClick={() => setBroadcastTemplate(`Hi {name}! 😊 We have a {lookingFor} available in {area} – perfect for your requirement!\n\nFurnished, DEWA + Wi-Fi included, safe environment. Available immediately.\n\nShall we arrange a viewing?`)}
+                  <button type="button" onClick={() => handleApplyPresetMessage(`Hi {name}! 😊 We have a {lookingFor} available in {area} – perfect for your requirement!\n\nFurnished, DEWA + Wi-Fi included, safe environment. Available immediately.\n\nShall we arrange a viewing?`)}
                     className="px-2.5 py-1 text-[11px] font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-md border border-indigo-200 transition cursor-pointer">
                     Short &amp; Direct
                   </button>
-                  <button type="button" onClick={() => setBroadcastTemplate(`Hi {name}, as our former resident, we'd love to welcome you back! 🏠\n\nWe have bed spaces and partition rooms available for rent in {area}. Please feel free to message us anytime to arrange a visit. Thank you! 😊`)}
+                  <button type="button" onClick={() => handleApplyPresetMessage(`Hi {name}, as our former resident, we'd love to welcome you back! 🏠\n\nWe have bed spaces and partition rooms available for rent in {area}. Please feel free to message us anytime to arrange a visit. Thank you! 😊`)}
                     className="px-2.5 py-1 text-[11px] font-bold bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-md border border-purple-200 transition cursor-pointer">
                     🏠 Former Tenant
                   </button>
                 </div>
-                <textarea rows={5} value={broadcastTemplate} onChange={e => setBroadcastTemplate(e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-sans focus:bg-white focus:outline-none focus:border-emerald-500" />
+                <textarea
+                  rows={5}
+                  value={broadcastTemplate}
+                  onChange={e => {
+                    setBroadcastTemplate(e.target.value);
+                    setDraftMessage(e.target.value);
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem(WHATSAPP_MSG_STORAGE_KEY, e.target.value);
+                    }
+                  }}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-sans focus:bg-white focus:outline-none focus:border-emerald-500"
+                />
               </div>
 
               {/* Recipient list */}
