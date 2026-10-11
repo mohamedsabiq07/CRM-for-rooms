@@ -11,15 +11,12 @@ import {
   Copy,
   X,
   MapPin,
-  ChevronDown,
-  ChevronUp,
   Send,
-  Smartphone,
 } from 'lucide-react';
 import { CustomerInquiry } from '../types/crm';
 import { formatWhatsAppNumber, normalizePhoneForStorage } from '../utils/dateUtils';
 
-// ─── Known areas strictly restricted to where rooms are operated ─────────────
+// ─── Strictly restricted to our 4 operational areas ───────────────────────────
 const AREA_OPTIONS = [
   'Al Barsha 1',
   'Deira',
@@ -27,13 +24,12 @@ const AREA_OPTIONS = [
   'Khor Al Anz',
 ] as const;
 
-// ─── Colour palette per area ───────────────────────────────────────────────────
 const AREA_COLORS: Record<string, string> = {
   'Al Barsha 1': 'bg-indigo-50 border-indigo-200 text-indigo-800',
-  'Deira':       'bg-amber-50  border-amber-200  text-amber-800',
+  'Deira':       'bg-amber-50 border-amber-200 text-amber-800',
   'Sharjah':     'bg-emerald-50 border-emerald-200 text-emerald-800',
-  'Khor Al Anz': 'bg-sky-50    border-sky-200    text-sky-800',
-  'Other':       'bg-slate-100 border-slate-300  text-slate-700',
+  'Khor Al Anz': 'bg-sky-50 border-sky-200 text-sky-800',
+  'Other':       'bg-slate-100 border-slate-300 text-slate-700',
 };
 const AREA_DOT: Record<string, string> = {
   'Al Barsha 1': 'bg-indigo-500',
@@ -42,24 +38,28 @@ const AREA_DOT: Record<string, string> = {
   'Khor Al Anz': 'bg-sky-500',
   'Other':       'bg-slate-500',
 };
-const areaColor  = (a?: string) => AREA_COLORS[a ?? 'Other']  ?? AREA_COLORS['Other'];
-const areaDot    = (a?: string) => AREA_DOT[a ?? 'Other']     ?? AREA_DOT['Other'];
-const areaLabel  = (a?: string) => a && a.trim() ? a : 'Unspecified';
+const areaColor = (a?: string) => AREA_COLORS[a ?? 'Other'] ?? AREA_COLORS['Other'];
+const areaDot   = (a?: string) => AREA_DOT[a ?? 'Other']   ?? AREA_DOT['Other'];
 
-// ─── Status badge ──────────────────────────────────────────────────────────────
+const STATUS_OPTIONS: CustomerInquiry['status'][] = [
+  'New',
+  'Followed Up',
+  'Interested',
+  'Converted',
+  'Not Interested',
+];
+
 const STATUS_COLORS: Record<string, string> = {
-  'New':           'bg-amber-50   text-amber-800  border-amber-200',
-  'Followed Up':   'bg-sky-50     text-sky-800    border-sky-200',
-  'Interested':    'bg-purple-50  text-purple-800 border-purple-200',
-  'Converted':     'bg-emerald-50 text-emerald-800 border-emerald-200',
-  'Not Interested':'bg-slate-100  text-slate-600  border-slate-200',
+  'New':            'bg-amber-50 text-amber-800 border-amber-300',
+  'Followed Up':    'bg-sky-50 text-sky-800 border-sky-300',
+  'Interested':     'bg-purple-50 text-purple-800 border-purple-300',
+  'Converted':      'bg-emerald-50 text-emerald-800 border-emerald-300',
+  'Not Interested': 'bg-slate-100 text-slate-600 border-slate-300',
 };
 
-// ─── Helper: effective WhatsApp number (prefer whatsappPhone, fall back to phone) ─
 const waPhone = (inq: CustomerInquiry) =>
   formatWhatsAppNumber(inq.whatsappPhone?.trim() || inq.phone);
 
-// ─── Component ──────────────────────────────────────────────────────────────────
 interface FollowUpPageProps {
   inquiries: CustomerInquiry[];
   selectedMonth: string;
@@ -77,64 +77,40 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
   onUpdateInquiry,
   onDeleteInquiry,
   onBatchUpdateStatus,
-  onConvertToTenant,
 }) => {
   // ── Filter state ──────────────────────────────────────────────────────────────
-  const [searchQuery, setSearchQuery]         = useState('');
-  const [statusFilter, setStatusFilter]       = useState<string>('all');
-  const [requirementFilter, setRequirementFilter] = useState<string>('all');
-  const [areaFilter, setAreaFilter]           = useState<string>('all');
-  const [sourceFilter, setSourceFilter]       = useState<'all' | 'former_tenants' | 'direct_inquiries'>('all');
-  const [groupByArea, setGroupByArea]         = useState(true);
-  const [collapsedAreas, setCollapsedAreas]   = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery]   = useState('');
+  const [areaFilter, setAreaFilter]     = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   // ── Modal / form state ────────────────────────────────────────────────────────
-  const [isAddModalOpen, setIsAddModalOpen]           = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen]             = useState(false);
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
-  const [broadcastAreaFilter, setBroadcastAreaFilter] = useState<string>('all');
-  const [editingInquiry, setEditingInquiry]           = useState<CustomerInquiry | null>(null);
+  const [broadcastAreaFilter, setBroadcastAreaFilter]   = useState<string>('all');
+  const [editingInquiry, setEditingInquiry]             = useState<CustomerInquiry | null>(null);
 
   const todayStr = () => new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
 
-  // ── Form fields ───────────────────────────────────────────────────────────────
+  // ── Core Form Fields ──────────────────────────────────────────────────────────
   const [formName, setFormName]             = useState('');
   const [formPhone, setFormPhone]           = useState('');
   const [formWaPhone, setFormWaPhone]       = useState('');
-  const [formDate, setFormDate]             = useState(todayStr());
   const [formLookingFor, setFormLookingFor] = useState<CustomerInquiry['lookingFor']>('Bed Space (Lower)');
   const [formLocation, setFormLocation]     = useState('Al Barsha 1');
   const [formBudget, setFormBudget]         = useState<number>(750);
   const [formStatus, setFormStatus]         = useState<CustomerInquiry['status']>('New');
   const [formNotes, setFormNotes]           = useState('');
 
-  // ── Broadcast state ───────────────────────────────────────────────────────────
+  // ── Default WhatsApp Message ──────────────────────────────────────────────────
   const DEFAULT_WHATSAPP_MESSAGE = `Hi! 👋\n\nWe have bed spaces and partition rooms available for rent. If you or anyone you know is looking for accommodation, please feel free to contact us.\n\nKindly let us know your requirements, including the preferred location, budget, and type of accommodation needed. We will be happy to arrange a visit to the apartment so you can check the facilities and choose a suitable option.\n\nPlease feel free to message us anytime. We will do our best to assist you. Thank you! 😊`;
 
-  const [selectedIds, setSelectedIds]         = useState<string[]>([]);
+  const [selectedIds, setSelectedIds]             = useState<string[]>([]);
   const [broadcastTemplate, setBroadcastTemplate] = useState(DEFAULT_WHATSAPP_MESSAGE);
   const [broadcastFeedback, setBroadcastFeedback] = useState('');
 
-  // ── KPIs ──────────────────────────────────────────────────────────────────────
-  const totalLeads       = inquiries.length;
-  const newLeads         = inquiries.filter(i => i.status === 'New').length;
-  const interestedLeads  = inquiries.filter(i => i.status === 'Interested').length;
-  const convertedLeads   = inquiries.filter(i => i.status === 'Converted').length;
-  const formerCount      = inquiries.filter(i => i.leadSource === 'Former Tenant' || !!i.tenantId).length;
-  const directCount      = inquiries.filter(i => i.leadSource !== 'Former Tenant' && !i.tenantId).length;
-
-  // ── Unique areas for filter bar ────────────────────────────────────────────────
-  const allAreas = useMemo(() => {
-    const s = new Set<string>();
-    inquiries.forEach(i => s.add(i.preferredLocation?.trim() || 'Unspecified'));
-    return Array.from(s).sort();
-  }, [inquiries]);
-
   // ── Filtered leads ─────────────────────────────────────────────────────────────
   const filtered = useMemo(() => inquiries.filter(item => {
-    if (sourceFilter === 'former_tenants'   && item.leadSource !== 'Former Tenant' && !item.tenantId) return false;
-    if (sourceFilter === 'direct_inquiries' && (item.leadSource === 'Former Tenant' || item.tenantId)) return false;
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
-    if (requirementFilter !== 'all' && item.lookingFor !== requirementFilter) return false;
     if (areaFilter !== 'all') {
       const loc = item.preferredLocation?.trim() || 'Unspecified';
       if (loc !== areaFilter) return false;
@@ -145,51 +121,41 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
         item.name.toLowerCase().includes(q) ||
         item.phone.toLowerCase().includes(q) ||
         (item.whatsappPhone || '').toLowerCase().includes(q) ||
-        (item.notes || '').toLowerCase().includes(q) ||
-        (item.preferredLocation || '').toLowerCase().includes(q)
+        (item.preferredLocation || '').toLowerCase().includes(q) ||
+        (item.notes || '').toLowerCase().includes(q)
       );
     }
     return true;
-  }), [inquiries, sourceFilter, statusFilter, requirementFilter, areaFilter, searchQuery]);
-
-  // ── Grouped by area ────────────────────────────────────────────────────────────
-  const groupedByArea = useMemo(() => {
-    const map = new Map<string, CustomerInquiry[]>();
-    filtered.forEach(item => {
-      const key = item.preferredLocation?.trim() || 'Unspecified';
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(item);
-    });
-    return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
-  }, [filtered]);
-
-  // ── Area toggle collapse ───────────────────────────────────────────────────────
-  const toggleCollapse = (area: string) => {
-    setCollapsedAreas(prev => {
-      const n = new Set(prev);
-      n.has(area) ? n.delete(area) : n.add(area);
-      return n;
-    });
-  };
+  }), [inquiries, statusFilter, areaFilter, searchQuery]);
 
   // ── Open Add modal ─────────────────────────────────────────────────────────────
   const handleOpenAddModal = () => {
     setEditingInquiry(null);
-    setFormName(''); setFormPhone(''); setFormWaPhone('');
-    setFormDate(todayStr()); setFormLookingFor('Bed Space (Lower)');
-    setFormLocation('Al Barsha 1'); setFormBudget(750);
-    setFormStatus('New'); setFormNotes('');
+    setFormName('');
+    setFormPhone('');
+    setFormWaPhone('');
+    setFormLookingFor('Bed Space (Lower)');
+    setFormLocation(areaFilter !== 'all' && AREA_OPTIONS.includes(areaFilter as any) ? areaFilter : 'Al Barsha 1');
+    setFormBudget(750);
+    setFormStatus('New');
+    setFormNotes('');
     setIsAddModalOpen(true);
   };
 
-  // ── Open Edit modal ────────────────────────────────────────────────────
+  // ── Open Edit modal ────────────────────────────────────────────────────────────
   const handleOpenEditModal = (item: CustomerInquiry) => {
     setEditingInquiry(item);
-    setFormName(item.name); setFormPhone(item.phone);
+    setFormName(item.name);
+    setFormPhone(item.phone);
     setFormWaPhone(item.whatsappPhone || '');
-    setFormDate(item.inquiryDate); setFormLookingFor(item.lookingFor);
-    setFormLocation(item.preferredLocation || 'Al Barsha 1');
-    setFormBudget(item.budget || 0); setFormStatus(item.status);
+    setFormLookingFor(item.lookingFor);
+    setFormLocation(
+      AREA_OPTIONS.includes((item.preferredLocation || '') as any)
+        ? item.preferredLocation!
+        : 'Al Barsha 1'
+    );
+    setFormBudget(item.budget || 0);
+    setFormStatus(item.status);
     setFormNotes(item.notes || '');
     setIsAddModalOpen(true);
   };
@@ -204,7 +170,7 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
       name: formName.trim(),
       phone: cleanPhone,
       whatsappPhone: cleanWaPhone,
-      inquiryDate: formDate,
+      inquiryDate: editingInquiry?.inquiryDate || todayStr(),
       lookingFor: formLookingFor,
       preferredLocation: formLocation,
       budget: Number(formBudget) || 0,
@@ -219,6 +185,15 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
     setIsAddModalOpen(false);
   };
 
+  // ── Instant 1-Tap Status Save ──────────────────────────────────────────────────
+  const handleQuickStatusChange = (item: CustomerInquiry, newStatus: CustomerInquiry['status']) => {
+    onUpdateInquiry({
+      ...item,
+      status: newStatus,
+      lastContactedDate: todayStr(),
+    });
+  };
+
   // ── Single WhatsApp ────────────────────────────────────────────────────────────
   const formatMsg = (item: CustomerInquiry, template?: string) =>
     (template || broadcastTemplate)
@@ -231,16 +206,19 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
   const handleSingleWhatsApp = (item: CustomerInquiry) => {
     const num = waPhone(item);
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(formatMsg(item))}`, '_blank');
-    onUpdateInquiry({ ...item, status: 'Followed Up', lastContactedDate: todayStr() });
+    if (item.status === 'New') {
+      onUpdateInquiry({ ...item, status: 'Followed Up', lastContactedDate: todayStr() });
+    }
   };
 
   // ── Broadcast helpers ──────────────────────────────────────────────────────────
   const handleOpenBroadcast = (area?: string) => {
-    const pool = area
-      ? inquiries.filter(i => (i.preferredLocation?.trim() || 'Unspecified') === area)
+    const targetArea = area || (areaFilter !== 'all' ? areaFilter : 'all');
+    const pool = targetArea !== 'all'
+      ? inquiries.filter(i => (i.preferredLocation?.trim() || 'Unspecified') === targetArea)
       : filtered;
     setSelectedIds(pool.filter(i => i.status !== 'Converted' && i.status !== 'Not Interested').map(i => i.id));
-    setBroadcastAreaFilter(area || 'all');
+    setBroadcastAreaFilter(targetArea);
     setIsBroadcastModalOpen(true);
   };
 
@@ -261,611 +239,400 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
   const handleCopyNumbers = () => {
     const nums = inquiries.filter(i => selectedIds.includes(i.id)).map(i => waPhone(i)).join(', ');
     navigator.clipboard.writeText(nums);
-    setBroadcastFeedback(`Copied ${selectedIds.length} WhatsApp numbers to clipboard!`);
-    setTimeout(() => setBroadcastFeedback(''), 4000);
+    setBroadcastFeedback(`Copied ${selectedIds.length} WhatsApp numbers!`);
+    setTimeout(() => setBroadcastFeedback(''), 3500);
   };
 
   const handleCopyTemplate = () => {
     navigator.clipboard.writeText(broadcastTemplate);
-    setBroadcastFeedback('Broadcast message template copied to clipboard!');
-    setTimeout(() => setBroadcastFeedback(''), 4000);
+    setBroadcastFeedback('Message copied!');
+    setTimeout(() => setBroadcastFeedback(''), 3500);
   };
 
   const handleMarkFollowedUp = () => {
     onBatchUpdateStatus(selectedIds, 'Followed Up', todayStr());
     setBroadcastFeedback(`Marked ${selectedIds.length} leads as Followed Up!`);
-    setTimeout(() => setBroadcastFeedback(''), 4000);
+    setTimeout(() => setBroadcastFeedback(''), 3500);
   };
 
-  // ── Row renderer ───────────────────────────────────────────────────────────────
-  const renderRow = (item: CustomerInquiry) => {
-    const waNum = waPhone(item);
-    const hasSeperateWa = !!(item.whatsappPhone?.trim() && item.whatsappPhone.trim() !== item.phone.trim());
-    return (
-      <tr key={item.id} className="hover:bg-slate-50/70 transition">
-        {/* Name */}
-        <td className="py-2.5 px-3 border-r border-slate-200/60 font-bold text-slate-900">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span>{item.name}</span>
-            {(item.leadSource === 'Former Tenant' || !!item.tenantId) && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-200">
-                🏠 Former
-              </span>
-            )}
-          </div>
-          {item.preferredLocation && (
-            <span className={`inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-semibold border ${areaColor(item.preferredLocation)}`}>
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${areaDot(item.preferredLocation)}`} />
-              {item.preferredLocation}
-            </span>
-          )}
-        </td>
-
-        {/* Phones */}
-        <td className="py-2.5 px-3 border-r border-slate-200/60 text-slate-700 font-medium text-xs">
-          {/* Calling number */}
-          <div className="flex items-center gap-1">
-            <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-            <span className="font-mono">{item.phone}</span>
-          </div>
-          {/* WhatsApp number — shown only if different */}
-          {hasSeperateWa ? (
-            <div className="flex items-center gap-1 mt-0.5">
-              <MessageSquare className="w-3 h-3 text-emerald-500 shrink-0" />
-              <span className="font-mono text-emerald-700">{item.whatsappPhone}</span>
-              <span className="text-[9px] text-emerald-600 font-bold">WA</span>
-            </div>
-          ) : (
-            <div className="text-[9px] text-slate-400 mt-0.5 flex items-center gap-0.5">
-              <MessageSquare className="w-2.5 h-2.5" />
-              Same as calling
-            </div>
-          )}
-        </td>
-
-        {/* Date */}
-        <td className="py-2.5 px-3 border-r border-slate-200/60 text-center text-slate-600 text-xs">
-          {item.inquiryDate}
-          {item.lastContactedDate && (
-            <span className="block text-[10px] text-slate-400">Last: {item.lastContactedDate}</span>
-          )}
-        </td>
-
-        {/* Looking For */}
-        <td className="py-2.5 px-3 border-r border-slate-200/60">
-          <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
-            {item.lookingFor}
-          </span>
-        </td>
-
-        {/* Budget */}
-        <td className="py-2.5 px-3 border-r border-slate-200/60 text-center font-bold text-slate-900 text-xs">
-          {item.budget ? `AED ${item.budget}` : '-'}
-        </td>
-
-        {/* Status */}
-        <td className="py-2.5 px-3 border-r border-slate-200/60 text-center">
-          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${STATUS_COLORS[item.status] || 'bg-slate-100 text-slate-700'}`}>
-            {item.status}
-          </span>
-        </td>
-
-        {/* Notes */}
-        <td className="py-2.5 px-3 border-r border-slate-200/60 text-slate-600 text-xs max-w-[160px]">
-          {item.notes || '-'}
-        </td>
-
-        {/* Actions */}
-        <td className="py-2.5 px-3 text-center">
-          <div className="flex items-center justify-center gap-1.5">
-            <button
-              onClick={() => handleSingleWhatsApp(item)}
-              title={`WhatsApp ${hasSeperateWa ? item.whatsappPhone : item.phone}`}
-              className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-semibold transition shadow-2xs"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>WhatsApp</span>
-            </button>
-            <button onClick={() => handleOpenEditModal(item)} title="Edit" className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-md transition">
-              <Edit3 className="w-3.5 h-3.5" />
-            </button>
-            <button onClick={() => onDeleteInquiry(item.id)} title="Delete" className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition">
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </td>
-      </tr>
-    );
-  };
-
-  // ── Mobile card renderer ───────────────────────────────────────────────────────
-  const renderMobileCard = (item: CustomerInquiry) => {
-    const hasSeperateWa = !!(item.whatsappPhone?.trim() && item.whatsappPhone.trim() !== item.phone.trim());
-    return (
-      <div key={item.id} className="p-3.5 bg-white hover:bg-slate-50 transition border-b border-slate-200/80 last:border-b-0 space-y-2.5">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h4 className="font-bold text-slate-900 text-sm">{item.name}</h4>
-              {(item.leadSource === 'Former Tenant' || !!item.tenantId) && (
-                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 border border-purple-200">
-                  🏠 Former
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              {item.preferredLocation && (
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${areaColor(item.preferredLocation)}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${areaDot(item.preferredLocation)}`} />
-                  {item.preferredLocation}
-                </span>
-              )}
-              <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-800 font-semibold border border-indigo-200">
-                {item.lookingFor}
-              </span>
-              {item.budget ? (
-                <span className="text-[10px] font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                  AED {item.budget}
-                </span>
-              ) : null}
-            </div>
-          </div>
-          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${STATUS_COLORS[item.status] || 'bg-slate-100 text-slate-700'}`}>
-            {item.status}
-          </span>
-        </div>
-
-        {/* Contact info */}
-        <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
-          <div className="space-y-0.5 font-mono text-xs">
-            <div className="flex items-center gap-1.5 text-slate-800">
-              <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="font-semibold">{item.phone}</span>
-            </div>
-            {hasSeperateWa && (
-              <div className="flex items-center gap-1.5 text-emerald-700 font-semibold text-[11px]">
-                <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>WA: {item.whatsappPhone}</span>
-              </div>
-            )}
-          </div>
-          <div className="text-right text-[10px] text-slate-500">
-            <div>Added: {item.inquiryDate}</div>
-            {item.lastContactedDate && <div className="text-slate-400">Contacted: {item.lastContactedDate}</div>}
-          </div>
-        </div>
-
-        {item.notes && (
-          <p className="text-[11px] text-slate-600 bg-amber-50/60 p-2 rounded-lg border border-amber-200/60 leading-relaxed">
-            {item.notes}
-          </p>
-        )}
-
-        {/* Action buttons */}
-        <div className="grid grid-cols-5 gap-1.5 pt-0.5">
-          <button
-            onClick={() => handleSingleWhatsApp(item)}
-            className="col-span-2 flex items-center justify-center gap-1.5 py-2 px-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>WhatsApp</span>
-          </button>
-          <a
-            href={`tel:${item.phone.replace(/[^0-9+]/g, '')}`}
-            className="col-span-1 flex items-center justify-center gap-1 py-2 px-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold border border-slate-200 transition text-center"
-          >
-            <Phone className="w-3.5 h-3.5 text-slate-600" />
-            <span>Call</span>
-          </a>
-          <button
-            onClick={() => handleOpenEditModal(item)}
-            title="Edit Inquiry"
-            className="col-span-1 flex items-center justify-center gap-1 py-2 px-2 text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium transition cursor-pointer"
-          >
-            <Edit3 className="w-3.5 h-3.5 text-slate-600" />
-            <span>Edit</span>
-          </button>
-          <button
-            onClick={() => onDeleteInquiry(item.id)}
-            title="Delete Inquiry"
-            className="col-span-1 flex items-center justify-center py-2 px-2 text-rose-500 hover:bg-rose-50 border border-slate-200 rounded-lg transition cursor-pointer"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  // ── Table header ───────────────────────────────────────────────────────────────
-  const tableHead = (
-    <thead>
-      <tr className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 text-xs">
-        <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[160px]">Customer</th>
-        <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[150px]">Phone Numbers</th>
-        <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[100px]">Date</th>
-        <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[130px]">Looking For</th>
-        <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[80px]">Budget</th>
-        <th className="py-2.5 px-3 border-r border-slate-200/60 text-center min-w-[110px]">Status</th>
-        <th className="py-2.5 px-3 border-r border-slate-200/60 min-w-[140px]">Notes</th>
-        <th className="py-2.5 px-3 text-center min-w-[170px]">Actions</th>
-      </tr>
-    </thead>
-  );
-
-  // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 pb-12">
-
-      {/* ── TOP BANNER ─────────────────────────────────────────────────────────── */}
-      <div className="bg-[#181824] text-white p-6 rounded-2xl shadow-sm border border-[#262638]">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-800">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#38CE3C] uppercase tracking-widest">
-              <Users className="w-4 h-4" />
-              <span>Customer Inquiries &amp; Lead Pipeline</span>
+    <div className="space-y-3">
+      {/* ══ COMPACT TOP CONTROL BAR (Cut, Clear & Mobile-First) ══════════════════ */}
+      <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-4 shadow-xs space-y-3">
+        {/* Top Row: Title + Primary 1-Tap Buttons */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4 text-[#38CE3C]" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mt-1">
-              Follow-Up &amp; Area-Based WhatsApp Broadcast
+            <h2 className="text-base sm:text-lg font-extrabold text-slate-900">
+              Follow-ups &amp; Leads
             </h2>
-            <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-              Leads grouped by preferred area — target all customers in a specific area when a vacancy opens there.
-            </p>
+            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+              {filtered.length}
+            </span>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={handleOpenAddModal}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-[#38CE3C] hover:bg-[#30b533] text-[#181824] font-bold rounded-lg text-xs shadow-sm transition cursor-pointer"
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              Add Inquiry
-            </button>
+
+          <div className="flex items-center gap-2">
             <button
               onClick={() => handleOpenBroadcast()}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-[#222234] hover:bg-[#2c2c42] text-[#38CE3C] font-semibold rounded-lg text-xs shadow-sm transition cursor-pointer border border-[#2f2f45]"
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-2xs"
             >
-              <Send className="w-4 h-4" />
-              WhatsApp Broadcast
+              <Send className="w-3.5 h-3.5" />
+              <span>Broadcast</span>
+            </button>
+            <button
+              onClick={handleOpenAddModal}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-2xs"
+            >
+              <Plus className="w-4 h-4 text-[#38CE3C] stroke-[2.5]" />
+              <span>Add Lead</span>
             </button>
           </div>
         </div>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-6">
-          {[
-            { label: 'Total Leads',     value: totalLeads,      color: 'text-white',          sub: 'All registered' },
-            { label: '🏠 Former Tenants', value: formerCount,   color: 'text-purple-300',     sub: 'Left rooms' },
-            { label: 'Direct Inquiries',value: directCount,     color: 'text-sky-300',        sub: 'Called / walked in' },
-            { label: 'New',             value: newLeads,        color: 'text-amber-300',      sub: 'Pending contact' },
-            { label: 'Interested',      value: interestedLeads, color: 'text-emerald-300',    sub: 'Viewing scheduled' },
-            { label: 'Converted',       value: convertedLeads,  color: 'text-[#38CE3C]',     sub: 'Moved in' },
-          ].map(k => (
-            <div key={k.label} className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
-              <span className={`text-[10px] font-semibold uppercase tracking-wider block ${k.color}`}>{k.label}</span>
-              <span className={`text-xl font-bold mt-0.5 block ${k.color}`}>{k.value}</span>
-              <span className="text-[11px] text-slate-400">{k.sub}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── AREA SUMMARY CARDS ──────────────────────────────────────────────────── */}
-      {groupedByArea.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-indigo-500" />
-              Leads by Preferred Area
-            </h3>
-            <span className="text-xs text-slate-500">{groupedByArea.length} areas • click a card to target that area</span>
+        {/* Search + Area Filter Pills */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search name or phone..."
+              className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-slate-400"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
-          <div className="flex gap-2 flex-wrap">
-            {groupedByArea.map(([area, leads]) => {
-              const active = leads.filter(i => i.status !== 'Converted' && i.status !== 'Not Interested').length;
+
+          {/* 1-Tap Area Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+            <button
+              onClick={() => setAreaFilter('all')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold border shrink-0 transition cursor-pointer ${
+                areaFilter === 'all'
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              All Areas ({inquiries.length})
+            </button>
+            {AREA_OPTIONS.map(area => {
+              const count = inquiries.filter(i => (i.preferredLocation?.trim() || '') === area).length;
+              const active = areaFilter === area;
               return (
                 <button
                   key={area}
-                  onClick={() => handleOpenBroadcast(area)}
-                  title={`Send WhatsApp to all ${area} leads`}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition hover:shadow-md cursor-pointer ${areaColor(area)}`}
+                  onClick={() => setAreaFilter(active ? 'all' : area)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border shrink-0 transition cursor-pointer ${
+                    active
+                      ? 'bg-slate-900 text-white border-slate-900'
+                      : `${areaColor(area)} hover:opacity-85`
+                  }`}
                 >
-                  <span className={`w-2 h-2 rounded-full ${areaDot(area)}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-[#38CE3C]' : areaDot(area)}`} />
                   <span>{area}</span>
-                  <span className="font-extrabold">{leads.length}</span>
-                  {active > 0 && (
-                    <span className="flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-white/70 text-[10px] font-bold border border-current opacity-80">
-                      <MessageSquare className="w-2.5 h-2.5" />
-                      {active}
-                    </span>
-                  )}
+                  <span className="opacity-75">({count})</span>
                 </button>
               );
             })}
           </div>
         </div>
-      )}
 
-      {/* ── FILTER / SEARCH BAR ─────────────────────────────────────────────────── */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-        {/* Row 1: source + area filter */}
-        <div className="flex items-center gap-2 flex-wrap border-b border-slate-100 pb-3">
-          <span className="text-xs text-slate-500 font-semibold">Source:</span>
-          {(['all', 'former_tenants', 'direct_inquiries'] as const).map(f => (
-            <button key={f} onClick={() => setSourceFilter(f)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                sourceFilter === f ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}>
-              {f === 'all' ? `All (${totalLeads})` : f === 'former_tenants' ? `🏠 Former (${formerCount})` : `Direct (${directCount})`}
-            </button>
-          ))}
+        {/* Status Quick Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-0.5">
+          {(['all', 'New', 'Followed Up', 'Interested', 'Converted', 'Not Interested'] as const).map(st => {
+            const active = statusFilter === st;
+            return (
+              <button
+                key={st}
+                onClick={() => setStatusFilter(st)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border shrink-0 transition cursor-pointer ${
+                  active
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {st === 'all' ? 'All Status' : st}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-          <span className="text-xs text-slate-400 mx-1">|</span>
-          <MapPin className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-xs text-slate-500 font-semibold">Area:</span>
-          <select
-            value={areaFilter}
-            onChange={e => setAreaFilter(e.target.value)}
-            className="bg-slate-50 text-xs font-medium text-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-200 focus:outline-none"
-          >
-            <option value="all">All Areas</option>
-            {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
-          </select>
-
+      {/* ══ CORE ACTION LIST (Mobile Cards + Clean Desktop Table) ════════════════ */}
+      {filtered.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
+          <p className="text-sm font-bold text-slate-700">No leads found</p>
           <button
-            onClick={() => setGroupByArea(g => !g)}
-            className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer border ${
-              groupByArea ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
-            }`}
+            onClick={handleOpenAddModal}
+            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl cursor-pointer"
           >
-            <MapPin className="w-3 h-3" />
-            {groupByArea ? 'Grouped by Area ✓' : 'Group by Area'}
+            <Plus className="w-4 h-4 text-[#38CE3C]" />
+            <span>Add New Lead</span>
           </button>
         </div>
-
-        {/* Row 2: search + status + requirement */}
-        <div className="flex flex-col md:flex-row md:items-center gap-3">
-          <div className="relative flex-1 min-w-[220px] max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search by name, phone, area, notes…"
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-          <div className="flex items-center gap-1 overflow-x-auto">
-            {['all', 'New', 'Followed Up', 'Interested', 'Converted', 'Not Interested'].map(st => (
-              <button key={st} onClick={() => setStatusFilter(st)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-                  statusFilter === st ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}>
-                {st === 'all' ? 'All Statuses' : st}
-              </button>
-            ))}
-          </div>
-          <select
-            value={requirementFilter} onChange={e => setRequirementFilter(e.target.value)}
-            className="bg-slate-50 text-xs font-medium text-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-200 focus:outline-none"
-          >
-            <option value="all">Any Room Type</option>
-            <option value="Bed Space (Lower)">Lower Bed</option>
-            <option value="Bed Space (Upper)">Upper Bed</option>
-            <option value="Partition">Partition</option>
-            <option value="Private Room">Private Room</option>
-            <option value="Any">Any / Flexible</option>
-          </select>
-        </div>
-      </div>
-
-      {/* ── INQUIRIES TABLE (flat or grouped) ──────────────────────────────────── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        {filtered.length === 0 ? (
-          <div className="py-16 text-center text-slate-400">
-            <Users className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-            <p>No customer inquiries match your filters.</p>
-          </div>
-        ) : groupByArea ? (
-          /* ── GROUPED VIEW ─────────────────────────────────────────────────── */
-          <div className="divide-y divide-slate-200">
-            {groupedByArea.map(([area, leads]) => {
-              const isCollapsed = collapsedAreas.has(area);
-              const active = leads.filter(i => i.status !== 'Converted' && i.status !== 'Not Interested').length;
-              return (
-                <div key={area}>
-                  {/* Area header row */}
-                  <div className={`flex items-center justify-between px-4 py-2.5 ${areaColor(area)} border-b`}>
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${areaDot(area)}`} />
-                      <span className="text-sm font-bold">{area}</span>
-                      <span className="text-[11px] font-semibold opacity-70">{leads.length} leads · {active} contactable</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleOpenBroadcast(area)}
-                        className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-[11px] font-bold transition shadow-sm"
-                      >
-                        <MessageSquare className="w-3 h-3" />
-                        Broadcast to {area}
-                      </button>
-                      <button onClick={() => toggleCollapse(area)} className="p-1 rounded hover:bg-black/10 transition">
-                        {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-                      </button>
-                    </div>
+      ) : (
+        <>
+          {/* ── MOBILE VIEW: Compact Core Action Cards (`md:hidden`) ── */}
+          <div className="md:hidden space-y-2.5">
+            {filtered.map(item => (
+              <div
+                key={item.id}
+                className="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2.5"
+              >
+                {/* Row 1: Name + Phone + Instant Status Select */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h4 className="font-extrabold text-slate-900 text-sm truncate">
+                      {item.name}
+                    </h4>
+                    <a
+                      href={`tel:${item.phone.replace(/[^0-9+]/g, '')}`}
+                      className="inline-flex items-center gap-1 text-xs font-mono font-bold text-slate-700 mt-0.5 hover:text-indigo-600"
+                    >
+                      <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span>{item.phone}</span>
+                    </a>
                   </div>
-                  {!isCollapsed && (
-                    <>
-                      {/* Mobile Cards (Phones / small screens) */}
-                      <div className="md:hidden divide-y divide-slate-100">
-                        {leads.map(renderMobileCard)}
-                      </div>
-                      {/* Desktop Table (Tablets & desktops) */}
-                      <div className="hidden md:block overflow-x-auto">
-                        <table className="w-full text-left text-xs border-collapse">
-                          {tableHead}
-                          <tbody className="divide-y divide-slate-200/70">{leads.map(renderRow)}</tbody>
-                        </table>
-                      </div>
-                    </>
+
+                  {/* 1-Tap Instant Status Dropdown */}
+                  <select
+                    value={item.status}
+                    onChange={e => handleQuickStatusChange(item, e.target.value as CustomerInquiry['status'])}
+                    aria-label="Lead Status"
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border cursor-pointer focus:outline-none ${
+                      STATUS_COLORS[item.status] || 'bg-slate-100 text-slate-700 border-slate-300'
+                    }`}
+                  >
+                    {STATUS_OPTIONS.map(st => (
+                      <option key={st} value={st} className="bg-white text-slate-900">
+                        {st}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Row 2: Area + Room Type + Budget */}
+                <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-bold border ${areaColor(item.preferredLocation)}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${areaDot(item.preferredLocation)}`} />
+                    {item.preferredLocation || 'Al Barsha 1'}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    {item.lookingFor}
+                  </span>
+                  {(item.budget ?? 0) > 0 && (
+                    <span className="px-2 py-0.5 rounded-md font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      AED {item.budget}
+                    </span>
                   )}
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          /* ── FLAT VIEW ────────────────────────────────────────────────────── */
-          <>
-            {/* Mobile Cards (Phones / small screens) */}
-            <div className="md:hidden divide-y divide-slate-100">
-              {filtered.map(renderMobileCard)}
-            </div>
-            {/* Desktop Table (Tablets & desktops) */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                {tableHead}
-                <tbody className="divide-y divide-slate-200/70">{filtered.map(renderRow)}</tbody>
-              </table>
-            </div>
-          </>
-        )}
-      </div>
 
-      {/* ══ ADD / EDIT MODAL ═══════════════════════════════════════════════════════ */}
+                {item.notes && (
+                  <p className="text-xs text-slate-500 truncate">
+                    {item.notes}
+                  </p>
+                )}
+
+                {/* Row 3: 1-Tap Action Bar (WhatsApp, Call, Edit, Delete) */}
+                <div className="grid grid-cols-4 gap-1.5 pt-1 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => handleSingleWhatsApp(item)}
+                    className="col-span-2 flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-600 active:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-2xs cursor-pointer"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>WhatsApp</span>
+                  </button>
+                  <a
+                    href={`tel:${item.phone.replace(/[^0-9+]/g, '')}`}
+                    className="flex items-center justify-center gap-1 py-2 px-2 bg-slate-100 active:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs border border-slate-200"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-slate-600" />
+                    <span>Call</span>
+                  </a>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditModal(item)}
+                      className="flex-1 flex items-center justify-center py-2 bg-slate-100 active:bg-slate-200 text-slate-700 rounded-xl border border-slate-200 cursor-pointer"
+                      title="Edit"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`Delete ${item.name}?`)) onDeleteInquiry(item.id);
+                      }}
+                      className="flex-1 flex items-center justify-center py-2 bg-rose-50 active:bg-rose-100 text-rose-600 rounded-xl border border-rose-200 cursor-pointer"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── DESKTOP VIEW: Clean 6-Column Core Table (`hidden md:block`) ── */}
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-900 text-white uppercase tracking-wider text-[10px] font-bold">
+                  <th className="py-3 px-4">Name</th>
+                  <th className="py-3 px-4">Phone / WhatsApp</th>
+                  <th className="py-3 px-4">Area &amp; Room</th>
+                  <th className="py-3 px-4">Budget</th>
+                  <th className="py-3 px-4">Status (1-Tap)</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {filtered.map(item => (
+                  <tr key={item.id} className="hover:bg-slate-50/80 transition">
+                    <td className="py-3 px-4 font-bold text-slate-900">
+                      <div>{item.name}</div>
+                      {item.notes && (
+                        <div className="text-[11px] font-normal text-slate-500 truncate max-w-xs">
+                          {item.notes}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 font-mono font-semibold text-slate-800">
+                      <a href={`tel:${item.phone.replace(/[^0-9+]/g, '')}`} className="hover:text-indigo-600">
+                        {item.phone}
+                      </a>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border ${areaColor(item.preferredLocation)}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${areaDot(item.preferredLocation)}`} />
+                          {item.preferredLocation || 'Al Barsha 1'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                          {item.lookingFor}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 font-extrabold text-slate-900">
+                      {item.budget ? `AED ${item.budget}` : '—'}
+                    </td>
+                    <td className="py-3 px-4">
+                      <select
+                        value={item.status}
+                        onChange={e => handleQuickStatusChange(item, e.target.value as CustomerInquiry['status'])}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border cursor-pointer focus:outline-none ${
+                          STATUS_COLORS[item.status] || 'bg-slate-100 text-slate-700 border-slate-300'
+                        }`}
+                      >
+                        {STATUS_OPTIONS.map(st => (
+                          <option key={st} value={st} className="bg-white text-slate-900">
+                            {st}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="inline-flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleSingleWhatsApp(item)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition cursor-pointer"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>WhatsApp</span>
+                        </button>
+                        <button
+                          onClick={() => handleOpenEditModal(item)}
+                          className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 transition cursor-pointer"
+                          title="Edit"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete ${item.name}?`)) onDeleteInquiry(item.id);
+                          }}
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 transition cursor-pointer"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* ══ STREAMLINED ADD / EDIT MODAL (Core Action Box Only) ══════════════════ */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="bg-slate-900 text-white p-4 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-indigo-400" />
-                <h3 className="text-sm font-bold">{editingInquiry ? 'Edit Customer Inquiry' : 'Add New Customer Inquiry'}</h3>
-              </div>
+            <div className="bg-slate-900 text-white px-4 py-3.5 flex items-center justify-between shrink-0">
+              <h3 className="text-sm sm:text-base font-bold">
+                {editingInquiry ? 'Edit Lead' : 'Add Lead'}
+              </h3>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                className="p-1 text-slate-400 hover:text-white rounded-lg cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Scrollable Form Body */}
-            <form id="inquiry-form" onSubmit={handleSaveForm} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-sm sm:text-xs">
-
-              {/* Customer Name */}
+            {/* Core Fields Form */}
+            <form id="inquiry-form" onSubmit={handleSaveForm} className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs">
+              {/* 1. Name */}
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Customer Name *</label>
+                <label className="font-bold text-slate-700 block mb-1">Name *</label>
                 <input
                   type="text"
                   required
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
-                  placeholder="e.g. John Doe"
-                  className="w-full px-3 py-2.5 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Customer name"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
-              {/* Phone numbers */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Calling Number */}
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-slate-500" />
-                    Calling Number *
-                  </label>
-                  <div className="flex rounded-xl border border-slate-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500">
-                    <span className="inline-flex items-center px-2.5 bg-slate-100 text-slate-700 text-xs font-semibold border-r border-slate-200 select-none">
-                      🇦🇪 +971
-                    </span>
-                    <input
-                      type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      required
-                      value={formPhone}
-                      onChange={e => setFormPhone(e.target.value)}
-                      placeholder="50 123 4567 or 050..."
-                      className="w-full px-3 py-2.5 sm:py-2 text-sm text-slate-900 focus:outline-none font-mono"
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">Accepts 050..., 50..., or full international number</p>
-                </div>
-
-                {/* WhatsApp Number */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-bold text-slate-700 flex items-center gap-1.5">
-                      <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
-                      WhatsApp Number
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setFormWaPhone(formPhone)}
-                      className="text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition cursor-pointer"
-                      title="Copy calling number to WhatsApp field"
-                    >
-                      Same as Calling
-                    </button>
-                  </div>
-                  <div className="flex rounded-xl border border-slate-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500">
-                    <span className="inline-flex items-center px-2.5 bg-emerald-50 text-emerald-800 text-xs font-semibold border-r border-emerald-200 select-none">
-                      WA
-                    </span>
-                    <input
-                      type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      value={formWaPhone}
-                      onChange={e => setFormWaPhone(e.target.value)}
-                      placeholder="Leave blank if same as calling"
-                      className="w-full px-3 py-2.5 sm:py-2 text-sm text-slate-900 focus:outline-none font-mono"
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    {formWaPhone ? 'WhatsApp messages will be sent to this number' : 'Leave empty to automatically use calling number'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Inquiry Date + Room Requirement */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Inquiry Date</label>
+              {/* 2. Phone / WhatsApp */}
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Phone / WhatsApp Number *</label>
+                <div className="flex rounded-xl border border-slate-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-slate-900">
+                  <span className="inline-flex items-center px-3 bg-slate-100 text-slate-700 text-xs font-bold border-r border-slate-200 select-none">
+                    +971
+                  </span>
                   <input
-                    type="text"
-                    value={formDate}
-                    onChange={e => setFormDate(e.target.value)}
-                    placeholder="DD.MM.YYYY"
-                    className="w-full px-3 py-2.5 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    required
+                    value={formPhone}
+                    onChange={e => setFormPhone(e.target.value)}
+                    placeholder="50 123 4567"
+                    className="w-full px-3 py-2.5 text-sm text-slate-900 focus:outline-none font-mono font-bold"
                   />
                 </div>
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Looking For (Room Type)</label>
-                  <select
-                    value={formLookingFor}
-                    onChange={e => setFormLookingFor(e.target.value as any)}
-                    className="w-full px-3 py-2.5 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
-                  >
-                    <option value="Bed Space (Lower)">Bed Space (Lower)</option>
-                    <option value="Bed Space (Upper)">Bed Space (Upper)</option>
-                    <option value="Partition">Partition</option>
-                    <option value="Private Room">Private Room</option>
-                    <option value="Any">Any / Flexible</option>
-                  </select>
-                </div>
               </div>
 
-              {/* Preferred Area: Restricted strictly to the 4 operational areas */}
-              <div className="bg-slate-50/80 p-3 sm:p-3.5 rounded-xl border border-slate-200 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
-                    <MapPin className="w-3.5 h-3.5 text-indigo-600" />
-                    Preferred Area * (Select One)
-                  </label>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${areaColor(formLocation)}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${areaDot(formLocation)}`} />
-                    {formLocation}
-                  </span>
-                </div>
-                {/* 1-tap Area Selection Chips */}
+              {/* 3. Preferred Area (4 1-Tap Buttons) */}
+              <div>
+                <label className="font-bold text-slate-700 block mb-1.5">Area *</label>
                 <div className="grid grid-cols-2 gap-2">
                   {AREA_OPTIONS.map(a => {
                     const isSelected = formLocation === a;
@@ -874,13 +641,13 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                         key={a}
                         type="button"
                         onClick={() => setFormLocation(a)}
-                        className={`px-3 py-2.5 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                        className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
                           isSelected
-                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs ring-2 ring-indigo-200'
-                            : `${AREA_COLORS[a] || 'bg-white text-slate-700 border-slate-200'} hover:opacity-90`
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                         }`}
                       >
-                        <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white' : AREA_DOT[a] || 'bg-slate-400'}`} />
+                        <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-[#38CE3C]' : AREA_DOT[a]}`} />
                         <span>{a}</span>
                       </button>
                     );
@@ -888,202 +655,188 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                 </div>
               </div>
 
-              {/* Budget & Status */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* 4. Room Type & Budget */}
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Budget (AED / month)</label>
+                  <label className="font-bold text-slate-700 block mb-1">Room Type</label>
+                  <select
+                    value={formLookingFor}
+                    onChange={e => setFormLookingFor(e.target.value as any)}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs font-bold focus:bg-white focus:outline-none"
+                  >
+                    <option value="Bed Space (Lower)">Bed Space (Lower)</option>
+                    <option value="Bed Space (Upper)">Bed Space (Upper)</option>
+                    <option value="Partition">Partition</option>
+                    <option value="Private Room">Private Room</option>
+                    <option value="Any">Any</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Budget (AED)</label>
                   <input
                     type="number"
+                    inputMode="numeric"
                     value={formBudget || ''}
                     onChange={e => setFormBudget(Number(e.target.value))}
-                    placeholder="e.g. 750"
-                    className="w-full px-3 py-2.5 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                    placeholder="750"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm font-extrabold focus:bg-white focus:outline-none"
                   />
                 </div>
+              </div>
+
+              {/* 5. Status & Short Note */}
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Lead Status</label>
+                  <label className="font-bold text-slate-700 block mb-1">Status</label>
                   <select
                     value={formStatus}
                     onChange={e => setFormStatus(e.target.value as any)}
-                    className="w-full px-3 py-2.5 sm:py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs font-bold focus:bg-white focus:outline-none"
                   >
-                    <option value="New">New Inquiry</option>
-                    <option value="Followed Up">Followed Up</option>
-                    <option value="Interested">Interested (Viewing)</option>
-                    <option value="Converted">Converted (Moved In)</option>
-                    <option value="Not Interested">Not Interested</option>
+                    {STATUS_OPTIONS.map(st => (
+                      <option key={st} value={st}>{st}</option>
+                    ))}
                   </select>
                 </div>
-              </div>
 
-              {/* Notes & Requirements */}
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Notes &amp; Requirements</label>
-                <textarea
-                  rows={2}
-                  value={formNotes}
-                  onChange={e => setFormNotes(e.target.value)}
-                  placeholder="e.g. Looking for room next month, works in Barsha, wants lower bed..."
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"
-                />
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Short Note</label>
+                  <input
+                    type="text"
+                    value={formNotes}
+                    onChange={e => setFormNotes(e.target.value)}
+                    placeholder="Optional note..."
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:bg-white focus:outline-none"
+                  />
+                </div>
               </div>
-
             </form>
 
-            {/* Sticky Action Footer */}
-            <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
+            {/* Footer */}
+            <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2.5 sm:py-2 border border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 transition text-sm sm:text-xs cursor-pointer"
+                className="px-4 py-2.5 border border-slate-300 text-slate-700 font-bold rounded-xl text-xs cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 form="inquiry-form"
-                className="px-5 py-2.5 sm:py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-sm transition text-sm sm:text-xs flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs cursor-pointer"
               >
-                {editingInquiry ? 'Save Changes' : 'Create Inquiry'}
+                {editingInquiry ? 'Save' : 'Add Lead'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ══ BROADCAST MODAL ════════════════════════════════════════════════════════ */}
+      {/* ══ WHATSAPP BROADCAST MODAL ═════════════════════════════════════════════ */}
       {isBroadcastModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden">
-            <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                  <Send className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold">
-                    {broadcastAreaFilter === 'all'
-                      ? 'WhatsApp Broadcast — All Leads'
-                      : `WhatsApp Broadcast — ${broadcastAreaFilter}`}
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {broadcastAreaFilter !== 'all' && (
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border mr-2 ${areaColor(broadcastAreaFilter)}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${areaDot(broadcastAreaFilter)}`} />
-                        {broadcastAreaFilter}
-                      </span>
-                    )}
-                    {selectedIds.length} recipients selected
-                  </p>
-                </div>
+          <div className="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col overflow-hidden">
+            <div className="bg-slate-900 text-white p-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <Send className="w-4 h-4 text-[#38CE3C]" />
+                <h3 className="text-sm sm:text-base font-bold">
+                  WhatsApp Broadcast ({selectedIds.length} selected)
+                </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsBroadcastModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                className="p-1 text-slate-400 hover:text-white rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs">
               {broadcastFeedback && (
-                <div className="bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-lg text-emerald-800 font-semibold flex items-center gap-2">
+                <div className="bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl text-emerald-800 font-bold flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>{broadcastFeedback}</span>
                 </div>
               )}
 
-              {/* Area selector inside broadcast modal */}
-              <div className="flex items-center gap-2 flex-wrap bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <MapPin className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                <span className="font-semibold text-slate-700 shrink-0">Target Area:</span>
+              {/* Area selector */}
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => { setBroadcastAreaFilter('all'); setSelectedIds(filtered.filter(i => i.status !== 'Converted' && i.status !== 'Not Interested').map(i => i.id)); }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer border ${broadcastAreaFilter === 'all' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+                  onClick={() => {
+                    setBroadcastAreaFilter('all');
+                    setSelectedIds(filtered.filter(i => i.status !== 'Converted' && i.status !== 'Not Interested').map(i => i.id));
+                  }}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border cursor-pointer ${
+                    broadcastAreaFilter === 'all' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-700 border-slate-200'
+                  }`}
                 >
                   All Areas
                 </button>
                 {AREA_OPTIONS.map(area => (
-                  <button key={area} type="button" onClick={() => {
-                    setBroadcastAreaFilter(area);
-                    const areaLeads = inquiries.filter(i => (i.preferredLocation?.trim() || 'Unspecified') === area);
-                    setSelectedIds(areaLeads.filter(i => i.status !== 'Converted' && i.status !== 'Not Interested').map(i => i.id));
-                  }}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer border ${broadcastAreaFilter === area ? 'bg-slate-900 text-white border-slate-900' : `${areaColor(area)} hover:opacity-80`}`}>
+                  <button
+                    key={area}
+                    type="button"
+                    onClick={() => {
+                      setBroadcastAreaFilter(area);
+                      const areaLeads = inquiries.filter(i => (i.preferredLocation?.trim() || '') === area);
+                      setSelectedIds(areaLeads.filter(i => i.status !== 'Converted' && i.status !== 'Not Interested').map(i => i.id));
+                    }}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border cursor-pointer ${
+                      broadcastAreaFilter === area ? 'bg-slate-900 text-white border-slate-900' : `${areaColor(area)}`
+                    }`}
+                  >
                     {area}
                   </button>
                 ))}
               </div>
 
-              {/* Message template */}
+              {/* Message Box */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="font-semibold text-slate-700">Message Template</label>
-                  <span className="text-[10px] text-slate-400">Variables: {'{name}'}, {'{lookingFor}'}, {'{area}'}, {'{month}'}</span>
-                </div>
-                <div className="flex gap-2 mb-2 flex-wrap">
-                  <button type="button" onClick={() => setBroadcastTemplate(DEFAULT_WHATSAPP_MESSAGE)}
-                    className="px-2.5 py-1 text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-md border border-emerald-200 transition cursor-pointer">
-                    Standard (Default)
-                  </button>
-                  <button type="button" onClick={() => setBroadcastTemplate(`Hi {name}! 😊 We have a {lookingFor} available in {area} – perfect for your requirement!\n\nFurnished, DEWA + Wi-Fi included, safe environment. Available immediately.\n\nShall we arrange a viewing?`)}
-                    className="px-2.5 py-1 text-[11px] font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-md border border-indigo-200 transition cursor-pointer">
-                    Short &amp; Direct
-                  </button>
-                  <button type="button" onClick={() => setBroadcastTemplate(`Hi {name}, as our former resident, we'd love to welcome you back! 🏠\n\nWe have bed spaces and partition rooms available for rent in {area}. Please feel free to message us anytime to arrange a visit. Thank you! 😊`)}
-                    className="px-2.5 py-1 text-[11px] font-bold bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-md border border-purple-200 transition cursor-pointer">
-                    🏠 Former Tenant
-                  </button>
-                </div>
-                <textarea rows={5} value={broadcastTemplate} onChange={e => setBroadcastTemplate(e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-sans focus:bg-white focus:outline-none focus:border-emerald-500" />
+                <label className="font-bold text-slate-700 block mb-1">WhatsApp Message</label>
+                <textarea
+                  rows={5}
+                  value={broadcastTemplate}
+                  onChange={e => setBroadcastTemplate(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:bg-white focus:outline-none focus:border-emerald-500"
+                />
               </div>
 
-              {/* Recipient list */}
+              {/* Recipients */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-slate-700">
-                    Recipients ({selectedIds.length} of {broadcastPool.length})
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-bold text-slate-700">
+                    Recipients ({selectedIds.length} / {broadcastPool.length})
                   </span>
-                  <button onClick={handleToggleSelectAll} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={handleToggleSelectAll}
+                    className="text-xs font-bold text-indigo-600 cursor-pointer"
+                  >
                     {selectedIds.length === broadcastPool.length ? 'Deselect All' : 'Select All'}
                   </button>
                 </div>
-                <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 p-1">
+                <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 p-1">
                   {broadcastPool.map(inq => {
                     const isSelected = selectedIds.includes(inq.id);
-                    const hasWa = !!(inq.whatsappPhone?.trim() && inq.whatsappPhone.trim() !== inq.phone.trim());
                     return (
-                      <div key={inq.id} onClick={() => handleToggleSelect(inq.id)}
-                        className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition ${isSelected ? 'bg-indigo-50/70' : 'hover:bg-slate-50'}`}>
+                      <div
+                        key={inq.id}
+                        onClick={() => handleToggleSelect(inq.id)}
+                        className={`flex items-center justify-between p-2 rounded-lg cursor-pointer ${
+                          isSelected ? 'bg-indigo-50/70' : 'hover:bg-slate-50'
+                        }`}
+                      >
                         <div className="flex items-center gap-2">
                           <input type="checkbox" checked={isSelected} onChange={() => {}} className="rounded text-indigo-600" />
-                          <div>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-bold text-slate-900">{inq.name}</span>
-                              {(inq.preferredLocation) && (
-                                <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${areaColor(inq.preferredLocation)}`}>
-                                  {inq.preferredLocation}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
-                              <span className="flex items-center gap-0.5">
-                                <Phone className="w-2.5 h-2.5" /> {inq.phone}
-                              </span>
-                              {hasWa && (
-                                <span className="flex items-center gap-0.5 text-emerald-600 font-semibold">
-                                  <MessageSquare className="w-2.5 h-2.5" /> WA: {inq.whatsappPhone}
-                                </span>
-                              )}
-                              <span>· {inq.lookingFor}</span>
-                            </div>
-                          </div>
+                          <span className="font-bold text-slate-900">{inq.name}</span>
+                          <span className="text-slate-500 font-mono text-[11px]">{inq.phone}</span>
                         </div>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${STATUS_COLORS[inq.status] || 'bg-slate-100 text-slate-600'}`}>
-                          {inq.status}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${areaColor(inq.preferredLocation)}`}>
+                          {inq.preferredLocation}
                         </span>
                       </div>
                     );
@@ -1091,37 +844,35 @@ export const FollowUpPage: React.FC<FollowUpPageProps> = ({
                 </div>
               </div>
 
-              {/* Action buttons */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
-                <span className="text-[11px] font-bold text-slate-800 block">Broadcast Options:</span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <button onClick={handleCopyNumbers} disabled={selectedIds.length === 0}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-semibold rounded-lg shadow-2xs transition disabled:opacity-40 cursor-pointer">
-                    <Copy className="w-3.5 h-3.5 text-slate-600" />
-                    Copy {selectedIds.length} WA Numbers
-                  </button>
-                  <button onClick={handleCopyTemplate}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-semibold rounded-lg shadow-2xs transition cursor-pointer">
-                    <Copy className="w-3.5 h-3.5" />
-                    Copy Message
-                  </button>
-                  <button onClick={handleMarkFollowedUp} disabled={selectedIds.length === 0}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-2xs transition disabled:opacity-40 cursor-pointer">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Mark Followed Up
-                  </button>
-                </div>
-                <p className="text-[10px] text-slate-500 pt-1">
-                  Tip: Copy the numbers → paste into a new WhatsApp Broadcast List on your phone. Or click <b>WhatsApp</b> on individual leads for a personalised 1-click message.
-                </p>
+              {/* 1-Tap Broadcast Actions */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleCopyNumbers}
+                  disabled={selectedIds.length === 0}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl border border-slate-300 disabled:opacity-40 cursor-pointer"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy Numbers</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyTemplate}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl border border-slate-300 cursor-pointer"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy Message</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleMarkFollowedUp}
+                  disabled={selectedIds.length === 0}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl disabled:opacity-40 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Mark Followed Up</span>
+                </button>
               </div>
-            </div>
-
-            <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end">
-              <button onClick={() => setIsBroadcastModalOpen(false)}
-                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-100 transition cursor-pointer">
-                Done
-              </button>
             </div>
           </div>
         </div>

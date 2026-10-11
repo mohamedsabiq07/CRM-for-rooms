@@ -1008,35 +1008,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Content - Full Width Layout */}
-      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-5">
-        
-        {/* Urgent Deadlines Alert Banner */}
-        {totalUrgentCount > 0 && (
-          <div className="mb-5 bg-slate-900 border border-slate-800 text-white p-4 rounded-xl shadow-sm flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-slate-800 text-slate-300 rounded-lg border border-slate-700">
-                <AlertTriangle className="w-4 h-4 text-slate-300" />
-              </div>
-              <div>
-                <h3 className="text-xs sm:text-sm font-semibold tracking-tight text-white">
-                  {totalUrgentCount} Action Items Requiring Attention
-                </h3>
-                <p className="text-xs text-slate-400">
-                  {tenantNotifications.length > 0 && `${tenantNotifications.length} tenant rents • `}
-                  {chequeNotifications.length > 0 && `${chequeNotifications.length} owner cheques • `}
-                  {utilityNotifications.length > 0 && `${utilityNotifications.length} utility bills`}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsNotificationOpen(true)}
-              className="px-3.5 py-1.5 bg-white text-slate-950 font-semibold rounded-lg text-xs hover:bg-slate-100 transition shadow-sm border border-slate-200 cursor-pointer"
-            >
-              View Alerts
-            </button>
-          </div>
-        )}
-
+      <main className="flex-1 w-full px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
         {/* --- VIEW 1: DEDICATED BUILDINGS PAGE --- */}
         {currentView === 'buildings' && (
           <BuildingsPage
@@ -1101,77 +1073,6 @@ export const App: React.FC = () => {
         {/* --- VIEW 2: TENANTS SPREADSHEET VIEW --- */}
         {currentView === 'sheet' && (
           <>
-            {/* Monthly Utility Alert Prompt */}
-            {(currentRoom?.dewaBill?.status === 'Due' || currentRoom?.wifiBill?.status === 'Due') && (
-              <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between flex-wrap gap-2 text-xs">
-                <div className="flex items-center gap-2.5 text-amber-900">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shrink-0">
-                    <Zap className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="font-bold block">Monthly Utility Bills Notice ({selectedMonth})</span>
-                    <span className="text-amber-800 text-[11px]">
-                      {currentBuilding?.name} Room {currentRoom?.roomNumber} has pending {currentRoom?.dewaBill?.status === 'Due' ? 'DEWA/SEWA' : ''} {currentRoom?.wifiBill?.status === 'Due' ? 'Wi-Fi' : ''} bills for this month.
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsMonthlyBillsOpen(true)}
-                  className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-lg shadow-2xs transition cursor-pointer text-xs"
-                >
-                  Enter & Settle {selectedMonth} Bills
-                </button>
-              </div>
-            )}
-
-            {/* Building & Room Selector Banner */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-              <div>
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  <span>{currentLocation?.name || 'Dubai'}</span>
-                  <span>•</span>
-                  <span>{currentBuilding?.name}</span>
-                </div>
-                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 mt-0.5">
-                  Room {currentRoom?.roomNumber || '103'} — {currentRoom?.roomType || 'Partition Flat'}
-                </h2>
-              </div>
-
-              {/* Utility Badges for this Room */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
-                  <Zap className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="font-medium text-slate-700">DEWA: AED {currentRoom?.dewaBill?.amount}</span>
-                  <span className={`text-[10px] font-medium px-1.5 py-0.2 rounded border ${
-                    currentRoom?.dewaBill?.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-700 border-slate-200'
-                  }`}>
-                    {currentRoom?.dewaBill?.status}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
-                  <Wifi className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="font-medium text-slate-700">Wi-Fi: AED {currentRoom?.wifiBill?.amount}</span>
-                  <span className={`text-[10px] font-medium px-1.5 py-0.2 rounded border ${
-                    currentRoom?.wifiBill?.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-700 border-slate-200'
-                  }`}>
-                    {currentRoom?.wifiBill?.status}
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setAddTenantSection('HALL');
-                    setIsAddTenantOpen(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg text-xs transition shadow-sm cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>Add Tenant</span>
-                </button>
-              </div>
-            </div>
-
             {/* Room Stats Cards */}
             {currentBuilding && (
               <StatsCards

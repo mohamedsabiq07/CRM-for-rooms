@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Building2, 
-  MapPin, 
   Plus, 
   Bell, 
   FileSpreadsheet, 
@@ -13,7 +12,6 @@ import {
   DoorOpen,
   LayoutGrid,
   LogOut,
-  User,
   Users,
   Zap,
   Calendar,
@@ -59,13 +57,10 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   currentView,
   onChangeView,
-  locations,
   buildings,
   rooms,
-  selectedLocationId,
   selectedBuildingId,
   selectedRoomId,
-  onSelectLocation,
   onSelectBuilding,
   onSelectRoom,
   searchQuery,
@@ -90,7 +85,6 @@ export const Header: React.FC<HeaderProps> = ({
   utilityNotifications,
   isNotificationOpen,
 }) => {
-  const currentBuildings = buildings.filter(b => b.locationId === selectedLocationId);
   const currentRooms = rooms.filter(r => r.buildingId === selectedBuildingId);
 
   const totalUrgentCount = 
@@ -113,7 +107,6 @@ export const Header: React.FC<HeaderProps> = ({
       window.requestAnimationFrame(() => {
         const currentScrollY = window.scrollY;
 
-        // If at or near the very top of the page, always show header
         if (currentScrollY <= 25) {
           setIsVisible(true);
           setIsScrolled(false);
@@ -124,7 +117,6 @@ export const Header: React.FC<HeaderProps> = ({
 
         setIsScrolled(true);
 
-        // Keep header visible if search input is focused or notifications drawer is open
         if (isSearchFocusedRef.current || isNotificationOpen) {
           setIsVisible(true);
           lastScrollY = currentScrollY;
@@ -132,7 +124,6 @@ export const Header: React.FC<HeaderProps> = ({
           return;
         }
 
-        // Prevent false triggers on iOS elastic bounce at page bottom
         const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
         if (currentScrollY >= maxScroll - 10) {
           ticking = false;
@@ -141,13 +132,10 @@ export const Header: React.FC<HeaderProps> = ({
 
         const diff = currentScrollY - lastScrollY;
 
-        // Threshold of 8px to filter out minor finger micro-movements
         if (Math.abs(diff) > 8) {
           if (diff > 0 && currentScrollY > 70) {
-            // User scrolled DOWN -> hide header
             setIsVisible(false);
           } else if (diff < 0) {
-            // User scrolled UP -> reveal header
             setIsVisible(true);
           }
           lastScrollY = currentScrollY;
@@ -163,7 +151,6 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isNotificationOpen]);
 
-  // Ensure header is visible whenever user switches views, buildings, rooms or months
   useEffect(() => {
     setIsVisible(true);
   }, [currentView, selectedBuildingId, selectedRoomId, selectedMonth]);
@@ -176,71 +163,67 @@ export const Header: React.FC<HeaderProps> = ({
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-2.5">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          
-          {/* Brand & Main View Navigation */}
-          <div className="flex items-center flex-wrap gap-4">
-            <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-lg bg-[#38CE3C] border border-[#38CE3C] flex items-center justify-center text-[#181824] font-bold shrink-0 shadow-sm">
-                <Building2 className="w-5 h-5 text-[#181824]" />
+      <div className="w-full px-3 sm:px-6 py-2 space-y-2">
+        {/* Row 1: Brand + Navigation Tabs + Primary Add / Bell / Logout */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto max-w-full">
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-[#38CE3C] flex items-center justify-center text-[#181824] font-bold shrink-0">
+                <Building2 className="w-4 h-4 text-[#181824]" />
               </div>
-              <div>
-                <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
-                  Tenant Management <span className="text-[10px] bg-[#38CE3C]/15 text-[#38CE3C] font-semibold px-2 py-0.5 rounded border border-[#38CE3C]/30">Dubai</span>
-                </h1>
-                <p className="text-[11px] text-slate-400 font-normal">Property & Tenant Management</p>
-              </div>
+              <span className="text-xs sm:text-sm font-extrabold tracking-tight text-white hidden sm:inline">
+                Rooms CRM
+              </span>
             </div>
 
-            {/* View Switcher Tabs */}
-            <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
+            {/* Compact View Switcher Tabs */}
+            <div className="flex bg-slate-900 p-0.5 rounded-lg border border-slate-800 shrink-0">
               <button
                 onClick={() => onChangeView('sheet')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-bold transition cursor-pointer ${
                   currentView === 'sheet'
-                    ? 'bg-slate-800 text-white shadow-sm font-semibold border border-slate-700'
+                    ? 'bg-slate-800 text-white border border-slate-700'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Tenants Sheet</span>
+                <span>Tenants</span>
               </button>
 
               <button
                 onClick={() => onChangeView('buildings')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-bold transition cursor-pointer ${
                   currentView === 'buildings'
-                    ? 'bg-slate-800 text-white shadow-sm font-semibold border border-slate-700'
+                    ? 'bg-slate-800 text-white border border-slate-700'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <LayoutGrid className="w-3.5 h-3.5 text-blue-400" />
-                <span>Buildings & Rooms ({buildings.length})</span>
+                <span>Rooms</span>
               </button>
 
               <button
                 onClick={() => onChangeView('profit_loss')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-bold transition cursor-pointer ${
                   currentView === 'profit_loss'
-                    ? 'bg-slate-800 text-white shadow-sm font-semibold border border-slate-700'
+                    ? 'bg-slate-800 text-white border border-slate-700'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Profit & Loss</span>
+                <span>P&amp;L</span>
               </button>
 
               <button
                 onClick={() => onChangeView('followups')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-bold transition cursor-pointer ${
                   currentView === 'followups'
-                    ? 'bg-slate-800 text-white shadow-sm font-semibold border border-slate-700'
+                    ? 'bg-slate-800 text-white border border-slate-700'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <Users className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Follow-ups & Leads</span>
+                <span>Leads</span>
                 {inquiryCount > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-600 text-white">
                     {inquiryCount}
@@ -248,227 +231,205 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </button>
             </div>
-
-            {/* Contextual Selectors (shown when in Sheet view) */}
-            {currentView === 'sheet' && (
-              <div className="flex items-center flex-wrap gap-2">
-                {/* Building Selector */}
-                <div className="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800">
-                  <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <select
-                    value={selectedBuildingId}
-                    onChange={(e) => onSelectBuilding(e.target.value)}
-                    aria-label="Select Building"
-                    className="bg-transparent text-xs font-medium text-slate-200 focus:outline-none cursor-pointer pr-1"
-                  >
-                    {buildings.map((bld) => (
-                      <option key={bld.id} value={bld.id} className="bg-slate-900 text-white">
-                        {bld.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Room Number Selector */}
-                <div className="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800">
-                  <DoorOpen className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <select
-                    value={selectedRoomId}
-                    onChange={(e) => onSelectRoom(e.target.value)}
-                    aria-label="Select Room Number"
-                    className="bg-transparent text-xs font-medium text-slate-200 focus:outline-none cursor-pointer pr-1"
-                  >
-                    {currentRooms.length === 0 ? (
-                      <option value="" className="bg-[#181824] text-slate-400">No rooms</option>
-                    ) : (
-                      currentRooms.map((room) => {
-                        const rawNum = room.roomNumber;
-                        const isNamed = /unit|hall/i.test(rawNum);
-                        const cleanNum = rawNum.replace(/^(room|flat)\s*/i, '').replace(/\s*\(.*\)$/, '').trim();
-                        const label = isNamed ? rawNum : `Flat ${cleanNum}`;
-                        return (
-                          <option key={room.id} value={room.id} className="bg-[#181824] text-white">
-                            {label} ({room.roomType.split(' ')[0]})
-                          </option>
-                        );
-                      })
-                    )}
-                  </select>
-                </div>
-
-                {/* Month Selector */}
-                {selectedMonth && onMonthChange && (
-                  <div className="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800">
-                    <Calendar className="w-3.5 h-3.5 text-[#38CE3C] shrink-0" />
-                    <select
-                      value={selectedMonth}
-                      onChange={(e) => onMonthChange(e.target.value)}
-                      aria-label="Select Stay Month"
-                      className="bg-transparent text-xs font-bold text-slate-200 focus:outline-none cursor-pointer pr-1"
-                    >
-                      {availableMonths.map((m) => (
-                        <option key={m} value={m} className="bg-[#181824] text-white">
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
-          {/* Search, Action Buttons, User Profile & Notifications */}
-          <div className="flex items-center flex-wrap gap-2">
-            {/* Search Input */}
-            <div className="relative min-w-[150px] sm:min-w-[170px]">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onFocus={() => {
-                  isSearchFocusedRef.current = true;
-                  setIsVisible(true);
-                }}
-                onBlur={() => {
-                  isSearchFocusedRef.current = false;
-                }}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Search tenant, partition..."
-                className="w-full bg-slate-900 text-xs text-white placeholder-slate-500 pl-8 pr-3 py-1.5 rounded-md border border-slate-800 focus:outline-none focus:border-slate-600 transition"
-              />
-            </div>
-
-            {/* Month Archives & Historical Review Button */}
-            {onOpenMonthHistory && (
+          {/* Right Quick Actions */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {currentView === 'sheet' ? (
               <button
-                onClick={onOpenMonthHistory}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-[#38CE3C] hover:text-white rounded-md text-xs font-medium border border-slate-800 transition cursor-pointer"
-                title="Search & Review Any Month's Data (Collections, Occupancy, Utility Bills)"
+                onClick={onOpenAddTenant}
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-[#38CE3C] hover:bg-[#30b533] text-[#181824] rounded-lg text-xs font-extrabold transition cursor-pointer"
               >
-                <FolderArchive className="w-3.5 h-3.5 text-[#38CE3C]" />
-                <span className="hidden sm:inline">Month Review</span>
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Add Tenant</span>
               </button>
-            )}
-
-            {/* Pro-Rata Rent Calculator Quick Tool */}
-            <button
-              onClick={onOpenRentCalculator}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-md text-xs font-medium border border-slate-800 transition cursor-pointer"
-              title="Pro-Rata Rent Calculator for Mid-Month Arrivals"
-            >
-              <Calculator className="w-3.5 h-3.5 text-slate-400" />
-              <span className="hidden sm:inline">Calculator</span>
-            </button>
-
-            {/* Past Stays / Checkout Archive */}
-            <button
-              onClick={onOpenPastTenants}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-md text-xs font-medium border border-slate-800 transition cursor-pointer"
-              title="Past Tenants & Vacated History"
-            >
-              <History className="w-3.5 h-3.5 text-slate-400" />
-              <span className="hidden sm:inline">Past Stays</span>
-              {pastTenantsCount > 0 && (
-                <span className="text-[10px] bg-slate-800 text-slate-300 px-1 rounded border border-slate-700 font-medium">
-                  {pastTenantsCount}
-                </span>
-              )}
-            </button>
-
-            {/* Quick Add Expense Button */}
-            {onOpenAddExpense && (
+            ) : currentView === 'buildings' ? (
               <button
-                onClick={onOpenAddExpense}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-md text-xs font-medium border border-slate-800 transition cursor-pointer"
-                title="Log Flat Expense (AC, maintenance, cleaning, supplies)"
+                onClick={onOpenAddBuilding}
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-[#38CE3C] hover:bg-[#30b533] text-[#181824] rounded-lg text-xs font-extrabold transition cursor-pointer"
               >
-                <Receipt className="w-3.5 h-3.5 text-slate-400" />
-                <span className="hidden sm:inline">Add Expense</span>
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Add Building</span>
               </button>
-            )}
+            ) : null}
 
-            {/* Monthly Utility Bills (DEWA / SEWA / Wi-Fi) */}
-            {onOpenMonthlyBills && (
-              <button
-                onClick={onOpenMonthlyBills}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 hover:text-amber-200 rounded-md text-xs font-medium border border-slate-800 transition cursor-pointer"
-                title="Monthly Utility Bills (DEWA, SEWA & Wi-Fi) for all 7 rooms"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Monthly Bills</span>
-              </button>
-            )}
-
-            {/* Excel Export (if in sheet) */}
-            {currentView === 'sheet' && (
-              <button
-                onClick={onExportExcel}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-md text-xs font-medium border border-slate-800 transition"
-                title="Export Current Sheet to Excel (.xlsx)"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-slate-400" />
-                <span className="hidden sm:inline">Export</span>
-              </button>
-            )}
-
-            {/* Notifications Bell with Total Due Count */}
             <button
               onClick={onToggleNotifications}
-              className={`relative p-2 rounded-md border transition ${
+              className={`relative p-1.5 rounded-lg border transition cursor-pointer ${
                 isNotificationOpen 
                   ? 'bg-slate-800 text-white border-slate-700' 
                   : totalUrgentCount > 0
                     ? 'bg-slate-900 text-rose-300 border-rose-900/60'
-                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'
+                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
               }`}
-              title="Notifications: Tenant Rent + Owner Cheques + DEWA/Wi-Fi"
+              title="Notifications"
             >
-              <Bell className="w-3.5 h-3.5" />
+              <Bell className="w-4 h-4" />
               {totalUrgentCount > 0 && (
-                <span className="absolute -top-1 -right-1 px-1.5 py-0.2 bg-rose-600 text-white text-[10px] font-semibold rounded-full border border-slate-950">
+                <span className="absolute -top-1 -right-1 px-1 bg-rose-600 text-white text-[9px] font-bold rounded-full">
                   {totalUrgentCount}
                 </span>
               )}
             </button>
 
-            {/* Contextual Action Button */}
-            {currentView === 'sheet' ? (
-              <button
-                onClick={onOpenAddTenant}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#38CE3C] hover:bg-[#30b533] text-[#181824] rounded-md text-xs font-bold shadow-sm transition cursor-pointer border border-[#38CE3C]"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Add Tenant</span>
-              </button>
-            ) : (
-              <button
-                onClick={onOpenAddBuilding}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#38CE3C] hover:bg-[#30b533] text-[#181824] rounded-md text-xs font-bold shadow-sm transition cursor-pointer border border-[#38CE3C]"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Add Building</span>
-              </button>
-            )}
+            <button
+              onClick={onLogout}
+              title="Log Out"
+              className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-900 rounded-lg transition cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
 
-            {/* User Profile & Logout */}
-            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800">
-              <div className="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-md border border-slate-800 text-xs font-medium text-slate-300">
-                <User className="w-3.5 h-3.5 text-slate-400" />
-                <span>abuthalif</span>
+        {/* Row 2 (Only in Sheet View): Building + Room + Month + Search + Quick Utilities */}
+        {currentView === 'sheet' && (
+          <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-slate-800/80">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Building Selector */}
+              <div className="flex items-center gap-1 bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <select
+                  value={selectedBuildingId}
+                  onChange={(e) => onSelectBuilding(e.target.value)}
+                  aria-label="Select Building"
+                  className="bg-transparent text-xs font-bold text-slate-200 focus:outline-none cursor-pointer"
+                >
+                  {buildings.map((bld) => (
+                    <option key={bld.id} value={bld.id} className="bg-slate-900 text-white">
+                      {bld.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <button
-                onClick={onLogout}
-                title="Log Out"
-                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-900 rounded-md transition"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
+
+              {/* Room Number Selector */}
+              <div className="flex items-center gap-1 bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                <DoorOpen className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <select
+                  value={selectedRoomId}
+                  onChange={(e) => onSelectRoom(e.target.value)}
+                  aria-label="Select Room"
+                  className="bg-transparent text-xs font-bold text-slate-200 focus:outline-none cursor-pointer"
+                >
+                  {currentRooms.map((room) => {
+                    const rawNum = room.roomNumber;
+                    const isNamed = /unit|hall/i.test(rawNum);
+                    const cleanNum = rawNum.replace(/^(room|flat)\s*/i, '').replace(/\s*\(.*\)$/, '').trim();
+                    const label = isNamed ? rawNum : `Flat ${cleanNum}`;
+                    return (
+                      <option key={room.id} value={room.id} className="bg-[#181824] text-white">
+                        {label}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* Month Selector */}
+              {selectedMonth && onMonthChange && (
+                <div className="flex items-center gap-1 bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                  <Calendar className="w-3.5 h-3.5 text-[#38CE3C] shrink-0" />
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => onMonthChange(e.target.value)}
+                    aria-label="Select Month"
+                    className="bg-transparent text-xs font-bold text-slate-200 focus:outline-none cursor-pointer"
+                  >
+                    {availableMonths.map((m) => (
+                      <option key={m} value={m} className="bg-[#181824] text-white">
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
-          </div>
+            {/* Search & Secondary Tools */}
+            <div className="flex items-center gap-1.5 flex-1 sm:flex-initial justify-end">
+              <div className="relative flex-1 sm:w-44 max-w-xs">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onFocus={() => {
+                    isSearchFocusedRef.current = true;
+                    setIsVisible(true);
+                  }}
+                  onBlur={() => {
+                    isSearchFocusedRef.current = false;
+                  }}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  placeholder="Search tenant..."
+                  className="w-full bg-slate-900 text-xs text-white placeholder-slate-500 pl-8 pr-2.5 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-slate-600"
+                />
+              </div>
 
-        </div>
+              <button
+                onClick={onOpenPastTenants}
+                className="flex items-center gap-1 px-2 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold border border-slate-800 cursor-pointer"
+                title="Past Tenants"
+              >
+                <History className="w-3.5 h-3.5 text-slate-400" />
+                <span className="hidden md:inline">Past</span>
+                {pastTenantsCount > 0 && (
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-1 rounded">
+                    {pastTenantsCount}
+                  </span>
+                )}
+              </button>
+
+              {onOpenMonthlyBills && (
+                <button
+                  onClick={onOpenMonthlyBills}
+                  className="flex items-center gap-1 px-2 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 rounded-lg text-xs font-semibold border border-slate-800 cursor-pointer"
+                  title="Utility Bills"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden md:inline">Bills</span>
+                </button>
+              )}
+
+              {onOpenAddExpense && (
+                <button
+                  onClick={onOpenAddExpense}
+                  className="hidden sm:flex items-center gap-1 px-2 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold border border-slate-800 cursor-pointer"
+                  title="Add Expense"
+                >
+                  <Receipt className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="hidden lg:inline">Expense</span>
+                </button>
+              )}
+
+              <button
+                onClick={onOpenRentCalculator}
+                className="hidden sm:flex items-center gap-1 px-2 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold border border-slate-800 cursor-pointer"
+                title="Pro-Rata Calculator"
+              >
+                <Calculator className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+
+              {onOpenMonthHistory && (
+                <button
+                  onClick={onOpenMonthHistory}
+                  className="hidden sm:flex items-center gap-1 px-2 py-1.5 bg-slate-900 hover:bg-slate-800 text-[#38CE3C] rounded-lg text-xs font-semibold border border-slate-800 cursor-pointer"
+                  title="Month Review"
+                >
+                  <FolderArchive className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              <button
+                onClick={onExportExcel}
+                className="hidden sm:flex items-center gap-1 px-2 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold border border-slate-800 cursor-pointer"
+                title="Export Excel"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
